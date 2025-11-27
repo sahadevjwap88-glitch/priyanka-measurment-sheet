@@ -5,7 +5,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { generateSummaryAction } from '@/app/actions';
@@ -129,6 +129,15 @@ export default function GraniteGridPage() {
     });
   };
 
+  const calculateTotalSquareFeet = () => {
+    const validData = getValidData();
+    if (validData.length === 0) {
+      return '0.00';
+    }
+    const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
+    return (totalAreaInches / 144).toFixed(2);
+  };
+
   return (
     <div className="space-y-8">
       <header className="space-y-2">
@@ -160,6 +169,16 @@ export default function GraniteGridPage() {
                     </Button>
                 </div>
             </div>
+            <Card className="mb-4">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Square Feet</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {calculateTotalSquareFeet()}
+                </div>
+              </CardContent>
+            </Card>
             <GraniteTable
                 fields={fields}
                 register={form.register}
