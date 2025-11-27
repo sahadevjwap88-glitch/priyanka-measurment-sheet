@@ -17,7 +17,7 @@ const GenerateDataSummaryInputSchema = z.object({
       length: z.number(),
       width: z.number(),
     })
-  ).describe('An array of granite measurement data, where each element contains length and width properties.'),
+  ).describe('An array of granite measurement data, where each element contains length and width properties in inches.'),
 });
 export type GenerateDataSummaryInput = z.infer<typeof GenerateDataSummaryInputSchema>;
 
@@ -36,11 +36,11 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateDataSummaryOutputSchema},
   prompt: `You are an expert data analyst specializing in summarizing numerical data.
 
-You will be provided with an array of granite measurement data, where each element contains length and width properties. Your task is to generate a concise text summary of the data, highlighting key characteristics such as the average length and width, the range of lengths and widths, and any notable patterns or outliers.
+You will be provided with an array of granite measurement data, where each element contains length and width properties in inches. Your task is to generate a concise text summary of the data, highlighting key characteristics such as the average length and width, the range of lengths and widths, and any notable patterns or outliers.
 
-Granite Measurement Data:
+Granite Measurement Data (in inches):
 {{#each data}}
-- Length: {{this.length}}, Width: {{this.width}}
+- Length: {{this.length}} in, Width: {{this.width}} in
 {{/each}}
 `,
 });

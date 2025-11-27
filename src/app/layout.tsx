@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'Granite Grid',
-  description: 'An app for granite length and width measurements.',
+  description: 'An app for granite length and width measurements in inches.',
 };
 
 export default function RootLayout({

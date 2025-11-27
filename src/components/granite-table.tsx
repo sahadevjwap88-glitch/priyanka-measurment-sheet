@@ -1,6 +1,7 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -10,19 +11,31 @@ import type { MeasurementRow } from '@/lib/types';
 interface GraniteTableProps {
   fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
   register: UseFormRegister<{ measurements: MeasurementRow[] }>;
-  remove: (index: number) => void;
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
+  control: Control<{ measurements: MeasurementRow[] }>;
 }
 
-export function GraniteTable({ fields, register, errors }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors, control }: GraniteTableProps) {
+  const measurements = useWatch({ control, name: 'measurements' });
+
+  const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
+    const length = parseFloat(lengthStr);
+    const width = parseFloat(widthStr);
+    if (!isNaN(length) && length > 0 && !isNaN(width) && width > 0) {
+      return ((length * width) / 144).toFixed(2);
+    }
+    return '0.00';
+  };
+  
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[80px]">Row</TableHead>
-            <TableHead>Length (cm)</TableHead>
-            <TableHead>Width (cm)</TableHead>
+            <TableHead>Length (in)</TableHead>
+            <TableHead>Width (in)</TableHead>
+            <TableHead>Area (sq ft)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -32,7 +45,7 @@ export function GraniteTable({ fields, register, errors }: GraniteTableProps) {
               <TableCell>
                 <Input
                   type="number"
-                  placeholder="e.g., 120.5"
+                  placeholder="e.g., 48.5"
                   step="0.1"
                   min="0"
                   {...register(`measurements.${index}.length`)}
@@ -45,7 +58,7 @@ export function GraniteTable({ fields, register, errors }: GraniteTableProps) {
               <TableCell>
                 <Input
                   type="number"
-                  placeholder="e.g., 75.2"
+                  placeholder="e.g., 30.2"
                   step="0.1"
                   min="0"
                   {...register(`measurements.${index}.width`)}
@@ -53,6 +66,15 @@ export function GraniteTable({ fields, register, errors }: GraniteTableProps) {
                     'w-full',
                     errors.measurements?.[index]?.width && 'border-destructive'
                   )}
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="text"
+                  readOnly
+                  value={calculateSquareFeet(measurements?.[index]?.length, measurements?.[index]?.width)}
+                  className="w-full bg-muted/50 border-none"
+                  tabIndex={-1}
                 />
               </TableCell>
             </TableRow>

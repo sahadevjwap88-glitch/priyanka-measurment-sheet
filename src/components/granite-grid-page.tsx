@@ -41,7 +41,7 @@ export default function GraniteGridPage() {
     mode: 'onBlur',
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
@@ -81,10 +81,15 @@ export default function GraniteGridPage() {
       return;
     }
     
-    const headers = ['Length', 'Width'];
+    const headers = ['Length (in)', 'Width (in)', 'Area (sq ft)'];
     const csvContent = [
       headers.join(','),
-      ...validRows.map(row => `${row.length},${row.width}`)
+      ...validRows.map(row => {
+        const length = parseFloat(row.length) || 0;
+        const width = parseFloat(row.width) || 0;
+        const area = (length * width) / 144;
+        return `${length},${width},${area.toFixed(2)}`;
+      })
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -132,7 +137,7 @@ export default function GraniteGridPage() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Granite Grid</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Input granite slab measurements, view statistics, and generate AI-powered summaries. You can add up to {MAX_ROWS} rows.
+          Input granite slab measurements in inches, view statistics, and generate AI-powered summaries. You can add up to {MAX_ROWS} rows.
         </p>
       </header>
       
@@ -158,8 +163,8 @@ export default function GraniteGridPage() {
             <GraniteTable
                 fields={fields}
                 register={form.register}
-                remove={remove}
                 errors={form.formState.errors}
+                control={form.control}
             />
             <div className="mt-4 flex justify-start">
                 <Button variant="secondary" onClick={handleAddRow} disabled={fields.length >= MAX_ROWS}>
