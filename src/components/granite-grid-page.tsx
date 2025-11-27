@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
-import type { Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { generateSummaryAction } from '@/app/actions';
 import { Download, Plus, FileText, Loader2, Sparkles, Ruler } from 'lucide-react';
 import type { MeasurementRow } from '@/lib/types';
-import { StatsCards } from '@/components/stats-cards';
 import { GraniteTable } from '@/components/granite-table';
 
 const formSchema = z.object({
@@ -138,8 +136,6 @@ export default function GraniteGridPage() {
         </p>
       </header>
       
-      <StatsCards control={form.control} />
-
       <Card>
         <div className="p-6">
             <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
