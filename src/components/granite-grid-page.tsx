@@ -1,23 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Plus, Ruler } from 'lucide-react';
-import type { MeasurementRow } from '@/lib/types';
+import { Download, Plus, Ruler, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
+  partyName: z.string().optional(),
+  partyPhoneNumber: z.string().optional(),
   measurements: z.array(
     z.object({
       length: z.string(),
       width: z.string(),
+      color: z.string().optional(),
     })
   ),
 });
@@ -25,69 +29,96 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const INITIAL_ROWS = 20;
-const MAX_ROWS = 100;
+const MAX_ROWS = 500;
 const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
 export default function GraniteGridPage() {
   const { toast } = useToast();
+  const [rowsToAdd, setRowsToAdd] = useState(1);
+  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) },
+    defaultValues: { 
+      partyName: '',
+      partyPhoneNumber: '',
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '', color: '' }) 
+    },
     mode: 'onBlur',
   });
   
-  const { fields, append, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
   
-  const measurements = useWatch({ control: form.control, name: 'measurements' });
+  const watchedData = useWatch({ control: form.control });
 
   useEffect(() => {
+    setIsClient(true);
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          replace(parsedData);
+        if (parsedData) {
+          form.reset(parsedData);
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
       }
     }
-  }, [replace]);
+  }, [form]);
 
   useEffect(() => {
-    if (measurements) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(measurements));
+    if (isClient) {
+      const subscription = form.watch((value) => {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+      });
+      return () => subscription.unsubscribe();
     }
-  }, [measurements]);
+  }, [isClient, form]);
 
 
-  const handleAddRow = () => {
-    if (fields.length < MAX_ROWS) {
-      append({ length: '', width: '' });
-    } else {
+  const handleAddRows = () => {
+    const numRowsToAdd = Number(rowsToAdd) || 1;
+    if (fields.length + numRowsToAdd > MAX_ROWS) {
       toast({
-        title: 'Row Limit Reached',
-        description: `You cannot add more than ${MAX_ROWS} rows.`,
+        title: 'Row Limit Exceeded',
+        description: `You can only add up to ${MAX_ROWS} rows in total.`,
         variant: 'destructive',
       });
+      return;
     }
+    const newRows = Array(numRowsToAdd).fill({ length: '', width: '', color: '' });
+    append(newRows);
   };
+  
+  const handleReset = () => {
+    const defaultValues = { 
+      partyName: '',
+      partyPhoneNumber: '',
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '', color: '' }) 
+    };
+    form.reset(defaultValues);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    toast({
+      title: 'Data Cleared',
+      description: 'All measurements and party details have been reset.',
+    });
+  }
 
   const getValidData = () => {
-    return measurements
-      .map((m) => ({
+    return watchedData.measurements
+      ?.map((m) => ({
         length: parseFloat(m.length),
         width: parseFloat(m.width),
+        color: m.color || '',
       }))
-      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0);
+      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
   };
   
   const handleExport = () => {
-    const validRows = measurements.filter(row => row.length && row.width);
+    const validRows = getValidData();
 
     if (validRows.length === 0) {
       toast({
@@ -100,37 +131,45 @@ export default function GraniteGridPage() {
     
     const doc = new jsPDF();
     
-    const tableColumn = ["Row", "Length (in)", "Width (in)", "Area (sq ft)"];
+    const tableColumn = ["Row", "Color", "Length (in)", "Width (in)", "Area (sq ft)"];
     const tableRows: (string|number)[][] = [];
 
     validRows.forEach((row, index) => {
-        const length = parseFloat(row.length) || 0;
-        const width = parseFloat(row.width) || 0;
-        const area = (length * width) / 144;
+        const area = (row.length * row.width) / 144;
         const rowData = [
             index + 1,
-            length,
-            width,
+            row.color,
+            row.length,
+            row.width,
             area.toFixed(2)
         ];
         tableRows.push(rowData);
     });
 
     const totalArea = parseFloat(calculateTotalSquareFeet());
-    const finalRow = ["", "Total", "", totalArea.toFixed(2)];
+    const finalRow = ["", "Total", "", "", totalArea.toFixed(2)];
     tableRows.push(finalRow);
+
+    const partyName = watchedData.partyName || 'N/A';
+    const partyPhone = watchedData.partyPhoneNumber || 'N/A';
+
+    doc.text("Priyanka Granite Sheet", 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Party Name: ${partyName}`, 14, 22);
+    doc.text(`Party Phone: ${partyPhone}`, 14, 27);
+
 
     (doc as any).autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 20,
+      startY: 35,
     });
     
-    doc.text("Priyanka Granite Sheet", 14, 15);
     doc.save('priyanka_granite_sheet.pdf');
   };
 
   const calculateTotalSquareFeet = () => {
+    if (!isClient) return '0.00';
     const validData = getValidData();
     if (validData.length === 0) {
       return '0.00';
@@ -138,6 +177,10 @@ export default function GraniteGridPage() {
     const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
     return (totalAreaInches / 144).toFixed(2);
   };
+
+  if (!isClient) {
+    return null; 
+  }
 
   return (
     <div className="space-y-8">
@@ -153,16 +196,34 @@ export default function GraniteGridPage() {
       
       <Card>
         <div className="p-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2" />
                         Export PDF
                     </Button>
+                    <Button variant="destructive" size="sm" onClick={handleReset}>
+                        <Trash2 className="mr-2" />
+                        Clear All Data
+                    </Button>
                 </div>
             </div>
-            <Card className="mb-4">
+
+            <Card className="mb-6">
+              <CardContent className="p-4 grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="partyName">Party Name</Label>
+                    <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
+                    <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Square Feet</CardTitle>
               </CardHeader>
@@ -172,17 +233,34 @@ export default function GraniteGridPage() {
                 </div>
               </CardContent>
             </Card>
+            
             <GraniteTable
                 fields={fields}
                 register={form.register}
                 errors={form.formState.errors}
                 control={form.control}
+                remove={remove}
             />
-            <div className="mt-4 flex justify-start">
-                <Button variant="secondary" onClick={handleAddRow} disabled={fields.length >= MAX_ROWS}>
-                    <Plus className="mr-2" />
-                    Add Row
-                </Button>
+            <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
+                <div className="flex items-center gap-2">
+                    <Input 
+                        type="number"
+                        value={rowsToAdd}
+                        onChange={(e) => setRowsToAdd(Math.max(1, parseInt(e.target.value, 10)))}
+                        className="w-24 h-9"
+                        min="1"
+                    />
+                    <Button variant="secondary" onClick={handleAddRows} disabled={fields.length >= MAX_ROWS}>
+                        <Plus className="mr-2" />
+                        Add Row(s)
+                    </Button>
+                </div>
+                {fields.length > 0 && (
+                    <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove(fields.length - 1)}>
+                        <Trash2 className="mr-2" />
+                        Remove Last Row
+                    </Button>
+                )}
             </div>
         </div>
       </Card>

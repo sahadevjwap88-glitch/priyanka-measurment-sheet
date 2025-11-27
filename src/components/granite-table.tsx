@@ -1,10 +1,12 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Control, UseFieldArrayRemove } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
 
@@ -13,9 +15,10 @@ interface GraniteTableProps {
   register: UseFormRegister<{ measurements: MeasurementRow[] }>;
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
   control: Control<{ measurements: MeasurementRow[] }>;
+  remove: UseFieldArrayRemove;
 }
 
-export function GraniteTable({ fields, register, errors, control }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors, control, remove }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
@@ -33,15 +36,28 @@ export function GraniteTable({ fields, register, errors, control }: GraniteTable
         <TableHeader>
           <TableRow>
             <TableHead className="w-[80px]">Row</TableHead>
+            <TableHead>Color Name</TableHead>
             <TableHead>Length (in)</TableHead>
             <TableHead>Width (in)</TableHead>
             <TableHead>Area (sq ft)</TableHead>
+            <TableHead className="w-[100px]">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {fields.map((field, index) => (
             <TableRow key={field.id} className={cn(index % 2 === 0 ? 'bg-muted/20' : '')}>
               <TableCell className="font-medium">{index + 1}</TableCell>
+              <TableCell>
+                <Input
+                  type="text"
+                  placeholder="e.g., Black Pearl"
+                  {...register(`measurements.${index}.color`)}
+                  className={cn(
+                    'w-full',
+                    errors.measurements?.[index]?.color && 'border-destructive'
+                  )}
+                />
+              </TableCell>
               <TableCell>
                 <Input
                   type="number"
@@ -76,6 +92,16 @@ export function GraniteTable({ fields, register, errors, control }: GraniteTable
                   className="w-full bg-muted/50 border-none"
                   tabIndex={-1}
                 />
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
