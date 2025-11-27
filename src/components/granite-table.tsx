@@ -1,12 +1,10 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors, Control, UseFieldArrayRemove } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
 
@@ -15,10 +13,9 @@ interface GraniteTableProps {
   register: UseFormRegister<{ measurements: MeasurementRow[] }>;
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
   control: Control<{ measurements: MeasurementRow[] }>;
-  remove: UseFieldArrayRemove;
 }
 
-export function GraniteTable({ fields, register, errors, control, remove }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors, control }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
@@ -39,7 +36,6 @@ export function GraniteTable({ fields, register, errors, control, remove }: Gran
             <TableHead>Length (in)</TableHead>
             <TableHead>Width (in)</TableHead>
             <TableHead>Area (sq ft)</TableHead>
-            <TableHead className="w-[100px]">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,16 +76,6 @@ export function GraniteTable({ fields, register, errors, control, remove }: Gran
                   className="w-full bg-muted/50 border-none"
                   tabIndex={-1}
                 />
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => remove(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </TableCell>
             </TableRow>
           ))}

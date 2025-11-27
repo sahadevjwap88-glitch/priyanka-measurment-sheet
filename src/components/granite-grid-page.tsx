@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -255,7 +255,6 @@ export default function GraniteGridPage() {
                 register={form.register}
                 errors={form.formState.errors}
                 control={form.control}
-                remove={remove}
             />
             <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
                 <div className="flex items-center gap-2">
