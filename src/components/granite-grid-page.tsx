@@ -106,8 +106,8 @@ export default function GraniteGridPage() {
       startY: 20,
     });
     
-    doc.text("Granite Measurements", 14, 15);
-    doc.save('granite_measurements.pdf');
+    doc.text("Priyanka Granite Sheet", 14, 15);
+    doc.save('priyanka_granite_sheet.pdf');
   };
 
   const calculateTotalSquareFeet = () => {
@@ -124,7 +124,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Ruler className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Granite Grid</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite Sheet</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl">
           Input granite slab measurements in inches, view statistics, and export your data. You can add up to {MAX_ROWS} rows.

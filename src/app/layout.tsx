@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Granite Grid',
+  title: 'Priyanka Granite Sheet',
   description: 'An app for granite length and width measurements in inches.',
 };
 
