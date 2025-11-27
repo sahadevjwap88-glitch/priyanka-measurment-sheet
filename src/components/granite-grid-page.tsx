@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Plus, Ruler, Trash2 } from 'lucide-react';
+import { Download, Plus, Ruler } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -94,21 +94,6 @@ export default function GraniteGridPage() {
     append(newRows);
   };
   
-  const handleReset = () => {
-    const defaultValues = { 
-      partyName: '',
-      partyPhoneNumber: '',
-      color: '',
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
-    };
-    form.reset(defaultValues);
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    toast({
-      title: 'Data Cleared',
-      description: 'All measurements and party details have been reset.',
-    });
-  }
-
   const getValidData = () => {
     return watchedData.measurements
       ?.map((m) => ({
@@ -214,10 +199,6 @@ export default function GraniteGridPage() {
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2" />
                         Export PDF
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={handleReset}>
-                        <Trash2 className="mr-2" />
-                        Clear All Data
                     </Button>
                 </div>
             </div>
