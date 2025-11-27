@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,24 +26,48 @@ type FormValues = z.infer<typeof formSchema>;
 
 const INITIAL_ROWS = 10;
 const MAX_ROWS = 100;
+const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
+
+const getInitialData = (): FormValues => {
+    if (typeof window === 'undefined') {
+        return { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) };
+    }
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+        try {
+            const parsedData = JSON.parse(savedData);
+            if (Array.isArray(parsedData) && parsedData.length > 0) {
+              return { measurements: parsedData };
+            }
+        } catch (error) {
+            console.error("Failed to parse data from localStorage", error);
+        }
+    }
+    return { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) };
+};
 
 export default function GraniteGridPage() {
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
-    },
+    defaultValues: getInitialData(),
     mode: 'onBlur',
   });
-
+  
   const { fields, append } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
-
+  
   const measurements = useWatch({ control: form.control, name: 'measurements' });
+
+  useEffect(() => {
+    if (measurements) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(measurements));
+    }
+  }, [measurements]);
+
 
   const handleAddRow = () => {
     if (fields.length < MAX_ROWS) {
@@ -127,7 +151,7 @@ export default function GraniteGridPage() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite Sheet</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Input granite slab measurements in inches, view statistics, and export your data. You can add up to {MAX_ROWS} rows.
+          Input granite slab measurements in inches, view statistics, and export your data. You can add up to {MAX_ROWS} rows. Your data is saved automatically.
         </p>
       </header>
       
