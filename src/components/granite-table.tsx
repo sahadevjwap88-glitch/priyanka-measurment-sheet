@@ -36,7 +36,6 @@ export function GraniteTable({ fields, register, errors, control, remove }: Gran
         <TableHeader>
           <TableRow>
             <TableHead className="w-[80px]">Row</TableHead>
-            <TableHead>Color Name</TableHead>
             <TableHead>Length (in)</TableHead>
             <TableHead>Width (in)</TableHead>
             <TableHead>Area (sq ft)</TableHead>
@@ -47,17 +46,6 @@ export function GraniteTable({ fields, register, errors, control, remove }: Gran
           {fields.map((field, index) => (
             <TableRow key={field.id} className={cn(index % 2 === 0 ? 'bg-muted/20' : '')}>
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>
-                <Input
-                  type="text"
-                  placeholder="e.g., Black Pearl"
-                  {...register(`measurements.${index}.color`)}
-                  className={cn(
-                    'w-full',
-                    errors.measurements?.[index]?.color && 'border-destructive'
-                  )}
-                />
-              </TableCell>
               <TableCell>
                 <Input
                   type="number"

@@ -17,11 +17,11 @@ import { Label } from '@/components/ui/label';
 const formSchema = z.object({
   partyName: z.string().optional(),
   partyPhoneNumber: z.string().optional(),
+  color: z.string().min(1, 'Color name is required.'),
   measurements: z.array(
     z.object({
       length: z.string(),
       width: z.string(),
-      color: z.string().optional(),
     })
   ),
 });
@@ -42,7 +42,8 @@ export default function GraniteGridPage() {
     defaultValues: { 
       partyName: '',
       partyPhoneNumber: '',
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '', color: '' }) 
+      color: '',
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     },
     mode: 'onBlur',
   });
@@ -89,7 +90,7 @@ export default function GraniteGridPage() {
       });
       return;
     }
-    const newRows = Array(numRowsToAdd).fill({ length: '', width: '', color: '' });
+    const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
     append(newRows);
   };
   
@@ -97,7 +98,8 @@ export default function GraniteGridPage() {
     const defaultValues = { 
       partyName: '',
       partyPhoneNumber: '',
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '', color: '' }) 
+      color: '',
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     };
     form.reset(defaultValues);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -112,7 +114,6 @@ export default function GraniteGridPage() {
       ?.map((m) => ({
         length: parseFloat(m.length),
         width: parseFloat(m.width),
-        color: m.color || '',
       }))
       .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
   };
@@ -128,17 +129,26 @@ export default function GraniteGridPage() {
       });
       return;
     }
+
+    if (!watchedData.color) {
+        toast({
+            title: 'Color Name Required',
+            description: 'Please enter a color name before exporting.',
+            variant: 'destructive'
+        });
+        form.setFocus('color');
+        return;
+    }
     
     const doc = new jsPDF();
     
-    const tableColumn = ["Row", "Color", "Length (in)", "Width (in)", "Area (sq ft)"];
+    const tableColumn = ["Row", "Length (in)", "Width (in)", "Area (sq ft)"];
     const tableRows: (string|number)[][] = [];
 
     validRows.forEach((row, index) => {
         const area = (row.length * row.width) / 144;
         const rowData = [
             index + 1,
-            row.color,
             row.length,
             row.width,
             area.toFixed(2)
@@ -147,22 +157,24 @@ export default function GraniteGridPage() {
     });
 
     const totalArea = parseFloat(calculateTotalSquareFeet());
-    const finalRow = ["", "Total", "", "", totalArea.toFixed(2)];
+    const finalRow = ["Total", "", "", totalArea.toFixed(2)];
     tableRows.push(finalRow);
 
     const partyName = watchedData.partyName || 'N/A';
     const partyPhone = watchedData.partyPhoneNumber || 'N/A';
+    const color = watchedData.color || 'N/A';
 
     doc.text("Priyanka Granite Sheet", 14, 15);
     doc.setFontSize(10);
     doc.text(`Party Name: ${partyName}`, 14, 22);
     doc.text(`Party Phone: ${partyPhone}`, 14, 27);
+    doc.text(`Color: ${color}`, 14, 32);
 
 
     (doc as any).autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 35,
+      startY: 40,
     });
     
     doc.save('priyanka_granite_sheet.pdf');
@@ -211,7 +223,7 @@ export default function GraniteGridPage() {
             </div>
 
             <Card className="mb-6">
-              <CardContent className="p-4 grid md:grid-cols-2 gap-4">
+              <CardContent className="p-4 grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="partyName">Party Name</Label>
                     <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
@@ -219,6 +231,10 @@ export default function GraniteGridPage() {
                 <div className="space-y-2">
                     <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
                     <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="color">Color Name</Label>
+                    <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
                 </div>
               </CardContent>
             </Card>
