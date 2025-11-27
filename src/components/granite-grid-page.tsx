@@ -28,39 +28,35 @@ const INITIAL_ROWS = 10;
 const MAX_ROWS = 100;
 const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
-const getInitialData = (): FormValues => {
-    if (typeof window === 'undefined') {
-        return { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) };
-    }
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-        try {
-            const parsedData = JSON.parse(savedData);
-            if (Array.isArray(parsedData) && parsedData.length > 0) {
-              return { measurements: parsedData };
-            }
-        } catch (error) {
-            console.error("Failed to parse data from localStorage", error);
-        }
-    }
-    return { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) };
-};
-
 export default function GraniteGridPage() {
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: getInitialData(),
+    defaultValues: { measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) },
     mode: 'onBlur',
   });
   
-  const { fields, append } = useFieldArray({
+  const { fields, append, replace } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
   
   const measurements = useWatch({ control: form.control, name: 'measurements' });
+
+  useEffect(() => {
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          replace(parsedData);
+        }
+      } catch (error) {
+        console.error("Failed to parse data from localStorage", error);
+      }
+    }
+  }, [replace]);
 
   useEffect(() => {
     if (measurements) {
