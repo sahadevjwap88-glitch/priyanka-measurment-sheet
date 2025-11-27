@@ -4,8 +4,6 @@ import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
 
@@ -16,7 +14,7 @@ interface GraniteTableProps {
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
 }
 
-export function GraniteTable({ fields, register, remove, errors }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors }: GraniteTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -25,7 +23,6 @@ export function GraniteTable({ fields, register, remove, errors }: GraniteTableP
             <TableHead className="w-[80px]">Row</TableHead>
             <TableHead>Length (cm)</TableHead>
             <TableHead>Width (cm)</TableHead>
-            <TableHead className="w-[50px] text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -57,16 +54,6 @@ export function GraniteTable({ fields, register, remove, errors }: GraniteTableP
                     errors.measurements?.[index]?.width && 'border-destructive'
                   )}
                 />
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => remove(index)}
-                  aria-label={`Remove row ${index + 1}`}
-                >
-                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                </Button>
               </TableCell>
             </TableRow>
           ))}
