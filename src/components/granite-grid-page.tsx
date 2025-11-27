@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { generateSummaryAction } from '@/app/actions';
-import { Download, Plus, FileText, Loader2, Sparkles, Ruler } from 'lucide-react';
+import { Download, Plus, Ruler } from 'lucide-react';
 import type { MeasurementRow } from '@/lib/types';
 import { GraniteTable } from '@/components/granite-table';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const formSchema = z.object({
   measurements: z.array(
@@ -28,9 +28,6 @@ const INITIAL_ROWS = 10;
 const MAX_ROWS = 100;
 
 export default function GraniteGridPage() {
-  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
-  const [summary, setSummary] = useState('');
-  const [isSummaryLoading, startSummaryTransition] = useTransition();
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -81,52 +78,36 @@ export default function GraniteGridPage() {
       return;
     }
     
-    const headers = ['Length (in)', 'Width (in)', 'Area (sq ft)'];
-    const csvContent = [
-      headers.join(','),
-      ...validRows.map(row => {
+    const doc = new jsPDF();
+    
+    const tableColumn = ["Row", "Length (in)", "Width (in)", "Area (sq ft)"];
+    const tableRows: (string|number)[][] = [];
+
+    validRows.forEach((row, index) => {
         const length = parseFloat(row.length) || 0;
         const width = parseFloat(row.width) || 0;
         const area = (length * width) / 144;
-        return `${length},${width},${area.toFixed(2)}`;
-      })
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'granite_measurements.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleGenerateSummary = () => {
-    const validData = getValidData();
-    if (validData.length === 0) {
-      toast({
-        title: 'Not Enough Data',
-        description: 'Please enter valid measurements to generate a summary.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    startSummaryTransition(async () => {
-      const result = await generateSummaryAction({ data: validData });
-      if (result.error) {
-        toast({
-          title: 'Error Generating Summary',
-          description: result.error,
-          variant: 'destructive',
-        });
-      } else if (result.summary) {
-        setSummary(result.summary);
-        setIsSummaryDialogOpen(true);
-      }
+        const rowData = [
+            index + 1,
+            length,
+            width,
+            area.toFixed(2)
+        ];
+        tableRows.push(rowData);
     });
+
+    const totalArea = parseFloat(calculateTotalSquareFeet());
+    const finalRow = ["", "Total", "", totalArea.toFixed(2)];
+    tableRows.push(finalRow);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+    
+    doc.text("Granite Measurements", 14, 15);
+    doc.save('granite_measurements.pdf');
   };
 
   const calculateTotalSquareFeet = () => {
@@ -146,7 +127,7 @@ export default function GraniteGridPage() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Granite Grid</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Input granite slab measurements in inches, view statistics, and generate AI-powered summaries. You can add up to {MAX_ROWS} rows.
+          Input granite slab measurements in inches, view statistics, and export your data. You can add up to {MAX_ROWS} rows.
         </p>
       </header>
       
@@ -157,15 +138,7 @@ export default function GraniteGridPage() {
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2" />
-                        Export CSV
-                    </Button>
-                    <Button size="sm" onClick={handleGenerateSummary} disabled={isSummaryLoading}>
-                        {isSummaryLoading ? (
-                            <Loader2 className="mr-2 animate-spin" />
-                        ) : (
-                            <Sparkles className="mr-2" />
-                        )}
-                        Generate Summary
+                        Export PDF
                     </Button>
                 </div>
             </div>
@@ -193,23 +166,6 @@ export default function GraniteGridPage() {
             </div>
         </div>
       </Card>
-
-      <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><FileText /> AI Generated Summary</DialogTitle>
-            <DialogDescription>
-              Here is a text summary of your measurement data.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="prose prose-sm dark:prose-invert max-h-[60vh] overflow-y-auto rounded-lg border bg-muted/50 p-4 text-sm leading-relaxed">
-            {summary}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setIsSummaryDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
