@@ -24,7 +24,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const INITIAL_ROWS = 10;
+const INITIAL_ROWS = 20;
 const MAX_ROWS = 100;
 const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
