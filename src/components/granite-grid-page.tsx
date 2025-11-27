@@ -48,7 +48,7 @@ export default function GraniteGridPage() {
     mode: 'onBlur',
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
@@ -270,12 +270,6 @@ export default function GraniteGridPage() {
                         Add Row(s)
                     </Button>
                 </div>
-                {fields.length > 0 && (
-                    <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove(fields.length - 1)}>
-                        <Trash2 className="mr-2" />
-                        Remove Last Row
-                    </Button>
-                )}
             </div>
         </div>
       </Card>
