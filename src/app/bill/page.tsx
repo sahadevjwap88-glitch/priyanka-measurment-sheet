@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Printer } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface Measurement {
   length: string;
@@ -18,6 +19,8 @@ interface StoredData {
   color?: string;
   rate?: string;
   measurements?: Measurement[];
+  labourCharges?: string;
+  transportCharges?: string;
 }
 
 export default function BillPage() {
@@ -59,6 +62,9 @@ export default function BillPage() {
   const totalArea = calculateTotalSquareFeet();
   const rate = data?.rate ? parseFloat(data.rate) : 0;
   const totalAmount = totalArea * rate;
+  const labourCharges = data?.labourCharges ? parseFloat(data.labourCharges) : 0;
+  const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
+  const grandTotal = totalAmount + labourCharges + transportCharges;
 
   const handlePrint = () => {
     window.print();
@@ -98,7 +104,7 @@ export default function BillPage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Party Name</p>
                   <p>{data?.partyName || 'N/A'}</p>
@@ -110,10 +116,6 @@ export default function BillPage() {
                 <div>
                   <p className="font-medium text-muted-foreground">Color</p>
                   <p>{data?.color || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Rate</p>
-                  <p>{rate.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -150,7 +152,7 @@ export default function BillPage() {
           </div>
 
           <div className="mt-8 flex justify-end">
-            <div className="w-full max-w-xs space-y-2">
+            <div className="w-full max-w-sm space-y-2">
                 <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Sq. Ft.</span>
                     <span>{totalArea.toFixed(2)}</span>
@@ -159,9 +161,22 @@ export default function BillPage() {
                     <span className="text-muted-foreground">Rate</span>
                     <span>{rate.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between text-sm font-semibold border-t pt-2">
                     <span>Total Amount</span>
                     <span>{totalAmount.toFixed(2)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Labour Charges</span>
+                    <span>{labourCharges.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Transport Charges</span>
+                    <span>{transportCharges.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Grand Total</span>
+                    <span>{grandTotal.toFixed(2)}</span>
                 </div>
             </div>
           </div>

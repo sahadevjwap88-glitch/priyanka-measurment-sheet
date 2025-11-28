@@ -20,6 +20,8 @@ const formSchema = z.object({
   partyPhoneNumber: z.string().optional(),
   color: z.string().optional(),
   rate: z.string().optional(),
+  labourCharges: z.string().optional(),
+  transportCharges: z.string().optional(),
   measurements: z.array(
     z.object({
       length: z.string(),
@@ -46,6 +48,8 @@ export default function GraniteGridPage() {
       partyPhoneNumber: '',
       color: '',
       rate: '',
+      labourCharges: '',
+      transportCharges: '',
       measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     },
     mode: 'onBlur',
@@ -200,17 +204,19 @@ export default function GraniteGridPage() {
                         <Download className="mr-2" />
                         Export PDF
                     </Button>
-                    <Link href="/bill" passHref legacyBehavior>
-                      <Button as="a" variant="outline" size="sm">
-                          <Eye className="mr-2" />
-                          View Bill
+                    <Link href="/bill" passHref>
+                      <Button asChild variant="outline" size="sm">
+                          <a>
+                            <Eye className="mr-2" />
+                            View Bill
+                          </a>
                       </Button>
                     </Link>
                 </div>
             </div>
 
             <Card className="mb-6">
-              <CardContent className="p-4 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <CardContent className="p-4 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="partyName">Party Name</Label>
                     <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
@@ -226,6 +232,14 @@ export default function GraniteGridPage() {
                 <div className="space-y-2">
                     <Label htmlFor="rate">Rate (per sq ft)</Label>
                     <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="labourCharges">Labour Charges</Label>
+                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="transportCharges">Transport Charges</Label>
+                    <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
                 </div>
               </CardContent>
             </Card>
