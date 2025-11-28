@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { Download } from 'lucide-react';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 interface Measurement {
   length: string;
@@ -65,6 +73,73 @@ export default function BillPage() {
   const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
   const grandTotal = totalAmount + labourCharges + transportCharges;
 
+  const handleExportPdf = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+
+    // Title
+    doc.setFontSize(20);
+    doc.text("Priyanka Granite", 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text("Granite Measurement Sheet", 105, 28, { align: 'center' });
+
+    // Party Details
+    const details = [
+        ['Party Name:', data?.partyName || 'N/A'],
+        ['Party Phone:', data?.partyPhoneNumber || 'N/A'],
+        ['Color:', data?.color || 'N/A'],
+    ];
+    doc.autoTable({
+        body: details,
+        startY: 35,
+        theme: 'plain',
+        styles: { fontSize: 10 },
+        columnStyles: { 0: { fontStyle: 'bold' } },
+    });
+
+    // Measurements Table
+    const tableData = validRows.map((row, index) => [
+        index + 1,
+        row.length,
+        row.width,
+        ((row.length * row.width) / 144).toFixed(2),
+    ]);
+
+    doc.autoTable({
+      head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+      body: tableData,
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      didDrawPage: (data) => {
+        // Footer
+        const str = "Page " + doc.internal.getNumberOfPages()
+        doc.setFontSize(10)
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
+      }
+    });
+
+    let finalY = (doc as any).lastAutoTable.finalY;
+
+    // Summary
+    const summaryData = [
+      ['Total Sq. Ft.', totalArea.toFixed(2)],
+      ['Rate', `Rs. ${rate.toFixed(2)}`],
+      [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, `Rs. ${totalAmount.toFixed(2)}`],
+      ['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`],
+      ['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`],
+      [{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 12 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 12 } }]
+    ];
+    
+    doc.autoTable({
+        body: summaryData,
+        startY: finalY + 10,
+        theme: 'plain',
+        columnStyles: { 1: { halign: 'right' } },
+        styles: { fontSize: 10 },
+    });
+
+    doc.save('bill.pdf');
+  };
+
   if (!isClient) {
     return null;
   }
@@ -82,6 +157,10 @@ export default function BillPage() {
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Bill Details</h1>
+          <Button onClick={handleExportPdf}>
+            <Download className="mr-2" />
+            Export PDF
+          </Button>
         </header>
 
         <div className="p-8 border rounded-lg" id="bill-content">
@@ -180,3 +259,5 @@ export default function BillPage() {
     </div>
   );
 }
+
+    
