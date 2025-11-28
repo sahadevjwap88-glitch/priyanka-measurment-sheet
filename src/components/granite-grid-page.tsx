@@ -206,7 +206,7 @@ export default function GraniteGridPage() {
                     </Button>
                     <Link href="/bill" passHref>
                       <Button asChild variant="outline" size="sm">
-                          <a><Eye className="mr-2" />View Bill</a>
+                          <div><Eye className="mr-2" />View Bill</div>
                       </Button>
                     </Link>
                 </div>
