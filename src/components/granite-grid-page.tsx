@@ -7,12 +7,13 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Plus, Ruler } from 'lucide-react';
+import { Download, Plus, Ruler, Eye } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 const formSchema = z.object({
   partyName: z.string().optional(),
@@ -30,7 +31,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
-const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
+export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
 export default function GraniteGridPage() {
   const { toast } = useToast();
@@ -48,7 +49,7 @@ export default function GraniteGridPage() {
     mode: 'onBlur',
   });
   
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
@@ -200,6 +201,14 @@ export default function GraniteGridPage() {
                         <Download className="mr-2" />
                         Export PDF
                     </Button>
+                    <Link href="/bill" passHref>
+                      <Button variant="outline" size="sm" asChild>
+                        <a>
+                          <Eye className="mr-2" />
+                          View Bill
+                        </a>
+                      </Button>
+                    </Link>
                 </div>
             </div>
 
@@ -236,6 +245,7 @@ export default function GraniteGridPage() {
                 register={form.register}
                 errors={form.formState.errors}
                 control={form.control}
+                remove={remove}
             />
             <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
                 <div className="flex items-center gap-2">

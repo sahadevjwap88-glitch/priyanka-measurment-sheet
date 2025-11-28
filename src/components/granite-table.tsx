@@ -1,21 +1,24 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Control, UseFieldArrayRemove } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
+import { Button } from './ui/button';
+import { Trash2 } from 'lucide-react';
 
 interface GraniteTableProps {
   fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
   register: UseFormRegister<{ measurements: MeasurementRow[] }>;
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
   control: Control<{ measurements: MeasurementRow[] }>;
+  remove: UseFieldArrayRemove;
 }
 
-export function GraniteTable({ fields, register, errors, control }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors, control, remove }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
@@ -36,6 +39,7 @@ export function GraniteTable({ fields, register, errors, control }: GraniteTable
             <TableHead>Length (in)</TableHead>
             <TableHead>Width (in)</TableHead>
             <TableHead>Area (sq ft)</TableHead>
+            <TableHead className="w-[100px] text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,6 +80,16 @@ export function GraniteTable({ fields, register, errors, control }: GraniteTable
                   className="w-full bg-muted/50 border-none"
                   tabIndex={-1}
                 />
+              </TableCell>
+              <TableCell className="text-right">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(index)}
+                    className="text-destructive hover:text-destructive"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
