@@ -18,7 +18,8 @@ import Link from 'next/link';
 const formSchema = z.object({
   partyName: z.string().optional(),
   partyPhoneNumber: z.string().optional(),
-  color: z.string().min(1, 'Color name is required.'),
+  color: z.string().optional(),
+  rate: z.string().optional(),
   measurements: z.array(
     z.object({
       length: z.string(),
@@ -44,6 +45,7 @@ export default function GraniteGridPage() {
       partyName: '',
       partyPhoneNumber: '',
       color: '',
+      rate: '',
       measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     },
     mode: 'onBlur',
@@ -115,16 +117,6 @@ export default function GraniteGridPage() {
       });
       return;
     }
-
-    if (!watchedData.color) {
-        toast({
-            title: 'Color Name Required',
-            description: 'Please enter a color name before exporting.',
-            variant: 'destructive'
-        });
-        form.setFocus('color');
-        return;
-    }
     
     const doc = new jsPDF();
     
@@ -149,18 +141,25 @@ export default function GraniteGridPage() {
     const partyName = watchedData.partyName || 'N/A';
     const partyPhone = watchedData.partyPhoneNumber || 'N/A';
     const color = watchedData.color || 'N/A';
+    const rate = parseFloat(watchedData.rate || '0');
+    const totalAmount = totalArea * rate;
 
     doc.text("Priyanka Granite Sheet", 14, 15);
     doc.setFontSize(10);
     doc.text(`Party Name: ${partyName}`, 14, 22);
     doc.text(`Party Phone: ${partyPhone}`, 14, 27);
     doc.text(`Color: ${color}`, 14, 32);
-
+    doc.text(`Rate: ${rate.toFixed(2)}`, 14, 37);
 
     (doc as any).autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 40,
+      startY: 45,
+      didDrawPage: function (data: any) {
+        doc.setFontSize(12);
+        const finalY = (doc as any).lastAutoTable.finalY;
+        doc.text(`Total Amount: ${totalAmount.toFixed(2)}`, 14, finalY + 10);
+      }
     });
     
     doc.save('priyanka_granite_sheet.pdf');
@@ -211,7 +210,7 @@ export default function GraniteGridPage() {
             </div>
 
             <Card className="mb-6">
-              <CardContent className="p-4 grid md:grid-cols-3 gap-4">
+              <CardContent className="p-4 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="partyName">Party Name</Label>
                     <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
@@ -223,6 +222,10 @@ export default function GraniteGridPage() {
                 <div className="space-y-2">
                     <Label htmlFor="color">Color Name</Label>
                     <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="rate">Rate (per sq ft)</Label>
+                    <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
                 </div>
               </CardContent>
             </Card>

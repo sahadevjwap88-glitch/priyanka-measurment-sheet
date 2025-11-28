@@ -16,6 +16,7 @@ interface StoredData {
   partyName?: string;
   partyPhoneNumber?: string;
   color?: string;
+  rate?: string;
   measurements?: Measurement[];
 }
 
@@ -45,17 +46,19 @@ export default function BillPage() {
   };
 
   const calculateTotalSquareFeet = () => {
-    if (!isClient) return '0.00';
+    if (!isClient) return 0;
     const validData = getValidData();
     if (validData.length === 0) {
-      return '0.00';
+      return 0;
     }
     const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
-    return (totalAreaInches / 144).toFixed(2);
+    return totalAreaInches / 144;
   };
   
   const validRows = getValidData();
   const totalArea = calculateTotalSquareFeet();
+  const rate = data?.rate ? parseFloat(data.rate) : 0;
+  const totalAmount = totalArea * rate;
 
   const handlePrint = () => {
     window.print();
@@ -95,7 +98,7 @@ export default function BillPage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="font-medium text-muted-foreground">Party Name</p>
                   <p>{data?.partyName || 'N/A'}</p>
@@ -107,6 +110,10 @@ export default function BillPage() {
                 <div>
                   <p className="font-medium text-muted-foreground">Color</p>
                   <p>{data?.color || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Rate</p>
+                  <p>{rate.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -135,11 +142,28 @@ export default function BillPage() {
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={3}>Total</TableCell>
-                    <TableCell className="text-right">{totalArea}</TableCell>
+                    <TableCell colSpan={3}>Total Square Feet</TableCell>
+                    <TableCell className="text-right">{totalArea.toFixed(2)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <div className="w-full max-w-xs space-y-2">
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Sq. Ft.</span>
+                    <span>{totalArea.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Rate</span>
+                    <span>{rate.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Total Amount</span>
+                    <span>{totalAmount.toFixed(2)}</span>
+                </div>
+            </div>
           </div>
           
           <div className="mt-8 text-center text-xs text-muted-foreground">
