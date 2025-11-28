@@ -7,10 +7,8 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Plus, Ruler, Eye } from 'lucide-react';
+import { Plus, Ruler, Eye } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
@@ -110,65 +108,6 @@ export default function GraniteGridPage() {
       .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
   };
   
-  const handleExport = () => {
-    const validRows = getValidData();
-
-    if (validRows.length === 0) {
-      toast({
-        title: 'No Data to Export',
-        description: 'Please enter some measurements before exporting.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    const doc = new jsPDF();
-    
-    const tableColumn = ["Row", "Length (in)", "Width (in)", "Area (sq ft)"];
-    const tableRows: (string|number)[][] = [];
-
-    validRows.forEach((row, index) => {
-        const area = (row.length * row.width) / 144;
-        const rowData = [
-            index + 1,
-            row.length,
-            row.width,
-            area.toFixed(2)
-        ];
-        tableRows.push(rowData);
-    });
-
-    const totalArea = parseFloat(calculateTotalSquareFeet());
-    const finalRow = ["Total", "", "", totalArea.toFixed(2)];
-    tableRows.push(finalRow);
-
-    const partyName = watchedData.partyName || 'N/A';
-    const partyPhone = watchedData.partyPhoneNumber || 'N/A';
-    const color = watchedData.color || 'N/A';
-    const rate = parseFloat(watchedData.rate || '0');
-    const totalAmount = totalArea * rate;
-
-    doc.text("Priyanka Granite Sheet", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Party Name: ${partyName}`, 14, 22);
-    doc.text(`Party Phone: ${partyPhone}`, 14, 27);
-    doc.text(`Color: ${color}`, 14, 32);
-    doc.text(`Rate: ${rate.toFixed(2)}`, 14, 37);
-
-    (doc as any).autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 45,
-      didDrawPage: function (data: any) {
-        doc.setFontSize(12);
-        const finalY = (doc as any).lastAutoTable.finalY;
-        doc.text(`Total Amount: ${totalAmount.toFixed(2)}`, 14, finalY + 10);
-      }
-    });
-    
-    doc.save('priyanka_granite_sheet.pdf');
-  };
-
   const calculateTotalSquareFeet = () => {
     if (!isClient) return '0.00';
     const validData = getValidData();
@@ -200,13 +139,9 @@ export default function GraniteGridPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap">
-                    <Button variant="outline" size="sm" onClick={handleExport}>
-                        <Download className="mr-2" />
-                        Export
-                    </Button>
                     <Link href="/bill" passHref>
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />View Bill
+                      <Button asChild variant="outline" size="sm">
+                          <a><Eye className="mr-2" />View Bill</a>
                       </Button>
                     </Link>
                 </div>
