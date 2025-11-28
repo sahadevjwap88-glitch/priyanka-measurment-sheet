@@ -139,7 +139,7 @@ export default function GraniteGridPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap">
-                    <Link href="/bill" passHref>
+                    <Link href="/bill" passHref legacyBehavior>
                       <Button asChild variant="outline" size="sm">
                           <a><Eye className="mr-2" />View Bill</a>
                       </Button>
