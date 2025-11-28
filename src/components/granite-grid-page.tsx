@@ -20,6 +20,7 @@ const formSchema = z.object({
   partyPhoneNumber: z.string().optional(),
   color: z.string().optional(),
   rate: z.string().optional(),
+  labourCharges: z.string().optional(),
   transportCharges: z.string().optional(),
   measurements: z.array(
     z.object({
@@ -47,6 +48,7 @@ export default function GraniteGridPage() {
       partyPhoneNumber: '',
       color: '',
       rate: '',
+      labourCharges: '',
       transportCharges: '',
       measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     },
@@ -203,9 +205,8 @@ export default function GraniteGridPage() {
                         Export PDF
                     </Button>
                     <Link href="/bill" passHref>
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />
-                          View Bill
+                      <Button asChild variant="outline" size="sm">
+                          <a><Eye className="mr-2" />View Bill</a>
                       </Button>
                     </Link>
                 </div>
@@ -228,6 +229,10 @@ export default function GraniteGridPage() {
                 <div className="space-y-2">
                     <Label htmlFor="rate">Rate (per sq ft)</Label>
                     <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="labourCharges">Labour Charges</Label>
+                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="transportCharges">Transport Charges</Label>
