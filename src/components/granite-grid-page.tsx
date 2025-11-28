@@ -203,11 +203,9 @@ export default function GraniteGridPage() {
                         Export PDF
                     </Button>
                     <Link href="/bill" passHref>
-                      <Button asChild variant="outline" size="sm">
-                          <span>
-                            <Eye className="mr-2" />
-                            View Bill
-                          </span>
+                      <Button variant="outline" size="sm">
+                          <Eye className="mr-2" />
+                          View Bill
                       </Button>
                     </Link>
                 </div>
@@ -255,6 +253,7 @@ export default function GraniteGridPage() {
                 errors={form.formState.errors}
                 control={form.control}
                 remove={remove}
+                setValue={form.setValue}
             />
             <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
                 <div className="flex items-center gap-2">
