@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Ruler, Eye } from 'lucide-react';
+import { Plus, Ruler, Eye, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,6 +34,16 @@ const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
+const defaultValues = { 
+  partyName: '',
+  partyPhoneNumber: '',
+  color: '',
+  rate: '',
+  labourCharges: '',
+  transportCharges: '',
+  measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
+};
+
 export default function GraniteGridPage() {
   const { toast } = useToast();
   const [rowsToAdd, setRowsToAdd] = useState(1);
@@ -41,19 +51,11 @@ export default function GraniteGridPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { 
-      partyName: '',
-      partyPhoneNumber: '',
-      color: '',
-      rate: '',
-      labourCharges: '',
-      transportCharges: '',
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
-    },
+    defaultValues,
     mode: 'onBlur',
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'measurements',
   });
@@ -98,6 +100,18 @@ export default function GraniteGridPage() {
     const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
     append(newRows);
   };
+
+  const handleClearAll = () => {
+    if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+      form.reset(defaultValues);
+      replace(Array(INITIAL_ROWS).fill({ length: '', width: '' }));
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      toast({
+        title: 'Data Cleared',
+        description: 'All measurements and details have been reset.',
+      });
+    }
+  };
   
   const getValidData = () => {
     return watchedData.measurements
@@ -139,11 +153,15 @@ export default function GraniteGridPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap">
-                    <Link href="/bill" passHref>
-                      <Button asChild variant="outline" size="sm">
-                          <span><Eye className="mr-2" />View Bill</span>
+                    <Link href="/bill">
+                      <Button variant="outline" size="sm">
+                          <Eye className="mr-2" />View Bill
                       </Button>
                     </Link>
+                    <Button variant="destructive" size="sm" onClick={handleClearAll}>
+                        <Trash2 className="mr-2" />
+                        Clear All
+                    </Button>
                 </div>
             </div>
 
