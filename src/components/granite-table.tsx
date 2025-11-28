@@ -7,8 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
-import { Button } from './ui/button';
-import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 interface GraniteTableProps {
@@ -58,8 +56,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
             <TableHead className="w-[80px] px-2">Row</TableHead>
             <TableHead className="px-2">Length (in)</TableHead>
             <TableHead className="px-2 w-[150px]">Width (in)</TableHead>
-            <TableHead className="px-2 w-[200px]">Area (sq ft)</TableHead>
-            <TableHead className="w-[100px] text-right px-2">Action</TableHead>
+            <TableHead className="px-2 w-[250px]">Area (sq ft)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,16 +104,6 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   className="w-full bg-muted/50 border-none text-sm"
                   tabIndex={-1}
                 />
-              </TableCell>
-              <TableCell className="text-right px-2 py-1">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    className="text-destructive hover:text-destructive h-8 w-8"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
               </TableCell>
             </TableRow>
           ))}

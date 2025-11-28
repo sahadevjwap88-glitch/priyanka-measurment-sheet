@@ -205,8 +205,8 @@ export default function GraniteGridPage() {
                         Export PDF
                     </Button>
                     <Link href="/bill" passHref>
-                      <Button asChild variant="outline" size="sm">
-                          <div><Eye className="mr-2" />View Bill</div>
+                      <Button variant="outline" size="sm">
+                          <Eye className="mr-2" />View Bill
                       </Button>
                     </Link>
                 </div>
