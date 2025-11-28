@@ -58,7 +58,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
             <TableHead className="w-[80px] px-2">Row</TableHead>
             <TableHead className="px-2">Length (in)</TableHead>
             <TableHead className="px-2 w-[150px]">Width (in)</TableHead>
-            <TableHead className="px-2 w-[150px]">Area (sq ft)</TableHead>
+            <TableHead className="px-2 w-[180px]">Area (sq ft)</TableHead>
             <TableHead className="w-[100px] text-right px-2">Action</TableHead>
           </TableRow>
         </TableHeader>
