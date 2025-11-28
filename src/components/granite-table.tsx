@@ -55,11 +55,11 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px] px-1">Row</TableHead>
-            <TableHead className="px-1">Length (in)</TableHead>
-            <TableHead className="px-1">Width (in)</TableHead>
-            <TableHead className="px-1">Area (sq ft)</TableHead>
-            <TableHead className="w-[100px] text-right px-1">Action</TableHead>
+            <TableHead className="w-[80px] px-2">Row</TableHead>
+            <TableHead className="px-2">Length (in)</TableHead>
+            <TableHead className="px-2 w-[150px]">Width (in)</TableHead>
+            <TableHead className="px-2 w-[150px]">Area (sq ft)</TableHead>
+            <TableHead className="w-[100px] text-right px-2">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -72,8 +72,8 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
               onDrop={(e) => handleDrop(e, index)}
               onDragOver={handleDragOver}
             >
-              <TableCell className="font-medium px-1">{index + 1}</TableCell>
-              <TableCell className="px-1">
+              <TableCell className="font-medium px-2">{index + 1}</TableCell>
+              <TableCell className="px-2">
                 <Input
                   type="number"
                   placeholder="e.g., 48.5"
@@ -86,7 +86,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   )}
                 />
               </TableCell>
-              <TableCell className="px-1">
+              <TableCell className="px-2">
                 <Input
                   type="number"
                   placeholder="e.g., 30.2"
@@ -99,7 +99,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   )}
                 />
               </TableCell>
-              <TableCell className="px-1">
+              <TableCell className="px-2">
                 <Input
                   type="text"
                   readOnly
@@ -108,7 +108,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   tabIndex={-1}
                 />
               </TableCell>
-              <TableCell className="text-right px-1">
+              <TableCell className="text-right px-2">
                 <Button
                     variant="ghost"
                     size="icon"
