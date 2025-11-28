@@ -55,11 +55,11 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[80px]">Row</TableHead>
-            <TableHead>Length (in)</TableHead>
-            <TableHead>Width (in)</TableHead>
-            <TableHead>Area (sq ft)</TableHead>
-            <TableHead className="w-[100px] text-right">Action</TableHead>
+            <TableHead className="w-[80px] px-1">Row</TableHead>
+            <TableHead className="px-1">Length (in)</TableHead>
+            <TableHead className="px-1">Width (in)</TableHead>
+            <TableHead className="px-1">Area (sq ft)</TableHead>
+            <TableHead className="w-[100px] text-right px-1">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -72,8 +72,8 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
               onDrop={(e) => handleDrop(e, index)}
               onDragOver={handleDragOver}
             >
-              <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium px-1">{index + 1}</TableCell>
+              <TableCell className="px-1">
                 <Input
                   type="number"
                   placeholder="e.g., 48.5"
@@ -81,12 +81,12 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   min="0"
                   {...register(`measurements.${index}.length`)}
                   className={cn(
-                    'w-full text-base',
+                    'w-full text-sm',
                     errors.measurements?.[index]?.length && 'border-destructive'
                   )}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className="px-1">
                 <Input
                   type="number"
                   placeholder="e.g., 30.2"
@@ -94,21 +94,21 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
                   min="0"
                   {...register(`measurements.${index}.width`)}
                   className={cn(
-                    'w-full text-base',
+                    'w-full text-sm',
                     errors.measurements?.[index]?.width && 'border-destructive'
                   )}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className="px-1">
                 <Input
                   type="text"
                   readOnly
                   value={calculateSquareFeet(measurements?.[index]?.length, measurements?.[index]?.width)}
-                  className="w-full bg-muted/50 border-none text-base"
+                  className="w-full bg-muted/50 border-none text-sm"
                   tabIndex={-1}
                 />
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right px-1">
                 <Button
                     variant="ghost"
                     size="icon"
