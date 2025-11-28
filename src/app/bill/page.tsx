@@ -64,7 +64,7 @@ export default function BillPage() {
   const totalArea = calculateTotalSquareFeet();
   const rate = data?.rate ? parseFloat(data.rate) : 0;
   const totalAmount = totalArea * rate;
-  const labourCharges = data?.labourCharges ? parseFloat(data.labourCharges) : 0;
+  const labourCharges = Math.max(200, totalArea * 3);
   const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
   const grandTotal = totalAmount + labourCharges + transportCharges;
 
