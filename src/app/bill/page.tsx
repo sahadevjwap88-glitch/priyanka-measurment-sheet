@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
-import { Printer } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Measurement {
   length: string;
@@ -66,8 +68,83 @@ export default function BillPage() {
   const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
   const grandTotal = totalAmount + labourCharges + transportCharges;
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportPdf = () => {
+    if (!data) return;
+
+    const doc = new jsPDF();
+    const tableColumn = ["Row", "Length (in)", "Width (in)", "Area (sq ft)"];
+    const tableRows: (string | number)[][] = [];
+
+    validRows.forEach((row, index) => {
+        const area = (row.length * row.width) / 144;
+        const rowData = [
+            index + 1,
+            row.length.toFixed(2),
+            row.width.toFixed(2),
+            area.toFixed(2)
+        ];
+        tableRows.push(rowData);
+    });
+    
+    doc.setFontSize(18);
+    doc.text("Priyanka Granite", 14, 22);
+    doc.setFontSize(11);
+    doc.text("Granite Measurement Sheet", 14, 28);
+    
+    doc.setFontSize(10);
+    doc.text(`Party Name: ${data.partyName || 'N/A'}`, 14, 38);
+    doc.text(`Party Phone: ${data.partyPhoneNumber || 'N/A'}`, 14, 43);
+    doc.text(`Color: ${data.color || 'N/A'}`, 14, 48);
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 55,
+      theme: 'grid',
+      foot: [
+          [{ content: 'Total Square Feet', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold' } }, { content: totalArea.toFixed(2), styles: { halign: 'right', fontStyle: 'bold' } }]
+      ],
+      footStyles: { fillColor: [230, 230, 230] }
+    });
+    
+    let finalY = (doc as any).lastAutoTable.finalY;
+
+    const summaryData = [
+        ['Total Sq. Ft.', totalArea.toFixed(2)],
+        ['Rate', rate.toFixed(2)],
+        ['Total Amount', totalAmount.toFixed(2)],
+        ['Labour Charges', labourCharges.toFixed(2)],
+        ['Transport Charges', transportCharges.toFixed(2)],
+        ['Grand Total', grandTotal.toFixed(2)],
+    ];
+
+    (doc as any).autoTable({
+        body: summaryData,
+        startY: finalY + 10,
+        theme: 'plain',
+        tableWidth: 'wrap',
+        margin: { left: doc.internal.pageSize.getWidth() - 80 },
+        styles: {
+            cellPadding: 1.5,
+            fontSize: 10,
+        },
+        columnStyles: {
+            0: { fontStyle: 'bold', halign: 'left' },
+            1: { halign: 'right' }
+        },
+        didParseCell: function (data: any) {
+            if (data.row.raw[0] === 'Grand Total') {
+                data.cell.styles.fontStyle = 'bold';
+                data.row.cells[1].styles.fontStyle = 'bold';
+            }
+        }
+    });
+
+    finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(10);
+    doc.text("Thank you for your business!", 14, finalY + 15);
+
+    doc.save(`bill_${data.partyName || 'details'}.pdf`);
   };
   
   if (!isClient) {
@@ -85,11 +162,11 @@ export default function BillPage() {
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
-        <header className="flex justify-between items-center mb-8 print:hidden">
+        <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Bill Details</h1>
-          <Button onClick={handlePrint} variant="outline">
-            <Printer className="mr-2 h-4 w-4" />
-            Print Bill
+          <Button onClick={handleExportPdf} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
         </header>
 
@@ -186,17 +263,8 @@ export default function BillPage() {
           </div>
         </div>
       </div>
-      <style jsx global>{`
-        @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .print\\:hidden {
-            display: none;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+
+    
