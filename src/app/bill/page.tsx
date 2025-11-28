@@ -166,7 +166,7 @@ export default function BillPage() {
           <h1 className="text-3xl font-bold">Bill Details</h1>
           <Button onClick={handleExportPdf} variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Export PDF
+            Export
           </Button>
         </header>
 

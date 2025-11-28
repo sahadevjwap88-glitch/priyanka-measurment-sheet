@@ -202,11 +202,11 @@ export default function GraniteGridPage() {
                 <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2" />
-                        Export PDF
+                        Export
                     </Button>
                     <Link href="/bill" passHref>
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />View Bill
+                      <Button asChild variant="outline" size="sm">
+                          <a><Eye className="mr-2" />View Bill</a>
                       </Button>
                     </Link>
                 </div>
