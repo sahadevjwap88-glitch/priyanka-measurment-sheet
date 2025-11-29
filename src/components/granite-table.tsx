@@ -111,6 +111,16 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
     // Reset source index after any touch end
     setTouchSourceIndex(null);
   };
+  
+  const handleRowNumberDoubleClick = (index: number) => {
+    if (index > 0 && measurements) {
+      const rowAbove = measurements[index - 1];
+      if (rowAbove && rowAbove.length && rowAbove.width) {
+        setValue(`measurements.${index}.length`, rowAbove.length, { shouldDirty: true });
+        setValue(`measurements.${index}.width`, rowAbove.width, { shouldDirty: true });
+      }
+    }
+  };
 
   return (
     <div className="rounded-md border">
@@ -145,7 +155,12 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                 setTouchSourceIndex(null);
               }}
             >
-              <TableCell className="font-medium px-2 py-1">{index + 1}</TableCell>
+              <TableCell 
+                className="font-medium px-2 py-1 select-none"
+                onDoubleClick={() => handleRowNumberDoubleClick(index)}
+              >
+                {index + 1}
+              </TableCell>
               <TableCell className="px-2 py-1">
                 <Input
                   type="number"
