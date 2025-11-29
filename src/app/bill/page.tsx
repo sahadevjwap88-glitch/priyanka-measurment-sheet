@@ -208,7 +208,6 @@ export default function BillPage() {
 
         <div className="p-8 border rounded-lg" id="bill-content">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">Priyanka Granite</h1>
             <p className="text-muted-foreground">Granite Measurement Sheet</p>
           </div>
           
