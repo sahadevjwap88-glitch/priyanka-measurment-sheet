@@ -126,6 +126,8 @@ export default function BillPage() {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `bill_${timestamp}.pdf`;
 
 
     // Title
@@ -172,7 +174,7 @@ export default function BillPage() {
         styles: { fontSize: 10 },
     });
 
-    doc.save('bill.pdf');
+    doc.save(filename);
   };
 
   if (!isClient) {

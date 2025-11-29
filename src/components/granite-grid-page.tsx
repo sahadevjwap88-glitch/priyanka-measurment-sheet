@@ -147,6 +147,8 @@ export default function GraniteGridPage() {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `measurement-sheet_${timestamp}.pdf`;
     
     const tableData = fields.map((field, index) => {
       const length = form.getValues(`measurements.${index}.length`);
@@ -170,7 +172,7 @@ export default function GraniteGridPage() {
     doc.setFontSize(12);
     doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 10);
     
-    doc.save('measurement-sheet.pdf');
+    doc.save(filename);
   };
 
   if (!isClient) {
