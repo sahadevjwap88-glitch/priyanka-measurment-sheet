@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 
 interface GraniteTableProps {
   fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
@@ -21,7 +21,6 @@ interface GraniteTableProps {
 export function GraniteTable({ fields, register, errors, control, setValue }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
   const [touchSourceIndex, setTouchSourceIndex] = useState<number | null>(null);
-  const lastTouchedRowIndex = useRef<number | null>(null);
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
     const length = parseFloat(lengthStr);
@@ -32,7 +31,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
     return '0.00';
   };
   
-  const applyCopy = (sourceIndex: number, targetIndex: number) => {
+  const applyCopyToRange = (sourceIndex: number, targetIndex: number) => {
      if (sourceIndex >= 0 && sourceIndex < (measurements?.length || 0)) {
         const sourceData = measurements[sourceIndex];
 
@@ -60,7 +59,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
     const sourceIndexStr = e.dataTransfer.getData('sourceIndex');
     if (!sourceIndexStr) return;
     const sourceIndex = parseInt(sourceIndexStr, 10);
-    applyCopy(sourceIndex, targetIndex);
+    applyCopyToRange(sourceIndex, targetIndex);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
@@ -68,34 +67,31 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
   };
   
   // Mobile Touch Events
-  const handleTouchStart = (e: React.TouchEvent<HTMLTableRowElement>, index: number) => {
+  const handleTouchStart = (index: number) => {
     setTouchSourceIndex(index);
-    lastTouchedRowIndex.current = index;
   };
-  
-  const handleTouchMove = (e: React.TouchEvent<HTMLTableSectionElement>) => {
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLTableRowElement>) => {
     if (touchSourceIndex === null) return;
     
-    const touch = e.touches[0];
+    // Find the element where the touch ended
+    const touch = e.changedTouches[0];
     const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
     const targetRow = targetElement?.closest('tr');
 
     if (targetRow && targetRow.dataset.index) {
-       // Prevent scrolling while dragging to copy
-      if (e.cancelable) {
-        e.preventDefault();
-      }
       const targetIndex = parseInt(targetRow.dataset.index, 10);
-      if (!isNaN(targetIndex) && targetIndex !== lastTouchedRowIndex.current) {
-        applyCopy(touchSourceIndex, targetIndex);
-        lastTouchedRowIndex.current = targetIndex;
+      if (!isNaN(targetIndex) && targetIndex !== touchSourceIndex) {
+        const sourceData = measurements?.[touchSourceIndex];
+        if (sourceData && sourceData.length && sourceData.width) {
+          setValue(`measurements.${targetIndex}.length`, sourceData.length, { shouldDirty: true });
+          setValue(`measurements.${targetIndex}.width`, sourceData.width, { shouldDirty: true });
+        }
       }
     }
-  };
-
-  const handleTouchEnd = () => {
+    
+    // Reset source index
     setTouchSourceIndex(null);
-    lastTouchedRowIndex.current = null;
   };
 
   return (
@@ -109,21 +105,23 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
             <TableHead className="w-[30%] px-2">Area (sq ft)</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-        >
+        <TableBody>
           {fields.map((field, index) => (
             <TableRow 
               key={field.id} 
               data-index={index}
-              className={cn(index % 2 === 0 ? 'bg-muted/20' : '', 'cursor-grab')}
+              className={cn(
+                'cursor-grab',
+                index % 2 === 0 ? 'bg-muted/20' : '',
+                touchSourceIndex === index ? 'bg-accent' : ''
+              )}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDrop={(e) => handleDrop(e, index)}
               onDragOver={handleDragOver}
-              onTouchStart={(e) => handleTouchStart(e, index)}
+              onTouchStart={() => handleTouchStart(index)}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={() => setTouchSourceIndex(null)}
             >
               <TableCell className="font-medium px-2 py-1">{index + 1}</TableCell>
               <TableCell className="px-2 py-1">
