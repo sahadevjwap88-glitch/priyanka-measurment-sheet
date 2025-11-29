@@ -193,36 +193,6 @@ export default function BillPage() {
             </CardContent>
           </Card>
 
-          <h2 className="text-2xl font-semibold mb-4">Measurements</h2>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Row</TableHead>
-                  <TableHead>Length (in)</TableHead>
-                  <TableHead>Width (in)</TableHead>
-                  <TableHead className="text-right">Area (sq ft)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {validRows.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell>{row.length}</TableCell>
-                    <TableCell>{row.width}</TableCell>
-                    <TableCell className="text-right">
-                      {((row.length * row.width) / 144).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={3}>Total Square Feet</TableCell>
-                    <TableCell className="text-right">{totalArea.toFixed(2)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-
           <div className="mt-8 flex justify-end">
             <div className="w-full max-w-sm space-y-2">
                 <div className="flex justify-between text-sm">
