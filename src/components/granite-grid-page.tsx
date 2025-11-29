@@ -208,9 +208,6 @@ export default function GraniteGridPage() {
           <Ruler className="h-8 w-8 text-primary" />
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite Sheet</h1>
         </div>
-        <p className="text-muted-foreground max-w-2xl">
-          Input granite slab measurements in inches, view statistics, and export your data. You can add up to {MAX_ROWS} rows. Your data is saved automatically.
-        </p>
       </header>
       
       <Card>
@@ -222,9 +219,9 @@ export default function GraniteGridPage() {
                       <Download className="mr-2" />
                       Export Measurement Sheet
                     </Button>
-                    <Link href="/bill">
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />View Bill
+                    <Link href="/bill" passHref legacyBehavior>
+                      <Button asChild variant="outline" size="sm">
+                          <a><Eye className="mr-2" />View Bill</a>
                       </Button>
                     </Link>
                     <Button variant="destructive" size="sm" onClick={handleClearAll}>
