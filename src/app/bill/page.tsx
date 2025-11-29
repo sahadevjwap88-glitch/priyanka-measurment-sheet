@@ -129,8 +129,6 @@ export default function BillPage() {
 
 
     // Title
-    doc.setFontSize(20);
-    doc.text("Priyanka Granite", 105, 20, { align: 'center' });
     doc.setFontSize(12);
     doc.text("Granite Measurement Sheet", 105, 28, { align: 'center' });
 
