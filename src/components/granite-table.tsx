@@ -114,6 +114,12 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
   
   const handleRowNumberDoubleClick = (index: number) => {
     if (index > 0 && measurements) {
+      const currentRow = measurements[index];
+      // Do not copy if the current row already has a value in either field.
+      if (currentRow && (currentRow.length || currentRow.width)) {
+        return;
+      }
+
       const rowAbove = measurements[index - 1];
       if (rowAbove && rowAbove.length && rowAbove.width) {
         setValue(`measurements.${index}.length`, rowAbove.length, { shouldDirty: true });
