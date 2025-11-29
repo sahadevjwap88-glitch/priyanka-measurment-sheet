@@ -166,7 +166,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Ruler className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Priyanka Granite</h1>
         </div>
       </header>
       
