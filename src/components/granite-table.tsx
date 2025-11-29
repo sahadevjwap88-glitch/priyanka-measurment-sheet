@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
@@ -77,7 +78,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                   min="0"
                   {...register(`measurements.${index}.length`)}
                   className={cn(
-                    'w-full text-sm',
+                    'w-full text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
                     errors.measurements?.[index]?.length && 'border-destructive'
                   )}
                 />
@@ -90,7 +91,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                   min="0"
                   {...register(`measurements.${index}.width`)}
                   className={cn(
-                    'w-full text-sm',
+                    'w-full text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
                     errors.measurements?.[index]?.width && 'border-destructive'
                   )}
                 />
@@ -100,7 +101,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                   type="text"
                   readOnly
                   value={calculateSquareFeet(measurements?.[index]?.length, measurements?.[index]?.width)}
-                  className="w-full bg-muted/50 border-none text-sm"
+                  className="w-full bg-transparent border-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                   tabIndex={-1}
                 />
               </TableCell>
