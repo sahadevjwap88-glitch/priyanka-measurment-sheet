@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Ruler, Eye, Download } from 'lucide-react';
+import { Plus, Ruler, Eye, Download, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -126,6 +126,28 @@ export default function GraniteGridPage() {
       form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
     }
   }, [watchedMeasurements, isClient, isLabourChargeManual, form, calculateTotalSquareFeet]);
+  
+  const handleClearAll = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    // Use a fresh copy of defaultValues to avoid issues
+    const newDefaultValues = { 
+      partyName: '',
+      partyPhoneNumber: '',
+      color: '',
+      rate: '',
+      labourCharges: '',
+      transportCharges: '',
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
+    };
+    form.reset(newDefaultValues);
+    // Directly replace the fields with the initial rows structure
+    replace(newDefaultValues.measurements);
+    setIsLabourChargeManual(false);
+    toast({
+      title: 'All Clear',
+      description: 'All fields have been reset.',
+    });
+  };
 
   const handleAddRows = () => {
     const numRowsToAdd = Number(rowsToAdd) || 1;
@@ -191,6 +213,10 @@ export default function GraniteGridPage() {
                     <Button variant="secondary" size="sm" onClick={handleExportMeasurementSheet}>
                       <Download className="mr-2" />
                       Export Sheet
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={handleClearAll}>
+                        <Trash2 className="mr-2" />
+                        All Clear
                     </Button>
                 </div>
             </div>
