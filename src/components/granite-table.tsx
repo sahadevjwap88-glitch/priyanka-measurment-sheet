@@ -72,7 +72,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
               <TableCell className="px-2 py-1">
                 <Input
                   type="number"
-                  placeholder="e.g., 48.5"
+                  placeholder="e.g., 102.5"
                   step="0.1"
                   min="0"
                   {...register(`measurements.${index}.length`)}
@@ -85,7 +85,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
               <TableCell className="px-2 py-1">
                 <Input
                   type="number"
-                  placeholder="e.g., 30.2"
+                  placeholder="e.g., 48.2"
                   step="0.1"
                   min="0"
                   {...register(`measurements.${index}.width`)}
