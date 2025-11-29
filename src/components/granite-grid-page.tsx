@@ -145,7 +145,8 @@ export default function GraniteGridPage() {
 
   const handleExportMeasurementSheet = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const today = new Date().toLocaleDateString();
+    const date = new Date();
+    const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     
     const tableData = fields.map((field, index) => {
       const length = form.getValues(`measurements.${index}.length`);

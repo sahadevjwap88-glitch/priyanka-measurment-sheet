@@ -124,7 +124,9 @@ export default function BillPage() {
 
   const handleExportPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const today = new Date().toLocaleDateString();
+    const date = new Date();
+    const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+
 
     // Title
     doc.setFontSize(20);
