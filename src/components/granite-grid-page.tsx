@@ -155,10 +155,6 @@ export default function GraniteGridPage() {
     // Directly replace the fields with the initial rows structure
     replace(newDefaultValues.measurements);
     setIsLabourChargeManual(false);
-    toast({
-      title: 'All Clear',
-      description: 'All fields have been reset.',
-    });
   };
 
   const handleAddRows = () => {
