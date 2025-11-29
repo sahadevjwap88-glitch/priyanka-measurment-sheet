@@ -1,6 +1,6 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors, Control, UseFieldArrayRemove } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,11 +14,10 @@ interface GraniteTableProps {
   register: UseFormRegister<{ measurements: MeasurementRow[] }>;
   errors: FieldErrors<{ measurements: MeasurementRow[] }>;
   control: Control<{ measurements: MeasurementRow[] }>;
-  remove: UseFieldArrayRemove;
   setValue: (name: any, value: any) => void;
 }
 
-export function GraniteTable({ fields, register, errors, control, remove, setValue }: GraniteTableProps) {
+export function GraniteTable({ fields, register, errors, control, setValue }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
