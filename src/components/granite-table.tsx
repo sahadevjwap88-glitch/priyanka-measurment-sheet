@@ -54,7 +54,7 @@ export function GraniteTable({ fields, register, errors, control, remove, setVal
         <TableHeader>
           <TableRow>
             <TableHead className="w-[80px] px-2">Row</TableHead>
-            <TableHead className="px-2 w-[150px]">Length (in)</TableHead>
+            <TableHead className="px-2 w-[180px]">Length (in)</TableHead>
             <TableHead className="px-2 w-[150px]">Width (in)</TableHead>
             <TableHead className="px-2 w-[250px]">Area (sq ft)</TableHead>
           </TableRow>

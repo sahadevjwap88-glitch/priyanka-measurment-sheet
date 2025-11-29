@@ -7,11 +7,17 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Ruler, Eye, Trash2 } from 'lucide-react';
+import { Plus, Ruler, Eye, Trash2, Download } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
 
 const formSchema = z.object({
   partyName: z.string().optional(),
@@ -131,6 +137,55 @@ export default function GraniteGridPage() {
     const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
     return (totalAreaInches / 144).toFixed(2);
   };
+  
+  const handleExportMeasurementSheet = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const validData = getValidData();
+
+    // Title
+    doc.setFontSize(20);
+    doc.text("Priyanka Granite", 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text("Granite Measurement Sheet", 105, 28, { align: 'center' });
+
+    // Party Details
+    const details = [
+        ['Party Name:', watchedData.partyName || 'N/A'],
+        ['Party Phone:', watchedData.partyPhoneNumber || 'N/A'],
+        ['Color:', watchedData.color || 'N/A'],
+    ];
+    doc.autoTable({
+        body: details,
+        startY: 35,
+        theme: 'plain',
+        styles: { fontSize: 10 },
+        columnStyles: { 0: { fontStyle: 'bold' } },
+    });
+
+    let finalY = (doc as any).lastAutoTable.finalY;
+
+    // Measurements Table
+    const tableData = validData.map((m, index) => [
+        index + 1,
+        m.length.toFixed(2),
+        m.width.toFixed(2),
+        ((m.length * m.width) / 144).toFixed(2)
+    ]);
+    
+    doc.autoTable({
+        head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        body: tableData,
+        startY: finalY + 10,
+        didDrawPage: (data) => {
+            // Footer on each page
+            const str = "Page " + doc.internal.getNumberOfPages();
+            doc.setFontSize(10);
+            doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        }
+    });
+
+    doc.save('measurement-sheet.pdf');
+  };
 
   if (!isClient) {
     return null; 
@@ -153,9 +208,13 @@ export default function GraniteGridPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap">
-                    <Link href="/bill">
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />View Bill
+                    <Button variant="secondary" size="sm" onClick={handleExportMeasurementSheet}>
+                      <Download className="mr-2" />
+                      Export Measurement Sheet
+                    </Button>
+                    <Link href="/bill" passHref>
+                      <Button asChild variant="outline" size="sm">
+                          <a><Eye className="mr-2" />View Bill</a>
                       </Button>
                     </Link>
                     <Button variant="destructive" size="sm" onClick={handleClearAll}>
