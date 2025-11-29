@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface GraniteTableProps {
   fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
@@ -21,6 +21,7 @@ interface GraniteTableProps {
 export function GraniteTable({ fields, register, errors, control, setValue }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
   const [touchSourceIndex, setTouchSourceIndex] = useState<number | null>(null);
+  const lastTouchedRowIndex = useRef<number | null>(null);
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
     const length = parseFloat(lengthStr);
@@ -69,10 +70,14 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
   // Mobile Touch Events
   const handleTouchStart = (e: React.TouchEvent<HTMLTableRowElement>, index: number) => {
     setTouchSourceIndex(index);
+    lastTouchedRowIndex.current = index;
   };
   
-  const handleTouchMove = (e: React.TouchEvent<HTMLTableRowElement>) => {
+  const handleTouchMove = (e: React.TouchEvent<HTMLTableSectionElement>) => {
     if (touchSourceIndex === null) return;
+
+    // Prevent scrolling while dragging to copy
+    e.preventDefault();
     
     const touch = e.touches[0];
     const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -80,14 +85,16 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
 
     if (targetRow && targetRow.dataset.index) {
       const targetIndex = parseInt(targetRow.dataset.index, 10);
-      if (!isNaN(targetIndex)) {
+      if (!isNaN(targetIndex) && targetIndex !== lastTouchedRowIndex.current) {
         applyCopy(touchSourceIndex, targetIndex);
+        lastTouchedRowIndex.current = targetIndex;
       }
     }
   };
 
   const handleTouchEnd = () => {
     setTouchSourceIndex(null);
+    lastTouchedRowIndex.current = null;
   };
 
   return (
@@ -104,6 +111,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
         <TableBody
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         >
           {fields.map((field, index) => (
             <TableRow 
