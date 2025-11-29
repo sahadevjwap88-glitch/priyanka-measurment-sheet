@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { Plus, Ruler, Eye, Download, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
@@ -52,8 +51,6 @@ type FormValues = z.infer<typeof formSchema>;
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
-const LABOUR_RATE = 3;
-const MIN_LABOUR_CHARGE = 200;
 
 const defaultValues = { 
   partyName: '',
@@ -66,10 +63,8 @@ const defaultValues = {
 };
 
 export default function GraniteGridPage() {
-  const { toast } = useToast();
   const [rowsToAdd, setRowsToAdd] = useState(1);
   const [isClient, setIsClient] = useState(false);
-  const [isLabourChargeManual, setIsLabourChargeManual] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -92,9 +87,6 @@ export default function GraniteGridPage() {
         const parsedData = JSON.parse(savedData);
         if (parsedData) {
           form.reset(parsedData);
-          if (parsedData.labourCharges) {
-            setIsLabourChargeManual(true);
-          }
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
@@ -131,13 +123,6 @@ export default function GraniteGridPage() {
     return totalAreaInches / 144;
   }, [isClient, getValidData]);
 
-  useEffect(() => {
-    if (isClient && !isLabourChargeManual) {
-      const totalSqFt = calculateTotalSquareFeet();
-      const calculatedLabour = Math.max(MIN_LABOUR_CHARGE, totalSqFt * LABOUR_RATE);
-      form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
-    }
-  }, [watchedMeasurements, isClient, isLabourChargeManual, form, calculateTotalSquareFeet]);
   
   const handleClearAll = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -154,17 +139,12 @@ export default function GraniteGridPage() {
     form.reset(newDefaultValues);
     // Directly replace the fields with the initial rows structure
     replace(newDefaultValues.measurements);
-    setIsLabourChargeManual(false);
   };
 
   const handleAddRows = () => {
     const numRowsToAdd = Number(rowsToAdd) || 1;
     if (fields.length + numRowsToAdd > MAX_ROWS) {
-      toast({
-        title: 'Row Limit Exceeded',
-        description: `You can only add up to ${MAX_ROWS} rows in total.`,
-        variant: 'destructive',
-      });
+      alert(`You can only add up to ${MAX_ROWS} rows in total.`);
       return;
     }
     const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
@@ -265,7 +245,7 @@ export default function GraniteGridPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="labourCharges">Labour Charges</Label>
-                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} onFocus={() => setIsLabourChargeManual(true)} />
+                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="transportCharges">Transport Charges</Label>
