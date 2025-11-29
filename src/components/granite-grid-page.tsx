@@ -73,8 +73,18 @@ export default function GraniteGridPage() {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData) {
-          form.reset(parsedData);
+        if (parsedData && parsedData.measurements) {
+          // Ensure every measurement has length and width properties
+          const cleanedMeasurements = parsedData.measurements.map((m: any) => ({
+            length: m?.length || '',
+            width: m?.width || '',
+          }));
+          form.reset({ ...parsedData, measurements: cleanedMeasurements });
+        } else if (parsedData) {
+          form.reset({
+            ...parsedData,
+            measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' })
+          })
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
