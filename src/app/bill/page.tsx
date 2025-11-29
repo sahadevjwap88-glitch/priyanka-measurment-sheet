@@ -8,7 +8,8 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download } from 'lucide-react';
+import { Download, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -143,6 +144,12 @@ export default function BillPage() {
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Bill Details</h1>
           <div className="flex gap-2">
+            <Link href="/" passHref>
+              <Button variant="outline">
+                  <ArrowLeft className="mr-2" />
+                  Back
+              </Button>
+            </Link>
             <Button onClick={handleExportPdf}>
                 <Download className="mr-2" />
                 Export PDF
