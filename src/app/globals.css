@@ -60,7 +60,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    zoom: 0.8;
+    zoom: 1.1;
   }
   /* Hide spinner buttons on number inputs */
   input[type='number']::-webkit-outer-spin-button,
