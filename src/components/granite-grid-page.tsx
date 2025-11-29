@@ -32,12 +32,6 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 
 const formSchema = z.object({
-  partyName: z.string().optional(),
-  partyPhoneNumber: z.string().optional(),
-  color: z.string().optional(),
-  rate: z.string().optional(),
-  labourCharges: z.string().optional(),
-  transportCharges: z.string().optional(),
   measurements: z.array(
     z.object({
       length: z.string(),
@@ -53,12 +47,6 @@ const MAX_ROWS = 500;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
 const defaultValues = { 
-  partyName: '',
-  partyPhoneNumber: '',
-  color: '',
-  rate: '',
-  labourCharges: '',
-  transportCharges: '',
   measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
 };
 
@@ -97,7 +85,9 @@ export default function GraniteGridPage() {
   useEffect(() => {
     if (isClient) {
       const subscription = form.watch((value) => {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+        const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+        const newData = { ...currentData, ...value };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
       });
       return () => subscription.unsubscribe();
     }
@@ -126,18 +116,10 @@ export default function GraniteGridPage() {
   
   const handleClearAll = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
-    // Use a fresh copy of defaultValues to avoid issues
     const newDefaultValues = { 
-      partyName: '',
-      partyPhoneNumber: '',
-      color: '',
-      rate: '',
-      labourCharges: '',
-      transportCharges: '',
       measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
     };
     form.reset(newDefaultValues);
-    // Directly replace the fields with the initial rows structure
     replace(newDefaultValues.measurements);
   };
 
@@ -224,35 +206,6 @@ export default function GraniteGridPage() {
                     </AlertDialog>
                 </div>
             </div>
-
-            <Card className="mb-6">
-              <CardContent className="p-4 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                    <Label htmlFor="partyName">Party Name</Label>
-                    <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
-                    <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="color">Color Name</Label>
-                    <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="rate">Rate (per sq ft)</Label>
-                    <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="labourCharges">Labour Charges</Label>
-                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="transportCharges">Transport Charges</Label>
-                    <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
-                </div>
-              </CardContent>
-            </Card>
 
             <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

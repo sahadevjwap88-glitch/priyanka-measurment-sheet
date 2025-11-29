@@ -1,20 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Download, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
-
 
 interface Measurement {
   length: string;
@@ -31,24 +34,70 @@ interface StoredData {
   transportCharges?: string;
 }
 
+const formSchema = z.object({
+  partyName: z.string().optional(),
+  partyPhoneNumber: z.string().optional(),
+  color: z.string().optional(),
+  rate: z.string().optional(),
+  labourCharges: z.string().optional(),
+  transportCharges: z.string().optional(),
+  measurements: z.array(
+    z.object({
+      length: z.string(),
+      width: z.string(),
+    })
+  ).optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+
 export default function BillPage() {
-  const [data, setData] = useState<StoredData | null>(null);
   const [isClient, setIsClient] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      partyName: '',
+      partyPhoneNumber: '',
+      color: '',
+      rate: '',
+      labourCharges: '',
+      transportCharges: '',
+      measurements: [],
+    },
+    mode: 'onBlur',
+  });
+  
+  const watchedData = useWatch({ control: form.control });
 
   useEffect(() => {
     setIsClient(true);
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
       try {
-        setData(JSON.parse(savedData));
+        const parsedData = JSON.parse(savedData);
+        if (parsedData) {
+          form.reset(parsedData);
+        }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
       }
     }
-  }, []);
+  }, [form]);
+  
+  useEffect(() => {
+    if (isClient) {
+      const subscription = form.watch((value) => {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [isClient, form]);
+
 
   const getValidData = () => {
-    return data?.measurements
+    return watchedData.measurements
       ?.map((m) => ({
         length: parseFloat(m.length),
         width: parseFloat(m.width),
@@ -66,12 +115,11 @@ export default function BillPage() {
     return totalAreaInches / 144;
   };
   
-  const validRows = getValidData();
   const totalArea = calculateTotalSquareFeet();
-  const rate = data?.rate ? parseFloat(data.rate) : 0;
+  const rate = watchedData?.rate ? parseFloat(watchedData.rate) : 0;
   const totalAmount = totalArea * rate;
-  const labourCharges = data?.labourCharges ? parseFloat(data.labourCharges) : 0;
-  const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
+  const labourCharges = watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
+  const transportCharges = watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
   const grandTotal = totalAmount + labourCharges + transportCharges;
 
   const handleExportPdf = () => {
@@ -85,9 +133,9 @@ export default function BillPage() {
 
     // Party Details
     const details = [
-        ['Party Name:', data?.partyName || 'N/A'],
-        ['Party Phone:', data?.partyPhoneNumber || 'N/A'],
-        ['Color:', data?.color || 'N/A'],
+        ['Party Name:', watchedData?.partyName || 'N/A'],
+        ['Party Phone:', watchedData?.partyPhoneNumber || 'N/A'],
+        ['Color:', watchedData?.color || 'N/A'],
     ];
     doc.autoTable({
         body: details,
@@ -130,7 +178,7 @@ export default function BillPage() {
     return null;
   }
   
-  if (!data) {
+  if (!watchedData) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>No bill data found. Please enter data on the main page first.</p>
@@ -167,20 +215,30 @@ export default function BillPage() {
             <CardHeader>
               <CardTitle>Details</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="font-medium text-muted-foreground">Party Name</p>
-                  <p>{data?.partyName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Party Phone</p>
-                  <p>{data?.partyPhoneNumber || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Color</p>
-                  <p>{data?.color || 'N/A'}</p>
-                </div>
+            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                  <Label htmlFor="partyName">Party Name</Label>
+                  <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
+                  <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="color">Color Name</Label>
+                  <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="rate">Rate (per sq ft)</Label>
+                  <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="labourCharges">Labour Charges</Label>
+                  <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="transportCharges">Transport Charges</Label>
+                  <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
               </div>
             </CardContent>
           </Card>
