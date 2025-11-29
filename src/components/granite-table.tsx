@@ -80,28 +80,32 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
     }, 500); // 500ms for long press
   };
 
-  const handleTouchMove = () => {
+  const handleTouchMove = (e: React.TouchEvent<HTMLTableRowElement>) => {
     // If finger moves, cancel the long press
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
     }
+
+    if (touchSourceIndex !== null) {
+      e.preventDefault(); // Prevent scrolling while dragging
+      const touch = e.touches[0];
+      const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetRow = targetElement?.closest('tr');
+      if (targetRow && targetRow.dataset.index) {
+        const targetIndex = parseInt(targetRow.dataset.index, 10);
+        if (targetIndex !== touchSourceIndex) {
+          applyCopyToRange(touchSourceIndex, targetIndex);
+        }
+      }
+    }
   };
   
-  const handleTouchEnd = (e: React.TouchEvent<HTMLTableRowElement>, targetIndex: number) => {
+  const handleTouchEnd = () => {
     // Clear any pending long press
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
-    }
-
-    if (touchSourceIndex !== null && touchSourceIndex !== targetIndex) {
-      const sourceData = measurements?.[touchSourceIndex];
-      if (sourceData && sourceData.length && sourceData.width) {
-        setValue(`measurements.${targetIndex}.length`, sourceData.length, { shouldDirty: true });
-        setValue(`measurements.${targetIndex}.width`, sourceData.width, { shouldDirty: true });
-      }
-      e.preventDefault(); // Prevent click events after paste
     }
     
     // Reset source index after any touch end
@@ -135,7 +139,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
               onDragOver={handleDragOver}
               onTouchStart={() => handleTouchStart(index)}
               onTouchMove={handleTouchMove}
-              onTouchEnd={(e) => handleTouchEnd(e, index)}
+              onTouchEnd={handleTouchEnd}
               onTouchCancel={() => {
                 if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
                 setTouchSourceIndex(null);
