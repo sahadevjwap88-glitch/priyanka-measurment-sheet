@@ -184,6 +184,16 @@ export default function GraniteGridPage() {
         }
     });
 
+    finalY = (doc as any).lastAutoTable.finalY;
+
+    // Total Square Feet
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Square Feet:', 14, finalY + 10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(calculateTotalSquareFeet(), 55, finalY + 10);
+
+
     doc.save('measurement-sheet.pdf');
   };
 
@@ -212,14 +222,14 @@ export default function GraniteGridPage() {
                       <Download className="mr-2" />
                       Export Measurement Sheet
                     </Button>
-                    <Link href="/bill" passHref>
-                      <Button asChild variant="outline" size="sm">
-                          <a><Eye className="mr-2" />View Bill</a>
+                    <Link href="/bill">
+                      <Button variant="outline" size="sm">
+                          <Eye className="mr-2" />View Bill
                       </Button>
                     </Link>
                     <Button variant="destructive" size="sm" onClick={handleClearAll}>
                         <Trash2 className="mr-2" />
-                        Clear All
+                        All Clear
                     </Button>
                 </div>
             </div>
