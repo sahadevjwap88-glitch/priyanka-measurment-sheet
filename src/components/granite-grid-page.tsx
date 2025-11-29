@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,6 +39,8 @@ type FormValues = z.infer<typeof formSchema>;
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
+const LABOUR_RATE = 3;
+const MIN_LABOUR_CHARGE = 200;
 
 const defaultValues = { 
   partyName: '',
@@ -54,6 +56,7 @@ export default function GraniteGridPage() {
   const { toast } = useToast();
   const [rowsToAdd, setRowsToAdd] = useState(1);
   const [isClient, setIsClient] = useState(false);
+  const [isLabourChargeManual, setIsLabourChargeManual] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -67,6 +70,7 @@ export default function GraniteGridPage() {
   });
   
   const watchedData = useWatch({ control: form.control });
+  const watchedMeasurements = useWatch({ control: form.control, name: 'measurements' });
 
   useEffect(() => {
     setIsClient(true);
@@ -76,6 +80,9 @@ export default function GraniteGridPage() {
         const parsedData = JSON.parse(savedData);
         if (parsedData) {
           form.reset(parsedData);
+          if (parsedData.labourCharges) {
+            setIsLabourChargeManual(true);
+          }
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
@@ -92,6 +99,33 @@ export default function GraniteGridPage() {
     }
   }, [isClient, form]);
 
+
+  const getValidData = useCallback(() => {
+    return watchedMeasurements
+      ?.map((m) => ({
+        length: parseFloat(m.length),
+        width: parseFloat(m.width),
+      }))
+      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
+  }, [watchedMeasurements]);
+  
+  const calculateTotalSquareFeet = useCallback(() => {
+    if (!isClient) return 0;
+    const validData = getValidData();
+    if (validData.length === 0) {
+      return 0;
+    }
+    const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
+    return totalAreaInches / 144;
+  }, [isClient, getValidData]);
+
+  useEffect(() => {
+    if (isClient && !isLabourChargeManual) {
+      const totalSqFt = calculateTotalSquareFeet();
+      const calculatedLabour = Math.max(MIN_LABOUR_CHARGE, totalSqFt * LABOUR_RATE);
+      form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
+    }
+  }, [watchedMeasurements, isClient, isLabourChargeManual, form, calculateTotalSquareFeet]);
 
   const handleAddRows = () => {
     const numRowsToAdd = Number(rowsToAdd) || 1;
@@ -112,30 +146,12 @@ export default function GraniteGridPage() {
       form.reset(defaultValues);
       replace(Array(INITIAL_ROWS).fill({ length: '', width: '' }));
       localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setIsLabourChargeManual(false);
       toast({
         title: 'Data Cleared',
         description: 'All measurements and details have been reset.',
       });
     }
-  };
-  
-  const getValidData = () => {
-    return watchedData.measurements
-      ?.map((m) => ({
-        length: parseFloat(m.length),
-        width: parseFloat(m.width),
-      }))
-      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
-  };
-  
-  const calculateTotalSquareFeet = () => {
-    if (!isClient) return '0.00';
-    const validData = getValidData();
-    if (validData.length === 0) {
-      return '0.00';
-    }
-    const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
-    return (totalAreaInches / 144).toFixed(2);
   };
   
   const handleExportMeasurementSheet = () => {
@@ -191,7 +207,7 @@ export default function GraniteGridPage() {
     doc.setFont('helvetica', 'bold');
     doc.text('Total Square Feet:', 14, finalY + 10);
     doc.setFont('helvetica', 'normal');
-    doc.text(calculateTotalSquareFeet(), 55, finalY + 10);
+    doc.text(calculateTotalSquareFeet().toFixed(2), 55, finalY + 10);
 
 
     doc.save('measurement-sheet.pdf');
@@ -219,9 +235,9 @@ export default function GraniteGridPage() {
                       <Download className="mr-2" />
                       Export Measurement Sheet
                     </Button>
-                    <Link href="/bill" passHref legacyBehavior>
+                    <Link href="/bill" passHref>
                       <Button asChild variant="outline" size="sm">
-                          <a><Eye className="mr-2" />View Bill</a>
+                          <div><Eye className="mr-2" />View Bill</div>
                       </Button>
                     </Link>
                     <Button variant="destructive" size="sm" onClick={handleClearAll}>
@@ -251,7 +267,7 @@ export default function GraniteGridPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="labourCharges">Labour Charges</Label>
-                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
+                    <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} onFocus={() => setIsLabourChargeManual(true)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="transportCharges">Transport Charges</Label>
@@ -266,7 +282,7 @@ export default function GraniteGridPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {calculateTotalSquareFeet()}
+                  {calculateTotalSquareFeet().toFixed(2)}
                 </div>
               </CardContent>
             </Card>

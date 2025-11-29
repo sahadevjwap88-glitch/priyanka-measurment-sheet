@@ -194,7 +194,7 @@ export default function BillPage() {
                 </div>
                 <Separator />
                 <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Labour Charges</span>
+                    <span className="text-muted-foreground">Labour Charges <span className="text-xs">(₹3/sq ft, min ₹200)</span></span>
                     <span>{labourCharges.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
