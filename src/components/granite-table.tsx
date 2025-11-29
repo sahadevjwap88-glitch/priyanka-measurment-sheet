@@ -75,15 +75,16 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
   
   const handleTouchMove = (e: React.TouchEvent<HTMLTableSectionElement>) => {
     if (touchSourceIndex === null) return;
-
-    // Prevent scrolling while dragging to copy
-    e.preventDefault();
     
     const touch = e.touches[0];
     const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
     const targetRow = targetElement?.closest('tr');
 
     if (targetRow && targetRow.dataset.index) {
+       // Prevent scrolling while dragging to copy
+      if (e.cancelable) {
+        e.preventDefault();
+      }
       const targetIndex = parseInt(targetRow.dataset.index, 10);
       if (!isNaN(targetIndex) && targetIndex !== lastTouchedRowIndex.current) {
         applyCopy(touchSourceIndex, targetIndex);
