@@ -36,10 +36,20 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
 
   const handleDrop = (e: React.DragEvent<HTMLTableRowElement>, targetIndex: number) => {
     const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'), 10);
-    if (sourceIndex !== targetIndex && measurements) {
-      const sourceData = measurements[sourceIndex];
-      setValue(`measurements.${targetIndex}.length`, sourceData.length);
-      setValue(`measurements.${targetIndex}.width`, sourceData.width);
+    if (sourceIndex >= 0 && sourceIndex < (measurements?.length || 0)) {
+        const sourceData = measurements[sourceIndex];
+
+        if (sourceData && sourceData.length && sourceData.width) {
+            const start = Math.min(sourceIndex, targetIndex);
+            const end = Math.max(sourceIndex, targetIndex);
+
+            for (let i = start; i <= end; i++) {
+                if (i !== sourceIndex) {
+                    setValue(`measurements.${i}.length`, sourceData.length, { shouldDirty: true });
+                    setValue(`measurements.${i}.width`, sourceData.width, { shouldDirty: true });
+                }
+            }
+        }
     }
     e.preventDefault();
   };
@@ -53,10 +63,10 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="px-2 w-[20%]">Row</TableHead>
+            <TableHead className="px-2 w-[15%]">Row</TableHead>
             <TableHead className="px-2 w-[25%]">Length (in)</TableHead>
             <TableHead className="px-2 w-[25%]">Width (in)</TableHead>
-            <TableHead className="px-2 w-[30%]">Area (sq ft)</TableHead>
+            <TableHead className="px-2 w-[35%]">Area (sq ft)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
