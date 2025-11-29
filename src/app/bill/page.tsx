@@ -8,7 +8,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, MessageSquare } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -72,41 +72,6 @@ export default function BillPage() {
   const labourCharges = data?.labourCharges ? parseFloat(data.labourCharges) : 0;
   const transportCharges = data?.transportCharges ? parseFloat(data.transportCharges) : 0;
   const grandTotal = totalAmount + labourCharges + transportCharges;
-
-  const handleSendWhatsApp = () => {
-    if (!data?.partyPhoneNumber) {
-        alert("Party phone number is not available.");
-        return;
-    }
-
-    let phoneNumber = data.partyPhoneNumber.replace(/\s+/g, ''); // Remove spaces
-    if (!phoneNumber.startsWith('91') && phoneNumber.length === 10) {
-        phoneNumber = `91${phoneNumber}`; // Assume Indian number if 10 digits
-    }
-
-    const message = `
-*Priyanka Granite*
-*Bill Summary*
-
-Party Name: ${data.partyName || 'N/A'}
-Color: ${data.color || 'N/A'}
--------------------------
-Total Sq. Ft.: ${totalArea.toFixed(2)}
-Rate: ₹${rate.toFixed(2)}
-*Total Amount: ₹${totalAmount.toFixed(2)}*
--------------------------
-Labour Charges: ₹${labourCharges.toFixed(2)}
-Transport Charges: ₹${transportCharges.toFixed(2)}
--------------------------
-*Grand Total: ₹${grandTotal.toFixed(2)}*
-
-Thank you for your business!
-    `;
-    
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message.trim())}`;
-    
-    window.open(whatsappUrl, '_blank');
-  };
 
   const handleExportPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
@@ -193,10 +158,6 @@ Thank you for your business!
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Bill Details</h1>
           <div className="flex gap-2">
-            <Button onClick={handleSendWhatsApp} variant="outline">
-                <MessageSquare className="mr-2" />
-                Send via WhatsApp
-            </Button>
             <Button onClick={handleExportPdf}>
                 <Download className="mr-2" />
                 Export PDF
