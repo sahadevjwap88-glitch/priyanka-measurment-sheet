@@ -124,6 +124,7 @@ export default function BillPage() {
 
   const handleExportPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
+    const today = new Date().toLocaleDateString();
 
     // Title
     doc.setFontSize(20);
@@ -133,16 +134,16 @@ export default function BillPage() {
 
     // Party Details
     const details = [
-        ['Party Name:', watchedData?.partyName || 'N/A'],
-        ['Party Phone:', watchedData?.partyPhoneNumber || 'N/A'],
-        ['Color:', watchedData?.color || 'N/A'],
+        ['Party Name:', watchedData?.partyName || 'N/A', 'Date:', today],
+        ['Party Phone:', watchedData?.partyPhoneNumber || 'N/A', '', ''],
+        ['Color:', watchedData?.color || 'N/A', '', ''],
     ];
     doc.autoTable({
         body: details,
         startY: 35,
         theme: 'plain',
         styles: { fontSize: 10 },
-        columnStyles: { 0: { fontStyle: 'bold' } },
+        columnStyles: { 0: { fontStyle: 'bold' }, 2: { fontStyle: 'bold' } },
         didDrawPage: (data) => {
             // Footer
             const str = "Page " + doc.internal.getNumberOfPages()

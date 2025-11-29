@@ -145,6 +145,8 @@ export default function GraniteGridPage() {
 
   const handleExportMeasurementSheet = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
+    const today = new Date().toLocaleDateString();
+    
     const tableData = fields.map((field, index) => {
       const length = form.getValues(`measurements.${index}.length`);
       const width = form.getValues(`measurements.${index}.width`);
@@ -152,7 +154,10 @@ export default function GraniteGridPage() {
       return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
     }).filter(row => row[1] && row[2]);
 
-    doc.text('Priyanka Granite - Measurement Sheet', 14, 16);
+    doc.text(`Priyanka Granite - Measurement Sheet`, 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 14, 16, { align: 'right' });
+    
     doc.autoTable({
         head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
         body: tableData,
