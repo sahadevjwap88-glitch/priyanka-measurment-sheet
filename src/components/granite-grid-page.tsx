@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Ruler, Eye, Trash2, Download } from 'lucide-react';
+import { Plus, Ruler, Eye, Download } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -141,18 +141,6 @@ export default function GraniteGridPage() {
     append(newRows);
   };
 
-  const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-      form.reset(defaultValues);
-      setIsLabourChargeManual(false);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      toast({
-        title: 'Data Cleared',
-        description: 'All measurements and details have been reset.',
-      });
-    }
-  };
-
   const handleExportMeasurementSheet = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const tableData = fields.map((field, index) => {
@@ -203,10 +191,6 @@ export default function GraniteGridPage() {
                     <Button variant="secondary" size="sm" onClick={handleExportMeasurementSheet}>
                       <Download className="mr-2" />
                       Export Sheet
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={handleClearAll}>
-                        <Trash2 className="mr-2" />
-                        All Clear
                     </Button>
                 </div>
             </div>
