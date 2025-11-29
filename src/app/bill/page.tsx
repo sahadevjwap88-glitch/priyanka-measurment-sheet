@@ -94,27 +94,12 @@ export default function BillPage() {
         theme: 'plain',
         styles: { fontSize: 10 },
         columnStyles: { 0: { fontStyle: 'bold' } },
-    });
-
-    // Measurements Table
-    const tableData = validRows.map((row, index) => [
-        index + 1,
-        row.length,
-        row.width,
-        ((row.length * row.width) / 144).toFixed(2),
-    ]);
-
-    doc.autoTable({
-      head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
-      body: tableData,
-      startY: (doc as any).lastAutoTable.finalY + 10,
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      didDrawPage: (data) => {
-        // Footer
-        const str = "Page " + doc.internal.getNumberOfPages()
-        doc.setFontSize(10)
-        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
-      }
+        didDrawPage: (data) => {
+            // Footer
+            const str = "Page " + doc.internal.getNumberOfPages()
+            doc.setFontSize(10)
+            doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
+        }
     });
 
     let finalY = (doc as any).lastAutoTable.finalY;
