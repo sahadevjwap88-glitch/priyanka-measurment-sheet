@@ -7,12 +7,18 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Ruler, Eye, Trash2 } from 'lucide-react';
+import { Plus, Ruler, Eye, Trash2, Download } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 const formSchema = z.object({
   partyName: z.string().optional(),
@@ -138,14 +144,37 @@ export default function GraniteGridPage() {
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to clear all data? This cannot be undone.')) {
       form.reset(defaultValues);
-      replace(Array(INITIAL_ROWS).fill({ length: '', width: '' }));
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
       setIsLabourChargeManual(false);
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       toast({
         title: 'Data Cleared',
         description: 'All measurements and details have been reset.',
       });
     }
+  };
+
+  const handleExportMeasurementSheet = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const tableData = fields.map((field, index) => {
+      const length = form.getValues(`measurements.${index}.length`);
+      const width = form.getValues(`measurements.${index}.width`);
+      const area = (parseFloat(length) * parseFloat(width)) / 144;
+      return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
+    }).filter(row => row[1] && row[2]);
+
+    doc.text('Priyanka Granite - Measurement Sheet', 14, 16);
+    doc.autoTable({
+        head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        body: tableData,
+        startY: 24,
+    });
+    
+    let finalY = (doc as any).lastAutoTable.finalY;
+    
+    doc.setFontSize(12);
+    doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 10);
+    
+    doc.save('measurement-sheet.pdf');
   };
 
   if (!isClient) {
@@ -157,7 +186,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <Ruler className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite Sheet</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Priyanka Granite</h1>
         </div>
       </header>
       
@@ -167,10 +196,14 @@ export default function GraniteGridPage() {
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap">
                     <Link href="/bill" passHref>
-                      <Button asChild variant="outline" size="sm">
-                          <a><Eye className="mr-2" />View Bill</a>
+                      <Button variant="outline" size="sm">
+                          <Eye className="mr-2" />View Bill
                       </Button>
                     </Link>
+                    <Button variant="secondary" size="sm" onClick={handleExportMeasurementSheet}>
+                      <Download className="mr-2" />
+                      Export Sheet
+                    </Button>
                     <Button variant="destructive" size="sm" onClick={handleClearAll}>
                         <Trash2 className="mr-2" />
                         All Clear
