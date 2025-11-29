@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MeasurementRow } from '@/lib/types';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface GraniteTableProps {
   fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
@@ -21,6 +21,7 @@ interface GraniteTableProps {
 export function GraniteTable({ fields, register, errors, control, setValue }: GraniteTableProps) {
   const measurements = useWatch({ control, name: 'measurements' });
   const [touchSourceIndex, setTouchSourceIndex] = useState<number | null>(null);
+  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const calculateSquareFeet = (lengthStr: string, widthStr: string) => {
     const length = parseFloat(lengthStr);
@@ -66,31 +67,44 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
     e.preventDefault();
   };
   
-  // Mobile Touch Events
   const handleTouchStart = (index: number) => {
-    setTouchSourceIndex(index);
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+    longPressTimeout.current = setTimeout(() => {
+      const sourceData = measurements?.[index];
+      if (sourceData && sourceData.length && sourceData.width) {
+        setTouchSourceIndex(index);
+      }
+      longPressTimeout.current = null;
+    }, 500); // 500ms for long press
   };
 
-  const handleTouchEnd = (e: React.TouchEvent<HTMLTableRowElement>) => {
-    if (touchSourceIndex === null) return;
-    
-    // Find the element where the touch ended
-    const touch = e.changedTouches[0];
-    const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
-    const targetRow = targetElement?.closest('tr');
+  const handleTouchMove = () => {
+    // If finger moves, cancel the long press
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent<HTMLTableRowElement>, targetIndex: number) => {
+    // Clear any pending long press
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
 
-    if (targetRow && targetRow.dataset.index) {
-      const targetIndex = parseInt(targetRow.dataset.index, 10);
-      if (!isNaN(targetIndex) && targetIndex !== touchSourceIndex) {
-        const sourceData = measurements?.[touchSourceIndex];
-        if (sourceData && sourceData.length && sourceData.width) {
-          setValue(`measurements.${targetIndex}.length`, sourceData.length, { shouldDirty: true });
-          setValue(`measurements.${targetIndex}.width`, sourceData.width, { shouldDirty: true });
-        }
+    if (touchSourceIndex !== null && touchSourceIndex !== targetIndex) {
+      const sourceData = measurements?.[touchSourceIndex];
+      if (sourceData && sourceData.length && sourceData.width) {
+        setValue(`measurements.${targetIndex}.length`, sourceData.length, { shouldDirty: true });
+        setValue(`measurements.${targetIndex}.width`, sourceData.width, { shouldDirty: true });
       }
+      e.preventDefault(); // Prevent click events after paste
     }
     
-    // Reset source index
+    // Reset source index after any touch end
     setTouchSourceIndex(null);
   };
 
@@ -113,15 +127,19 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
               className={cn(
                 'cursor-grab',
                 index % 2 === 0 ? 'bg-muted/20' : '',
-                touchSourceIndex === index ? 'bg-accent' : ''
+                touchSourceIndex === index ? 'bg-primary/20' : ''
               )}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDrop={(e) => handleDrop(e, index)}
               onDragOver={handleDragOver}
               onTouchStart={() => handleTouchStart(index)}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={() => setTouchSourceIndex(null)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={(e) => handleTouchEnd(e, index)}
+              onTouchCancel={() => {
+                if (longPressTimeout.current) clearTimeout(longPressTimeout.current);
+                setTouchSourceIndex(null);
+              }}
             >
               <TableCell className="font-medium px-2 py-1">{index + 1}</TableCell>
               <TableCell className="px-2 py-1">
