@@ -85,9 +85,12 @@ export default function GraniteGridPage() {
             ...parsedData,
             measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' })
           })
+        } else {
+           form.reset(defaultValues);
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
+        form.reset(defaultValues);
       }
     }
   }, [form]);
@@ -157,20 +160,34 @@ export default function GraniteGridPage() {
       return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
     }).filter(row => row[1] && row[2]);
 
-    doc.text(`Measurement Sheet`, 14, 16);
-    doc.setFontSize(10);
-    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 14, 16, { align: 'right' });
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Measurement Sheet`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 20, 30, { align: 'right' });
     
     doc.autoTable({
         head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
         body: tableData,
-        startY: 24,
+        startY: 40,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
+        styles: { fontSize: 10 },
+        columnStyles: {
+            0: { halign: 'center' },
+            1: { halign: 'right' },
+            2: { halign: 'right' },
+            3: { halign: 'right' },
+        }
     });
     
     let finalY = (doc as any).lastAutoTable.finalY;
     
-    doc.setFontSize(12);
-    doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 10);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 15);
     
     doc.save(filename);
   };

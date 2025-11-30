@@ -128,51 +128,85 @@ export default function BillPage() {
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
     const filename = `bill_${timestamp}.pdf`;
+    const pageWidth = doc.internal.pageSize.getWidth();
 
-
-    // Title
-    doc.setFontSize(12);
-    doc.text("Granite Measurement Sheet", 105, 28, { align: 'center' });
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text("INVOICE", pageWidth / 2, 20, { align: 'center' });
 
     // Party Details
     const details = [
-        ['Party Name:', watchedData?.partyName || 'N/A', 'Date:', today],
-        ['Party Phone:', watchedData?.partyPhoneNumber || 'N/A', '', ''],
-        ['Color:', watchedData?.color || 'N/A', '', ''],
+        [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, watchedData?.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, today],
+        [{content: 'Party Phone:', styles: {fontStyle: 'bold'}}, watchedData?.partyPhoneNumber || 'N/A', '', ''],
+        [{content: 'Color:', styles: {fontStyle: 'bold'}}, watchedData?.color || 'N/A', '', ''],
     ];
+
     doc.autoTable({
         body: details,
-        startY: 35,
+        startY: 30,
         theme: 'plain',
-        styles: { fontSize: 10 },
-        columnStyles: { 0: { fontStyle: 'bold' }, 2: { fontStyle: 'bold' } },
-        didDrawPage: (data) => {
-            // Footer
-            const str = "Page " + doc.internal.getNumberOfPages()
-            doc.setFontSize(10)
-            doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
+        styles: { fontSize: 11, cellPadding: 2 },
+        columnStyles: { 
+          0: { cellWidth: 35 }, 
+          1: { cellWidth: 60},
+          2: { cellWidth: 35 },
         }
     });
 
     let finalY = (doc as any).lastAutoTable.finalY;
 
+    // Measurements Table
+    const measurementData = getValidData();
+    const tableData = measurementData.map((m, i) => [
+        i + 1,
+        m.length.toFixed(2),
+        m.width.toFixed(2),
+        ((m.length * m.width) / 144).toFixed(2)
+    ]);
+
+    doc.autoTable({
+        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        body: tableData,
+        startY: finalY + 5,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
+        styles: { fontSize: 10, cellPadding: 2 },
+        columnStyles: {
+            0: { halign: 'center' },
+            1: { halign: 'right' },
+            2: { halign: 'right' },
+            3: { halign: 'right' },
+        }
+    });
+
+    finalY = (doc as any).lastAutoTable.finalY;
+    
     // Summary
     const summaryData = [
       ['Total Sq. Ft.', totalArea.toFixed(2)],
       ['Rate', `Rs. ${rate.toFixed(2)}`],
-      [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, `Rs. ${totalAmount.toFixed(2)}`],
+      [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, { content: `Rs. ${totalAmount.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
       ['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`],
       ['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`],
-      [{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 12 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 12 } }]
+      [{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]
     ];
     
     doc.autoTable({
         body: summaryData,
         startY: finalY + 10,
         theme: 'plain',
-        columnStyles: { 1: { halign: 'right' } },
-        styles: { fontSize: 10 },
+        columnStyles: { 0: {cellWidth: 145, fontStyle: 'bold'}, 1: { halign: 'right' } },
+        styles: { fontSize: 12, cellPadding: 2 },
     });
+
+    finalY = (doc as any).lastAutoTable.finalY;
+
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
+
 
     doc.save(filename);
   };
