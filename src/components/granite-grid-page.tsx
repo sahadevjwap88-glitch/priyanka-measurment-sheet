@@ -51,7 +51,7 @@ const defaultValues = {
 };
 
 export default function GraniteGridPage() {
-  const [rowsToAdd, setRowsToAdd] = useState(1);
+  const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   const [isClient, setIsClient] = useState(false);
 
   const form = useForm<FormValues>({
@@ -265,7 +265,15 @@ export default function GraniteGridPage() {
                     <Input 
                         type="number"
                         value={rowsToAdd}
-                        onChange={(e) => setRowsToAdd(Math.max(1, parseInt(e.target.value, 10)))}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                                setRowsToAdd('');
+                            } else {
+                                const num = parseInt(value, 10);
+                                setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
+                            }
+                        }}
                         className="w-24 h-9"
                         min="1"
                     />
