@@ -73,7 +73,7 @@ export default function GraniteGridPage() {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData && parsedData.measurements) {
+        if (parsedData && Array.isArray(parsedData.measurements)) {
           // Ensure every measurement has length and width properties
           const cleanedMeasurements = parsedData.measurements.map((m: any) => ({
             length: m?.length || '',
