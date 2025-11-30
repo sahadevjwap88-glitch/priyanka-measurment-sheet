@@ -173,8 +173,8 @@ export default function GraniteGridPage() {
         body: tableData,
         startY: 40,
         theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
-        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 12 },
+        styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: {
             0: { halign: 'center' },
             1: { halign: 'right' },
@@ -185,7 +185,7 @@ export default function GraniteGridPage() {
     
     let finalY = (doc as any).lastAutoTable.finalY;
     
-    doc.setFontSize(14);
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 15);
     
