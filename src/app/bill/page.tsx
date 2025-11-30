@@ -155,32 +155,6 @@ export default function BillPage() {
     });
 
     let finalY = (doc as any).lastAutoTable.finalY;
-
-    // Measurements Table
-    const measurementData = getValidData();
-    const tableData = measurementData.map((m, i) => [
-        i + 1,
-        m.length.toFixed(2),
-        m.width.toFixed(2),
-        ((m.length * m.width) / 144).toFixed(2)
-    ]);
-
-    doc.autoTable({
-        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
-        body: tableData,
-        startY: finalY + 5,
-        theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
-        styles: { fontSize: 10, cellPadding: 2 },
-        columnStyles: {
-            0: { halign: 'center' },
-            1: { halign: 'right' },
-            2: { halign: 'right' },
-            3: { halign: 'right' },
-        }
-    });
-
-    finalY = (doc as any).lastAutoTable.finalY;
     
     // Summary
     const summaryData = [
