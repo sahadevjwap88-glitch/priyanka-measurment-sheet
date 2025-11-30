@@ -160,7 +160,7 @@ export default function GraniteGridPage() {
       return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
     }).filter(row => row[1] && row[2]);
 
-    doc.setFontSize(18);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text(`Measurement Sheet`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
 
@@ -169,12 +169,12 @@ export default function GraniteGridPage() {
     doc.text(`Date: ${today}`, doc.internal.pageSize.width - 20, 30, { align: 'right' });
     
     doc.autoTable({
-        head: [['Row', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
         body: tableData,
         startY: 40,
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
-        styles: { fontSize: 10 },
+        styles: { fontSize: 10, cellPadding: 2 },
         columnStyles: {
             0: { halign: 'center' },
             1: { halign: 'right' },
