@@ -133,7 +133,7 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[15%] px-2">Row</TableHead>
+            <TableHead className="w-[15%] px-2">S.No</TableHead>
             <TableHead className="w-[27.5%] px-2">Length (in)</TableHead>
             <TableHead className="w-[27.5%] px-2">Width (in)</TableHead>
             <TableHead className="w-[30%] px-2">Area (sq ft)</TableHead>
