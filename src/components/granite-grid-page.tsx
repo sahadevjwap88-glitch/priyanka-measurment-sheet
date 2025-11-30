@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Ruler, Eye, Download, Trash2 } from 'lucide-react';
+import { Plus, Eye, Download, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,66 @@ export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 const defaultValues = { 
   measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
 };
+
+function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      {...props}
+    >
+      <rect width="32" height="32" rx="6" fill="#6C757D" />
+      <path
+        d="M9 8C8.44772 8 8 8.44772 8 9V20C8 20.5523 8.44772 21 9 21H11C11.5523 21 12 20.5523 12 20V9C12 8.44772 11.5523 8 11 8H9Z"
+        fill="white"
+      />
+      <path
+        d="M10 10H12"
+        stroke="#6C757D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 13H12"
+        stroke="#6C757D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 16H12"
+        stroke="#6C757D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 19H12"
+        stroke="#6C757D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16 11.5L19.5 8L20.5 9L17 12.5L20.5 16L19.5 17L16 13.5L15 14.5V20C15 20.5523 15.4477 21 16 21H18C18.5523 21 19 20.5523 19 20V18H23V20C23 20.5523 23.4477 21 24 21H25C25.5523 21 26 20.5523 26 20V14.5L25 13.5L21.5 17L18 13.5L21.5 10L25 13.5L26 12.5V9C26 8.44772 25.5523 8 25 8H24C23.4477 8 23 8.44772 23 9V11H19V9C19 8.44772 18.5523 8 18 8H16C15.4477 8 15 8.44772 15 9V12.5L16 11.5Z"
+        fill="white"
+      />
+      <text
+        x="50%"
+        y="27"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        fill="white"
+        fontSize="5.5"
+        fontFamily="sans-serif"
+        fontWeight="bold"
+      >
+        GRANITE
+      </text>
+    </svg>
+  );
+}
+
 
 export default function GraniteGridPage() {
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
@@ -200,7 +260,7 @@ export default function GraniteGridPage() {
     <div className="space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-3">
-          <Ruler className="h-8 w-8 text-primary" />
+          <GraniteIcon />
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Priyanka Granite</h1>
         </div>
       </header>
