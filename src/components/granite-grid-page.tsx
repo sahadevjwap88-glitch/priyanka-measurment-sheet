@@ -172,7 +172,7 @@ export default function GraniteGridPage() {
         head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
         body: tableData,
         startY: 40,
-        theme: 'striped',
+        theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 11 },
         styles: { fontSize: 10, cellPadding: 2 },
         columnStyles: {
