@@ -97,12 +97,13 @@ export default function BillPage() {
 
 
   const getValidData = () => {
-    return watchedData.measurements
-      ?.map((m) => ({
+    const measurements = Array.isArray(watchedData.measurements) ? watchedData.measurements : [];
+    return measurements
+      .map((m) => ({
         length: parseFloat(m.length),
         width: parseFloat(m.width),
       }))
-      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
+      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0);
   };
 
   const calculateTotalSquareFeet = () => {
