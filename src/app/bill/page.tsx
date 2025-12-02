@@ -218,9 +218,6 @@ export default function BillPage() {
         </header>
 
         <div className="p-8 border rounded-lg" id="bill-content">
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground">Granite Measurement Sheet</p>
-          </div>
           
           <Card className="mb-6">
             <CardHeader>
