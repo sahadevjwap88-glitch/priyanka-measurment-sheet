@@ -256,7 +256,7 @@ export default function GraniteGridPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <GraniteIcon />
@@ -265,7 +265,7 @@ export default function GraniteGridPage() {
       </header>
       
       <Card>
-        <div className="p-6">
+        <div className="p-4">
             <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap items-center">
@@ -300,12 +300,12 @@ export default function GraniteGridPage() {
                     </AlertDialog>
                 </div>
             </div>
-             <div className="space-y-2 mb-6 max-w-sm">
+             <div className="space-y-2 mb-4 max-w-sm">
                 <Label htmlFor="color">Color Name</Label>
                 <Input id="color" placeholder="Enter color name" {...form.register('color')} />
             </div>
 
-            <Card className="mb-6">
+            <Card className="mb-4">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Square Feet</CardTitle>
               </CardHeader>
