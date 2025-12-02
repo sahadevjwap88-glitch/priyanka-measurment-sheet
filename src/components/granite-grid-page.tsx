@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -310,7 +311,7 @@ export default function GraniteGridPage() {
                   <Input id="color" placeholder="Enter color name" {...form.register('color')} className="w-full" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Total Square Feet: </span>
+                  <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
                   <span className="text-lg font-bold">{calculateTotalSquareFeet().toFixed(2)}</span>
                 </div>
             </div>
