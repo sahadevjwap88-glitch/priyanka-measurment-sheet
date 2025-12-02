@@ -5,7 +5,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Plus, Eye, Download, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
@@ -270,7 +270,7 @@ export default function GraniteGridPage() {
       
       <Card>
         <div className="p-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap items-center">
                     <Link href="/bill" passHref>
@@ -304,29 +304,27 @@ export default function GraniteGridPage() {
                     </AlertDialog>
                 </div>
             </div>
-             <div className="space-y-2 mb-4 max-w-sm">
-                <Label htmlFor="color">Color Name</Label>
-                <Input id="color" placeholder="Enter color name" {...form.register('color')} />
+             <div className="space-y-3 mt-4">
+                <div className="space-y-2 max-w-sm">
+                  <Label htmlFor="color">Color Name</Label>
+                  <Input id="color" placeholder="Enter color name" {...form.register('color')} />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Total Square Feet: </span>
+                  <span className="text-lg font-bold">{calculateTotalSquareFeet().toFixed(2)}</span>
+                </div>
             </div>
 
-            <Card className="mb-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Square Feet</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {calculateTotalSquareFeet().toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
             
-            <GraniteTable
-                fields={fields}
-                register={form.register}
-                errors={form.formState.errors}
-                control={form.control}
-                setValue={form.setValue}
-            />
+            <div className="mt-4">
+              <GraniteTable
+                  fields={fields}
+                  register={form.register}
+                  errors={form.formState.errors}
+                  control={form.control}
+                  setValue={form.setValue}
+              />
+            </div>
             <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
                 <div className="flex items-center gap-2">
                     <Input 
