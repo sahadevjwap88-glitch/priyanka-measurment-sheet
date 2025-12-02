@@ -266,12 +266,9 @@ export default function GraniteGridPage() {
       
       <Card>
         <div className="p-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
                 <div className="flex gap-2 flex-wrap items-center">
-                    <div className="space-y-2">
-                        <Input id="color" placeholder="Color Name" {...form.register('color')} className="h-9 w-36" />
-                    </div>
                     <Link href="/bill" passHref>
                       <Button variant="outline" size="sm">
                           <Eye className="mr-2" />View Bill
@@ -302,6 +299,10 @@ export default function GraniteGridPage() {
                       </AlertDialogContent>
                     </AlertDialog>
                 </div>
+            </div>
+             <div className="space-y-2 mb-6 max-w-sm">
+                <Label htmlFor="color">Color Name</Label>
+                <Input id="color" placeholder="Enter color name" {...form.register('color')} />
             </div>
 
             <Card className="mb-6">
