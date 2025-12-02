@@ -226,7 +226,7 @@ export default function BillPage() {
             <CardHeader>
               <CardTitle>Details</CardTitle>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CardContent className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                   <Label htmlFor="partyName">Party Name</Label>
                   <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
