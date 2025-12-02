@@ -38,6 +38,7 @@ const formSchema = z.object({
       width: z.string(),
     })
   ),
+  color: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,8 +47,9 @@ const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
-const defaultValues = { 
-  measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
+const defaultValues: FormValues = { 
+  measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+  color: '',
 };
 
 function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -133,18 +135,15 @@ export default function GraniteGridPage() {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData && Array.isArray(parsedData.measurements)) {
+        if (parsedData) {
           // Ensure every measurement has length and width properties
-          const cleanedMeasurements = parsedData.measurements.map((m: any) => ({
+          const cleanedMeasurements = parsedData.measurements?.map((m: any) => ({
             length: m?.length || '',
             width: m?.width || '',
-          }));
-          form.reset({ ...parsedData, measurements: cleanedMeasurements });
-        } else if (parsedData) {
-          form.reset({
-            ...parsedData,
-            measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' })
-          })
+          })) || Array(INITIAL_ROWS).fill({ length: '', width: '' });
+          
+          form.reset({ ...defaultValues, ...parsedData, measurements: cleanedMeasurements });
+
         } else {
            form.reset(defaultValues);
         }
@@ -188,12 +187,12 @@ export default function GraniteGridPage() {
 
   
   const handleClearAll = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
     const newDefaultValues = { 
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }) 
+      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+      color: '',
     };
     form.reset(newDefaultValues);
-    replace(newDefaultValues.measurements);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
   const handleAddRows = () => {
@@ -269,7 +268,10 @@ export default function GraniteGridPage() {
         <div className="p-6">
             <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
                 <h2 className="text-xl font-semibold">Measurement Data</h2>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap items-center">
+                    <div className="space-y-2">
+                        <Input id="color" placeholder="Color Name" {...form.register('color')} className="h-9 w-36" />
+                    </div>
                     <Link href="/bill" passHref>
                       <Button variant="outline" size="sm">
                           <Eye className="mr-2" />View Bill

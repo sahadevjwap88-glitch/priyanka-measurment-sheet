@@ -243,10 +243,6 @@ export default function BillPage() {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="color">Color Name</Label>
-                        <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
-                    </div>
-                    <div className="space-y-2">
                         <Label htmlFor="rate">Rate (per sq ft)</Label>
                         <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
                     </div>
