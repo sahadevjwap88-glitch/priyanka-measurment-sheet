@@ -304,8 +304,8 @@ export default function GraniteGridPage() {
                     </AlertDialog>
                 </div>
             </div>
-             <div className="space-y-3 mt-4">
-                <div className="space-y-2 max-w-sm">
+             <div className="flex flex-wrap items-end gap-4 mt-4">
+                <div className="space-y-2 flex-grow" style={{maxWidth: '20rem'}}>
                   <Label htmlFor="color">Color Name</Label>
                   <Input id="color" placeholder="Enter color name" {...form.register('color')} />
                 </div>
