@@ -266,33 +266,40 @@ export default function BillPage() {
           </Card>
 
           <div className="mt-8 flex justify-end">
-            <div className="w-full max-w-sm space-y-2">
-                <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Sq. Ft.</span>
-                    <span>{totalArea.toFixed(2)}</span>
-                </div>
-                 <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Rate</span>
-                    <span>{rate.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm font-semibold border-t pt-2">
-                    <span>Total Amount</span>
-                    <span>{totalAmount.toFixed(2)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Labour Charges</span>
-                    <span>{labourCharges.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Transport Charges</span>
-                    <span>{transportCharges.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>Grand Total</span>
-                    <span>{grandTotal.toFixed(2)}</span>
-                </div>
-            </div>
+             <Card className="w-full max-w-md">
+                <CardContent className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Total Sq. Ft.</span>
+                            <span className="font-medium">{totalArea.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Rate</span>
+                            <span className="font-medium">₹{rate.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center font-semibold">
+                            <span>Subtotal</span>
+                            <span>₹{totalAmount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Labour Charges</span>
+                            <span className="font-medium">₹{labourCharges.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Transport Charges</span>
+                            <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <Separator />
+                     <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
+                        <span>Grand Total</span>
+                        <span>₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                </CardContent>
+            </Card>
           </div>
           
           <div className="mt-8 text-center text-xs text-muted-foreground">
