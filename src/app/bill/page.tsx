@@ -54,6 +54,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function BillPage() {
   const [isClient, setIsClient] = useState(false);
+  const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -117,6 +118,15 @@ export default function BillPage() {
   };
   
   const totalArea = calculateTotalSquareFeet();
+
+  useEffect(() => {
+    if (!labourManuallyEdited && isClient) {
+      const calculatedLabour = Math.max(200, totalArea * 3);
+      form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
+    }
+  }, [totalArea, isClient, labourManuallyEdited, form]);
+
+
   const rate = watchedData?.rate ? parseFloat(watchedData.rate) : 0;
   const totalAmount = totalArea * rate;
   const labourCharges = watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
@@ -247,7 +257,16 @@ export default function BillPage() {
                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="labourCharges">Labour Charges</Label>
-                        <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
+                        <Input 
+                          id="labourCharges" 
+                          type="number" 
+                          placeholder="Enter labour charges" 
+                          {...form.register('labourCharges')}
+                          onChange={(e) => {
+                            form.setValue('labourCharges', e.target.value);
+                            setLabourManuallyEdited(true);
+                          }}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="transportCharges">Transport Charges</Label>
