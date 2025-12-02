@@ -226,31 +226,37 @@ export default function BillPage() {
             <CardHeader>
               <CardTitle>Details</CardTitle>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                  <Label htmlFor="partyName">Party Name</Label>
-                  <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
-                  <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="color">Color Name</Label>
-                  <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="rate">Rate (per sq ft)</Label>
-                  <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="labourCharges">Labour Charges</Label>
-                  <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="transportCharges">Transport Charges</Label>
-                  <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
-              </div>
+            <CardContent className="grid gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="partyName">Party Name</Label>
+                        <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
+                        <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+                    </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="color">Color Name</Label>
+                        <Input id="color" placeholder="e.g., Black Pearl" {...form.register('color')} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="rate">Rate (per sq ft)</Label>
+                        <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
+                    </div>
+                </div>
+                 <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="labourCharges">Labour Charges</Label>
+                        <Input id="labourCharges" type="number" placeholder="Enter labour charges" {...form.register('labourCharges')} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="transportCharges">Transport Charges</Label>
+                        <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
+                    </div>
+                </div>
             </CardContent>
           </Card>
 
