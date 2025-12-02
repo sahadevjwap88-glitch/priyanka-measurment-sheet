@@ -312,7 +312,7 @@ export default function GraniteGridPage() {
                 </div>
                 <div>
                   <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
-                  <span className="text-lg font-bold">{calculateTotalSquareFeet().toFixed(2)}</span>
+                  <span className="text-2xl font-bold">{calculateTotalSquareFeet().toFixed(2)}</span>
                 </div>
             </div>
 
