@@ -231,41 +231,37 @@ export default function BillPage() {
           
           <Card className="mb-6">
             <CardContent className="grid gap-4 pt-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="partyName">Party Name</Label>
-                        <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
-                        <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="partyName">Party Name</Label>
+                    <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="rate">Rate (per sq ft)</Label>
-                        <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
-                    </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
+                    <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
                 </div>
-                 <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="labourCharges">Labour Charges</Label>
-                        <Input 
-                          id="labourCharges" 
-                          type="number" 
-                          placeholder="Enter labour charges" 
-                          {...form.register('labourCharges')}
-                          onChange={(e) => {
-                            form.setValue('labourCharges', e.target.value);
-                            setLabourManuallyEdited(true);
-                          }}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="transportCharges">Transport Charges</Label>
-                        <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
-                    </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="rate">Rate (per sq ft)</Label>
+                    <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
                 </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="labourCharges">Labour Charges</Label>
+                    <Input 
+                      id="labourCharges" 
+                      type="number" 
+                      placeholder="Enter labour charges" 
+                      {...form.register('labourCharges')}
+                      onChange={(e) => {
+                        form.setValue('labourCharges', e.target.value);
+                        setLabourManuallyEdited(true);
+                      }}
+                    />
+                </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="transportCharges">Transport Charges</Label>
+                    <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
