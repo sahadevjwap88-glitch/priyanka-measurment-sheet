@@ -149,7 +149,7 @@ export default function BillPage() {
     // Party Details
     const details = [
         [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, watchedData?.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, today],
-        [{content: 'Party Phone:', styles: {fontStyle: 'bold'}}, watchedData?.partyPhoneNumber || 'N/A', '', ''],
+        [{content: 'Party Phone:', styles: {fontStyle: 'bold'}}, watchedData?.partyPhoneNumber || 'N.A', '', ''],
         [{content: 'Color:', styles: {fontStyle: 'bold'}}, watchedData?.color || 'N/A', '', ''],
     ];
 
@@ -227,7 +227,7 @@ export default function BillPage() {
           </div>
         </header>
 
-        <div className="p-8 border rounded-lg" id="bill-content">
+        <div className="py-8 border rounded-lg" id="bill-content">
           
           <Card className="mb-6">
             <CardContent className="grid gap-4 pt-6">
