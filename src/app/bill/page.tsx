@@ -230,10 +230,7 @@ export default function BillPage() {
         <div className="p-8 border rounded-lg" id="bill-content">
           
           <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Details</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-4 pt-6">
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="partyName">Party Name</Label>
