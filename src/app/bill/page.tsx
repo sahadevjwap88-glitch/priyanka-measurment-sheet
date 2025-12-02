@@ -279,7 +279,7 @@ export default function BillPage() {
                         </div>
                         <div className="flex justify-between items-center font-semibold">
                             <span>Subtotal</span>
-                            <span>₹{totalAmount.toFixed(2)}</span>
+                            <span>₹{Math.round(totalAmount).toLocaleString('en-IN')}</span>
                         </div>
                     </div>
                     <Separator />
@@ -296,7 +296,7 @@ export default function BillPage() {
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
-                        <span>₹{grandTotal.toFixed(2)}</span>
+                        <span>₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
                     </div>
                 </CardContent>
             </Card>
