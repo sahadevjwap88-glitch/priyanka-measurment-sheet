@@ -403,7 +403,7 @@ export default function GraniteGridPage() {
               <div className="flex items-center gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" className="h-8 px-2 text-xs">
+                    <Button variant="default" className="h-7 px-1.5 text-xs">
                       <MenuIcon className="mr-1 h-3 w-3" />
                       Menu
                     </Button>
@@ -483,16 +483,16 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="default" onClick={handleDownloadSheetPdf} className="h-8 px-2 text-xs">
+                <Button variant="default" onClick={handleDownloadSheetPdf} className="h-7 px-1.5 text-xs">
                   <FileDown className="mr-1 h-3 w-3" />
                   Download
                 </Button>
-                 <Button variant="default" onClick={handleShareSheetPdf} className="h-8 px-2 text-xs">
+                 <Button variant="default" onClick={handleShareSheetPdf} className="h-7 px-1.5 text-xs">
                   <Share2 className="mr-1 h-3 w-3" />
                   Share
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="default" className="h-8 px-2 text-xs">
+                  <Button variant="default" className="h-7 px-1.5 text-xs">
                     <Eye className="mr-1 h-3 w-3" />
                     Bill
                   </Button>
