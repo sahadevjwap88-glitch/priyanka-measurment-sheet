@@ -472,16 +472,18 @@ export default function GraniteGridPage() {
               </TabsList>
                {fields.map((sheet, sheetIndex) => (
                   <TabsContent key={sheet.id} value={sheet.id}>
-                    <div className="flex flex-wrap items-center gap-4 mt-4">
-                      <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
-                        <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
-                        <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-full" />
+                    <div className="flex flex-wrap items-end gap-4 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
+                            <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-full" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
+                            <Input id={`rate-${sheet.id}`} type="number" placeholder="Enter rate" {...form.register(`sheets.${sheetIndex}.rate`)} className="w-full" />
+                          </div>
                       </div>
-                       <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
-                        <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
-                        <Input id={`rate-${sheet.id}`} type="number" placeholder="Enter rate" {...form.register(`sheets.${sheetIndex}.rate`)} className="w-full" />
-                      </div>
-                      <div>
+                      <div className="ml-auto">
                         <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
                         <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
                       </div>
