@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon, FileDown } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -306,22 +306,6 @@ export default function GraniteGridPage() {
     form.setValue('activeSheetId', newSheetId);
   };
 
-  const duplicateSheet = () => {
-    if (fields.length >= MAX_SHEETS) {
-      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
-      return;
-    }
-    if (!activeSheet) return;
-    const newSheetId = Date.now().toString();
-    const newSheet = {
-      ...activeSheet,
-      id: newSheetId,
-      name: `${activeSheet.name} (copy)`,
-    };
-    append(newSheet);
-    form.setValue('activeSheetId', newSheetId);
-  };
-
   const deleteSheet = (sheetId: string) => {
     if (fields.length <= 1) {
       alert("You cannot delete the last sheet.");
@@ -383,10 +367,6 @@ export default function GraniteGridPage() {
                       <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
                         <Plus className="mr-2 h-4 w-4" />
                         <span>Add New Sheet</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={duplicateSheet} disabled={!activeSheet || fields.length >= MAX_SHEETS}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        <span>Duplicate Current Sheet</span>
                       </DropdownMenuItem>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -524,3 +504,4 @@ export default function GraniteGridPage() {
     
 
     
+
