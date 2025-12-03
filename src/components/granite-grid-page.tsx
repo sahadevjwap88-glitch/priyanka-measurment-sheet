@@ -77,8 +77,8 @@ const createNewSheet = (id: string, name: string): Sheet => ({
 });
 
 const defaultValues: FormValues = {
-  sheets: [createNewSheet(Date.now().toString(), 'Sheet 1')],
-  activeSheetId: createNewSheet(Date.now().toString(), 'Sheet 1').id,
+  sheets: [],
+  activeSheetId: undefined,
 };
 
 function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -158,8 +158,9 @@ export default function GraniteGridPage() {
 
   const watchedSheets = useWatch({ control: form.control, name: 'sheets' });
   const activeSheetId = useWatch({ control: form.control, name: 'activeSheetId' });
+  
   const activeSheetIndex = watchedSheets.findIndex(s => s.id === activeSheetId);
-  const activeSheet = watchedSheets[activeSheetIndex];
+  const activeSheet = activeSheetIndex !== -1 ? watchedSheets[activeSheetIndex] : undefined;
   
   useEffect(() => {
     setIsClient(true);
@@ -365,88 +366,89 @@ export default function GraniteGridPage() {
       <Card>
         <div className="p-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <MenuIcon className="mr-2 h-4 w-4" />
-                  Menu
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <MenuIcon className="mr-2 h-4 w-4" />
+                      Menu
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Sheet Actions</DropdownMenuLabel>
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        <span>Add New Sheet</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={duplicateSheet} disabled={fields.length >= MAX_SHEETS}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        <span>Duplicate Current Sheet</span>
+                      </DropdownMenuItem>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Current Sheet</span>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the current sheet. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => activeSheet && deleteSheet(activeSheet.id)}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </DropdownMenuGroup>
+                     <DropdownMenuSeparator />
+                     <DropdownMenuGroup>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Clear All Data</span>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete all your data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleClearAll}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                     </DropdownMenuGroup>
+                     <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="flex gap-2 ml-auto">
+                <Link href="/bill" passHref>
+                  <Button variant="outline">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Bill
+                  </Button>
+                </Link>
+                <Button onClick={handleExportMeasurementSheet}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export Sheet
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Sheet Actions</DropdownMenuLabel>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span>Add New Sheet</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={duplicateSheet} disabled={fields.length >= MAX_SHEETS}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    <span>Duplicate Current Sheet</span>
-                  </DropdownMenuItem>
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete Current Sheet</span>
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete the current sheet. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => activeSheet && deleteSheet(activeSheet.id)}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                   <DropdownMenuItem asChild>
-                    <Link href="/bill" passHref>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Bill
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportMeasurementSheet}>
-                    <Download className="mr-2 h-4 w-4" />
-                    <span>Export Current Sheet</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuGroup>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Clear All Data</span>
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all your data.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleClearAll}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                 </DropdownMenuGroup>
-                 <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </div>
           </div>
 
           <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
