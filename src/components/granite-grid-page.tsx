@@ -57,7 +57,7 @@ const sheetSchema = z.object({
 
 const formSchema = z.object({
   sheets: z.array(sheetSchema),
-  activeSheetId: z.string(),
+  activeSheetId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -78,7 +78,7 @@ const createNewSheet = (id: string, name: string): Sheet => ({
 
 const defaultValues: FormValues = {
   sheets: [createNewSheet(Date.now().toString(), 'Sheet 1')],
-  activeSheetId: '',
+  activeSheetId: createNewSheet(Date.now().toString(), 'Sheet 1').id,
 };
 
 function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -172,18 +172,30 @@ export default function GraniteGridPage() {
             ...sheet,
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
-          form.reset({ ...parsedData, sheets: cleanedSheets });
+
+          const newActiveSheetId = parsedData.activeSheetId || cleanedSheets[0].id;
+          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
         } else {
-           form.reset(defaultValues);
-           form.setValue('activeSheetId', defaultValues.sheets[0].id);
+           const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
+           form.reset({
+              sheets: [newSheet],
+              activeSheetId: newSheet.id,
+           });
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
-        form.reset(defaultValues);
-        form.setValue('activeSheetId', defaultValues.sheets[0].id);
+        const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
+        form.reset({
+           sheets: [newSheet],
+           activeSheetId: newSheet.id,
+        });
       }
     } else {
-        form.setValue('activeSheetId', defaultValues.sheets[0].id);
+        const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
+        form.reset({
+           sheets: [newSheet],
+           activeSheetId: newSheet.id,
+        });
     }
   }, [form]);
 
