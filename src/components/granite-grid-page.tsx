@@ -7,13 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon, Download } from 'lucide-react';
+import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +35,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
-
-interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => jsPDF;
-}
 
 const measurementSchema = z.object({
   length: z.string(),
@@ -284,62 +278,6 @@ export default function GraniteGridPage() {
     }
   };
 
-  const handleExportSheet = () => {
-    const currentSheet = watchedSheets.find(s => s.id === activeSheetId);
-    if (!currentSheet) return;
-
-    const doc = new jsPDF() as jsPDFWithAutoTable;
-    const date = new Date();
-    const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `sheet_${currentSheet.name}_${timestamp}.pdf`;
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Header
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Measurement Sheet: ${currentSheet.name}`, pageWidth / 2, 20, { align: 'center' });
-
-    // Details
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Color: ${currentSheet.color || 'N/A'}`, 15, 30);
-    doc.text(`Date: ${today}`, pageWidth - 15, 30, { align: 'right' });
-    
-    const validData = getValidDataForSheet(currentSheet);
-    const tableData = validData.map(m => [
-      m.sno.toString(),
-      m.length.toFixed(2),
-      m.width.toFixed(2),
-      m.area.toFixed(2)
-    ]);
-    const totalArea = calculateTotalSquareFeetForSheet(currentSheet);
-
-    doc.autoTable({
-      head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
-      body: tableData,
-      startY: 40,
-      theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      didDrawPage: (data) => {
-        // Footer
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.text(`Page ${data.pageNumber} of ${pageCount}`, pageWidth - 15, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
-      }
-    });
-
-    const finalY = (doc as any).lastAutoTable.finalY;
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Square Feet: ${totalArea.toFixed(2)}`, 15, finalY + 15);
-
-    doc.save(filename);
-  };
-
-
   const handleAddRows = () => {
     if (!activeSheet) return;
     const numRowsToAdd = Number(rowsToAdd) || 1;
@@ -444,10 +382,6 @@ export default function GraniteGridPage() {
                 </DropdownMenu>
               </div>
               <div className="flex gap-2 ml-auto">
-                 <Button variant="outline" onClick={handleExportSheet} disabled={!activeSheet}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export Sheet
-                  </Button>
                 <Link href="/bill" passHref>
                   <Button variant="outline">
                     <Eye className="mr-2 h-4 w-4" />
@@ -523,5 +457,7 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
