@@ -175,9 +175,7 @@ export default function GraniteGridPage() {
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
 
-          const newActiveSheetId = parsedData.activeSheetId && cleanedSheets.some((s: Sheet) => s.id === parsedData.activeSheetId) 
-              ? parsedData.activeSheetId 
-              : cleanedSheets[0]?.id;
+          const newActiveSheetId = cleanedSheets[0]?.id;
 
           form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
         } else {
@@ -497,6 +495,8 @@ export default function GraniteGridPage() {
     
 
 
+
+    
 
     
 
