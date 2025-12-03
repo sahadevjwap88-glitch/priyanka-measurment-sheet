@@ -528,7 +528,7 @@ export default function GraniteGridPage() {
                               }
                               form.setValue(`sheets.${sheetIndex}.rate`, e.target.value, { shouldValidate: true });
                             }}
-                            className="w-32"
+                            className="w-24"
                           />
                       </div>
                       <div className="ml-auto">
