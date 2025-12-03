@@ -475,7 +475,7 @@ export default function GraniteGridPage() {
                     <div className="flex flex-wrap items-end gap-4 mt-4">
                       <div className="flex items-center gap-2">
                         <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
-                        <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[30%]" />
+                        <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[180px]" />
                       </div>
                       <div className="flex items-center gap-2">
                         <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
@@ -546,3 +546,4 @@ export default function GraniteGridPage() {
     
 
     
+
