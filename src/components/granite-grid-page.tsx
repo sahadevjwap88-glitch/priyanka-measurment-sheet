@@ -381,26 +381,6 @@ export default function GraniteGridPage() {
                         <Plus className="mr-2 h-4 w-4" />
                         <span>Add New Sheet</span>
                       </DropdownMenuItem>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!activeSheet || fields.length <= 1}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete Current Sheet</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the current sheet. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => activeSheet && deleteSheet(activeSheet.id)}>Continue</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                     </DropdownMenuGroup>
                      <DropdownMenuSeparator />
                      <DropdownMenuGroup>
