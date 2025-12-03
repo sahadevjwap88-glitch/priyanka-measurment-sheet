@@ -480,7 +480,19 @@ export default function GraniteGridPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
-                            <Input id={`rate-${sheet.id}`} type="number" placeholder="Enter rate" {...form.register(`sheets.${sheetIndex}.rate`)} className="w-full" />
+                            <Input
+                                id={`rate-${sheet.id}`}
+                                type="number"
+                                placeholder="Enter rate"
+                                {...form.register(`sheets.${sheetIndex}.rate`)}
+                                onChange={(e) => {
+                                  if (e.target.value.length > 4) {
+                                    e.target.value = e.target.value.slice(0, 4);
+                                  }
+                                  form.setValue(`sheets.${sheetIndex}.rate`, e.target.value, { shouldValidate: true });
+                                }}
+                                className="w-32"
+                              />
                           </div>
                       </div>
                       <div className="ml-auto">
@@ -532,3 +544,5 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
