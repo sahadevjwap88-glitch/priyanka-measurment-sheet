@@ -166,7 +166,6 @@ export default function GraniteGridPage() {
   useEffect(() => {
     setIsClient(true);
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let newActiveSheetId;
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
@@ -175,11 +174,8 @@ export default function GraniteGridPage() {
             ...sheet,
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
-          newActiveSheetId = parsedData.activeSheetId || cleanedSheets[0]?.id;
-          if (!cleanedSheets.some((s: Sheet) => s.id === newActiveSheetId)) {
-            newActiveSheetId = cleanedSheets[0]?.id;
-          }
-           form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
+          const newActiveSheetId = cleanedSheets[0]?.id; // Always default to the first sheet
+          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
         } else {
            handleClearAll(false);
         }
@@ -493,3 +489,5 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
