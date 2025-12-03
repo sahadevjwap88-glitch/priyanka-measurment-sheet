@@ -129,13 +129,7 @@ export default function BillPage() {
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
     const filename = `bill_${timestamp}.pdf`;
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Header
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text("INVOICE", pageWidth / 2, 20, { align: 'center' });
-
+    
     // Party Details
     const details = [
         [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, watchedData?.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, today],
@@ -144,7 +138,7 @@ export default function BillPage() {
 
     doc.autoTable({
         body: details,
-        startY: 30,
+        startY: 20,
         theme: 'plain',
         styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: { 
@@ -193,7 +187,7 @@ export default function BillPage() {
       summaryRows.push(['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`]);
     }
 
-    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
     
     doc.autoTable({
         body: summaryRows,
@@ -206,6 +200,7 @@ export default function BillPage() {
     finalY = (doc as any).lastAutoTable.finalY;
 
     // Footer
+    const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFontSize(10);
     doc.setTextColor(150);
     doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
