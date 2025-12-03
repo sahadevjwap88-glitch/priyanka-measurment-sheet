@@ -259,16 +259,16 @@ export default function BillPage() {
           <h1 className="text-3xl font-bold">Bill Details</h1>
           <div className="flex gap-2">
             <Link href="/" passHref>
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                   <ArrowLeft className="mr-2" />
                   Back
               </Button>
             </Link>
-            <Button onClick={handleExportPdf}>
+            <Button onClick={handleExportPdf} size="sm">
                 <Download className="mr-2" />
                 Export PDF
             </Button>
-            <Button onClick={handleShareToWhatsApp}>
+            <Button onClick={handleShareToWhatsApp} size="sm">
                 <Share2 className="mr-2" />
                 Share
             </Button>
