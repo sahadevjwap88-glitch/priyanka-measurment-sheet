@@ -270,7 +270,7 @@ export default function GraniteGridPage() {
       const totalArea = calculateTotalSquareFeetForSheet(sheet);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Total Square Feet: ${totalArea.toFixed(2)}`, 14, 25);
+      doc.text(`SFT: ${totalArea.toFixed(2)}`, 14, 25);
       
       doc.autoTable({
         head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
@@ -532,7 +532,7 @@ export default function GraniteGridPage() {
                           />
                       </div>
                       <div className="ml-auto">
-                        <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
+                        <span className="text-sm font-bold text-foreground">SFT: </span>
                         <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
                       </div>
                     </div>

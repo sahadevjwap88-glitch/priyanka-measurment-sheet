@@ -163,7 +163,7 @@ export default function BillPage() {
     });
 
     doc.autoTable({
-      head: [['Color', 'Total Sq. Ft.', 'Rate', 'Total Amount']],
+      head: [['Color', 'SFT', 'Rate', 'Total Amount']],
       body: summaryBody,
       startY: finalY,
       theme: 'grid',
@@ -322,7 +322,7 @@ export default function BillPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Color</TableHead>
-                    <TableHead className="text-right">Total Sq. Ft.</TableHead>
+                    <TableHead className="text-right">SFT</TableHead>
                     <TableHead className="text-right">Rate</TableHead>
                     <TableHead className="text-right">Total Amount</TableHead>
                   </TableRow>
