@@ -190,7 +190,7 @@ export default function GraniteGridPage() {
     } else {
         handleClearAll(false);
     }
-  }, [form]);
+  }, []);
 
   useEffect(() => {
     if (isClient) {
@@ -339,7 +339,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <GraniteIcon />
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Priyanka Granite</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-destructive">Priyanka Granite</h1>
         </div>
       </header>
       
