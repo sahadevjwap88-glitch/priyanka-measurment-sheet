@@ -356,7 +356,7 @@ export default function GraniteGridPage() {
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
+                    <Button variant="outline" size="sm">
                       <MenuIcon className="mr-2 h-4 w-4" />
                       Menu
                     </Button>
@@ -419,12 +419,12 @@ export default function GraniteGridPage() {
                       </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" onClick={handleDownloadSheetPdf}>
+                <Button variant="outline" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2 h-4 w-4" />
                   Download
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="outline">
+                  <Button variant="outline" size="sm">
                     <Eye className="mr-2 h-4 w-4" />
                     View Bill
                   </Button>
@@ -504,6 +504,8 @@ export default function GraniteGridPage() {
     
 
 
+
+    
 
     
 
