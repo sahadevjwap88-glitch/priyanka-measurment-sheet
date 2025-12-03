@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -198,6 +198,66 @@ export default function BillPage() {
 
     doc.save(filename);
   };
+  
+  const handleDownloadSheetPdf = () => {
+    const allSheets = watchedData.sheets || [];
+    if (allSheets.length === 0) return;
+
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `sheets_${timestamp}.pdf`;
+    
+    let isFirstPage = true;
+
+    allSheets.forEach(sheet => {
+      const validData = sheet.measurements
+        .map((m, index) => ({
+          sno: index + 1,
+          length: parseFloat(m.length),
+          width: parseFloat(m.width),
+          area: ((parseFloat(m.length) * parseFloat(m.width)) / 144) || 0
+        }))
+        .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0);
+
+      if (validData.length === 0) return;
+
+      if (!isFirstPage) {
+        doc.addPage();
+      }
+      isFirstPage = false;
+      
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      const sheetTitle = `${sheet.name} - ${sheet.color || 'N/A'}`;
+      doc.text(sheetTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      const totalArea = calculateTotalSquareFeetForSheet(sheet);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Total Square Feet: ${totalArea.toFixed(2)}`, 14, 25);
+      
+      doc.autoTable({
+        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        body: validData.map(m => [m.sno, m.length.toFixed(2), m.width.toFixed(2), m.area.toFixed(2)]),
+        startY: 30,
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { halign: 'center' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+        }
+      });
+    });
+
+    if (!isFirstPage) {
+      doc.save(filename);
+    } else {
+      alert("No measurement data to export.");
+    }
+  };
 
   if (!isClient) {
     return null;
@@ -225,6 +285,10 @@ export default function BillPage() {
                   Back
               </Button>
             </Link>
+            <Button onClick={handleDownloadSheetPdf} variant="outline">
+              <FileDown className="mr-2" />
+              Download Sheet
+            </Button>
             <Button onClick={handleExportPdf}>
                 <Download className="mr-2" />
                 Export PDF
