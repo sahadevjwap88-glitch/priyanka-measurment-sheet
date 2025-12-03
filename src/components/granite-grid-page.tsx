@@ -179,7 +179,7 @@ export default function GraniteGridPage() {
           if (!cleanedSheets.some((s: Sheet) => s.id === newActiveSheetId)) {
             newActiveSheetId = cleanedSheets[0]?.id;
           }
-          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
+           form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
         } else {
            handleClearAll(false);
         }
@@ -339,7 +339,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <GraniteIcon />
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-destructive">Priyanka Granite</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-destructive">Priyanka Granite</h1>
         </div>
       </header>
       
