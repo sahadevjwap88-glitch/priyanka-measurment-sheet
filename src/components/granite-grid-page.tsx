@@ -266,7 +266,7 @@ export default function GraniteGridPage() {
           1: { halign: 'right' },
           2: { halign: 'right' },
           3: { halign: 'right' },
-        }
+        },
       });
     });
 
@@ -462,30 +462,32 @@ export default function GraniteGridPage() {
                   </TabsContent>
                ))}
           </Tabs>
-
-          <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
-              <div className="flex items-center gap-2">
-                  <Input 
-                      type="number"
-                      value={rowsToAdd}
-                      onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '') {
-                              setRowsToAdd('');
-                          } else {
-                              const num = parseInt(value, 10);
-                              setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
-                          }
-                      }}
-                      className="w-24 h-9"
-                      min="1"
-                  />
-                  <Button variant="secondary" onClick={handleAddRows} disabled={(activeSheet?.measurements?.length ?? 0) >= MAX_ROWS}>
-                      <Plus className="mr-2" />
-                      Add Row(s)
-                  </Button>
-              </div>
-          </div>
+          
+          {activeSheet && (
+            <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
+                <div className="flex items-center gap-2">
+                    <Input 
+                        type="number"
+                        value={rowsToAdd}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                                setRowsToAdd('');
+                            } else {
+                                const num = parseInt(value, 10);
+                                setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
+                            }
+                        }}
+                        className="w-24 h-9"
+                        min="1"
+                    />
+                    <Button variant="secondary" onClick={handleAddRows} disabled={(activeSheet?.measurements?.length ?? 0) >= MAX_ROWS}>
+                        <Plus className="mr-2" />
+                        Add Row(s)
+                    </Button>
+                </div>
+            </div>
+          )}
         </div>
       </Card>
     </div>
