@@ -419,8 +419,6 @@ export default function GraniteGridPage() {
                       </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-              <div className="flex gap-2 ml-auto">
                 <Button variant="outline" onClick={handleDownloadSheetPdf}>
                   <FileDown className="mr-2 h-4 w-4" />
                   Download
@@ -506,5 +504,7 @@ export default function GraniteGridPage() {
     
 
 
+
+    
 
     
