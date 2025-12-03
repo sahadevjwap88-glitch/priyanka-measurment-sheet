@@ -7,11 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon } from 'lucide-react';
+import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon, FileDown } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +58,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 type Sheet = z.infer<typeof sheetSchema>;
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
@@ -227,6 +233,59 @@ export default function GraniteGridPage() {
     return totalArea;
   }, [isClient, getValidDataForSheet]);
 
+  const handleDownloadSheetPdf = useCallback(() => {
+    const allSheets = watchedData.sheets || [];
+    if (allSheets.length === 0) return;
+
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `sheets_${timestamp}.pdf`;
+    
+    let isFirstPage = true;
+
+    allSheets.forEach(sheet => {
+      const validData = getValidDataForSheet(sheet);
+
+      if (validData.length === 0) return;
+
+      if (!isFirstPage) {
+        doc.addPage();
+      }
+      isFirstPage = false;
+      
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      const sheetTitle = `${sheet.name} - ${sheet.color || 'N/A'}`;
+      doc.text(sheetTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      const totalArea = calculateTotalSquareFeetForSheet(sheet);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Total Square Feet: ${totalArea.toFixed(2)}`, 14, 25);
+      
+      doc.autoTable({
+        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
+        body: validData.map(m => [m.sno, m.length.toFixed(2), m.width.toFixed(2), m.area.toFixed(2)]),
+        startY: 30,
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { halign: 'center' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+        }
+      });
+    });
+
+    if (!isFirstPage) {
+      doc.save(filename);
+    } else {
+      alert("No measurement data to export.");
+    }
+  }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet]);
+
   const handleClearAll = () => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
     form.reset({
@@ -382,6 +441,10 @@ export default function GraniteGridPage() {
                 </DropdownMenu>
               </div>
               <div className="flex gap-2 ml-auto">
+                <Button variant="outline" onClick={handleDownloadSheetPdf}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Download Sheet
+                </Button>
                 <Link href="/bill" passHref>
                   <Button variant="outline">
                     <Eye className="mr-2 h-4 w-4" />
