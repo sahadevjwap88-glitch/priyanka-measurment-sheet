@@ -451,11 +451,11 @@ export default function GraniteGridPage() {
                     </div>
                     <div className="mt-4">
                       <GraniteTable
-                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
-                          register={form.register}
-                          errors={form.formState.errors}
-                          control={form.control}
-                          setValue={form.setValue}
+                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` })),
+                          register={form.register},
+                          errors={form.formState.errors},
+                          control={form.control},
+                          setValue={form.setValue},
                           sheetIndex={sheetIndex}
                       />
                     </div>
@@ -491,23 +491,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
