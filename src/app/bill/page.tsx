@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,43 +15,35 @@ import { Download, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
 
-interface Measurement {
-  length: string;
-  width: string;
-}
+const measurementSchema = z.object({
+  length: z.string(),
+  width: z.string(),
+});
 
-interface StoredData {
-  partyName?: string;
-  partyPhoneNumber?: string;
-  color?: string;
-  rate?: string;
-  measurements?: Measurement[];
-  labourCharges?: string;
-  transportCharges?: string;
-}
+const sheetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string().optional(),
+  rate: z.string().optional(),
+  measurements: z.array(measurementSchema),
+});
 
 const formSchema = z.object({
   partyName: z.string().optional(),
   partyPhoneNumber: z.string().optional(),
-  color: z.string().optional(),
-  rate: z.string().optional(),
   labourCharges: z.string().optional(),
   transportCharges: z.string().optional(),
-  measurements: z.array(
-    z.object({
-      length: z.string(),
-      width: z.string(),
-    })
-  ).optional(),
+  sheets: z.array(sheetSchema).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
+type Sheet = z.infer<typeof sheetSchema>;
 
 export default function BillPage() {
   const [isClient, setIsClient] = useState(false);
@@ -61,11 +54,9 @@ export default function BillPage() {
     defaultValues: {
       partyName: '',
       partyPhoneNumber: '',
-      color: '',
-      rate: '',
       labourCharges: '',
       transportCharges: '',
-      measurements: [],
+      sheets: [],
     },
     mode: 'onBlur',
   });
@@ -96,42 +87,33 @@ export default function BillPage() {
     }
   }, [isClient, form]);
 
-
-  const getValidData = () => {
-    const measurements = Array.isArray(watchedData.measurements) ? watchedData.measurements : [];
-    return measurements
-      .map((m) => ({
-        length: parseFloat(m.length),
-        width: parseFloat(m.width),
-      }))
-      .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0);
-  };
-
-  const calculateTotalSquareFeet = () => {
-    if (!isClient) return 0;
-    const validData = getValidData();
-    if (validData.length === 0) {
-      return 0;
-    }
-    const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
+  const calculateTotalSquareFeetForSheet = (sheet: Sheet) => {
+    if (!sheet || !sheet.measurements) return 0;
+    const totalAreaInches = sheet.measurements
+      .map(m => ({ length: parseFloat(m.length), width: parseFloat(m.width) }))
+      .filter(m => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0)
+      .reduce((acc, m) => acc + m.length * m.width, 0);
     return totalAreaInches / 144;
   };
-  
-  const totalArea = calculateTotalSquareFeet();
+
+  const totalAreaAllSheets = watchedData.sheets?.reduce((acc, sheet) => acc + calculateTotalSquareFeetForSheet(sheet), 0) || 0;
 
   useEffect(() => {
     if (!labourManuallyEdited && isClient) {
-      const calculatedLabour = Math.max(200, totalArea * 3);
+      const calculatedLabour = Math.max(200, totalAreaAllSheets * 3);
       form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
     }
-  }, [totalArea, isClient, labourManuallyEdited, form]);
+  }, [totalAreaAllSheets, isClient, labourManuallyEdited, form]);
 
+  const subtotalAllSheets = watchedData.sheets?.reduce((acc, sheet) => {
+    const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
+    const area = calculateTotalSquareFeetForSheet(sheet);
+    return acc + (area * rate);
+  }, 0) || 0;
 
-  const rate = watchedData?.rate ? parseFloat(watchedData.rate) : 0;
-  const totalAmount = totalArea * rate;
   const labourCharges = watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
   const transportCharges = watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
-  const grandTotal = totalAmount + labourCharges + transportCharges;
+  const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
 
   const handleExportPdf = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
@@ -150,7 +132,6 @@ export default function BillPage() {
     const details = [
         [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, watchedData?.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, today],
         [{content: 'Party Phone:', styles: {fontStyle: 'bold'}}, watchedData?.partyPhoneNumber || 'N.A', '', ''],
-        [{content: 'Color:', styles: {fontStyle: 'bold'}}, watchedData?.color || 'N/A', '', ''],
     ];
 
     doc.autoTable({
@@ -165,13 +146,36 @@ export default function BillPage() {
         }
     });
 
-    let finalY = (doc as any).lastAutoTable.finalY;
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
     
-    // Summary
+    // Sheets Summary
+    const allSheets = watchedData.sheets || [];
+    const summaryBody = allSheets.map(sheet => {
+      const area = calculateTotalSquareFeetForSheet(sheet);
+      const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
+      const total = area * rate;
+      return [
+        sheet.color || 'N/A',
+        area.toFixed(2),
+        `Rs. ${rate.toFixed(2)}`,
+        `Rs. ${total.toFixed(2)}`
+      ];
+    });
+
+    doc.autoTable({
+      head: [['Color', 'Total Sq. Ft.', 'Rate', 'Total Amount']],
+      body: summaryBody,
+      startY: finalY,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 3: { halign: 'right' } }
+    });
+
+    finalY = (doc as any).lastAutoTable.finalY;
+
+    // Grand Totals
     const summaryData = [
-      ['Total Sq. Ft.', totalArea.toFixed(2)],
-      ['Rate', `Rs. ${rate.toFixed(2)}`],
-      [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, { content: `Rs. ${totalAmount.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
+      [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${subtotalAllSheets.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
       ['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`],
       ['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`],
       [{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]
@@ -192,7 +196,6 @@ export default function BillPage() {
     doc.setTextColor(150);
     doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
 
-
     doc.save(filename);
   };
 
@@ -207,6 +210,8 @@ export default function BillPage() {
         </div>
     );
   }
+  
+  const allSheets = watchedData.sheets || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
@@ -241,10 +246,6 @@ export default function BillPage() {
                     <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
                 </div>
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
-                    <Label htmlFor="rate">Rate (per sq ft)</Label>
-                    <Input id="rate" type="number" placeholder="Enter rate" {...form.register('rate')} />
-                </div>
-                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="labourCharges">Labour Charges</Label>
                     <Input 
                       id="labourCharges" 
@@ -264,23 +265,46 @@ export default function BillPage() {
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Item Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Color</TableHead>
+                    <TableHead className="text-right">Total Sq. Ft.</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead className="text-right">Total Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allSheets.map(sheet => {
+                    const area = calculateTotalSquareFeetForSheet(sheet);
+                    const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
+                    const total = area * rate;
+                    return (
+                      <TableRow key={sheet.id}>
+                        <TableCell>{sheet.color || 'N/A'}</TableCell>
+                        <TableCell className="text-right">{area.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">₹{rate.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">₹{total.toFixed(2)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
           <div className="mt-8 flex justify-end">
              <Card className="w-full max-w-md">
                 <CardContent className="p-6 space-y-4">
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Total Sq. Ft.</span>
-                            <span className="font-medium">{totalArea.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Rate</span>
-                            <span className="font-medium">₹{rate.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center font-semibold">
-                            <span>Subtotal</span>
-                            <span>₹{Math.round(totalAmount).toLocaleString('en-IN')}</span>
-                        </div>
+                    <div className="flex justify-between items-center font-semibold">
+                        <span>Subtotal</span>
+                        <span>₹{Math.round(subtotalAllSheets).toLocaleString('en-IN')}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">

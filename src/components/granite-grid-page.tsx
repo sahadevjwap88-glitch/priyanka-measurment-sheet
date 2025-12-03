@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Download, Trash2 } from 'lucide-react';
+import { Plus, Eye, Download, Trash2, Copy, Settings, Menu as MenuIcon } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,33 +24,61 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
 
+const measurementSchema = z.object({
+  length: z.string(),
+  width: z.string(),
+});
+
+const sheetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string().optional(),
+  rate: z.string().optional(),
+  measurements: z.array(measurementSchema),
+});
 
 const formSchema = z.object({
-  measurements: z.array(
-    z.object({
-      length: z.string(),
-      width: z.string(),
-    })
-  ),
-  color: z.string().optional(),
+  sheets: z.array(sheetSchema),
+  activeSheetId: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type Sheet = z.infer<typeof sheetSchema>;
 
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
+const MAX_SHEETS = 4;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
-const defaultValues: FormValues = { 
-  measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+const createNewSheet = (id: string, name: string): Sheet => ({
+  id,
+  name,
   color: '',
+  rate: '',
+  measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+});
+
+const defaultValues: FormValues = {
+  sheets: [createNewSheet(Date.now().toString(), 'Sheet 1')],
+  activeSheetId: '',
 };
 
 function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -123,107 +151,160 @@ export default function GraniteGridPage() {
     mode: 'onBlur',
   });
   
-  const { fields, append, replace } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
-    name: 'measurements',
+    name: "sheets",
   });
-  
-  const watchedMeasurements = useWatch({ control: form.control, name: 'measurements' });
 
+  const watchedSheets = useWatch({ control: form.control, name: 'sheets' });
+  const activeSheetId = useWatch({ control: form.control, name: 'activeSheetId' });
+  const activeSheetIndex = watchedSheets.findIndex(s => s.id === activeSheetId);
+  const activeSheet = watchedSheets[activeSheetIndex];
+  
   useEffect(() => {
     setIsClient(true);
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData) {
-          // Ensure every measurement has length and width properties
-          const cleanedMeasurements = parsedData.measurements?.map((m: any) => ({
-            length: m?.length || '',
-            width: m?.width || '',
-          })) || Array(INITIAL_ROWS).fill({ length: '', width: '' });
-          
-          form.reset({ ...defaultValues, ...parsedData, measurements: cleanedMeasurements });
-
+        if (parsedData && parsedData.sheets && parsedData.sheets.length > 0) {
+           const cleanedSheets = parsedData.sheets.map((sheet: any) => ({
+            ...sheet,
+            measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+          }));
+          form.reset({ ...parsedData, sheets: cleanedSheets });
         } else {
            form.reset(defaultValues);
+           form.setValue('activeSheetId', defaultValues.sheets[0].id);
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
         form.reset(defaultValues);
+        form.setValue('activeSheetId', defaultValues.sheets[0].id);
       }
+    } else {
+        form.setValue('activeSheetId', defaultValues.sheets[0].id);
     }
   }, [form]);
 
   useEffect(() => {
     if (isClient) {
       const subscription = form.watch((value) => {
-        const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
-        const newData = { ...currentData, ...value };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
       });
       return () => subscription.unsubscribe();
     }
   }, [isClient, form]);
 
 
-  const getValidData = useCallback(() => {
-    return watchedMeasurements
-      ?.map((m) => ({
+  const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
+    if (!sheet || !sheet.measurements) return [];
+    return sheet.measurements
+      .map((m) => ({
         length: parseFloat(m.length),
         width: parseFloat(m.width),
       }))
       .filter((m) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0) || [];
-  }, [watchedMeasurements]);
-  
-  const calculateTotalSquareFeet = useCallback(() => {
-    if (!isClient) return 0;
-    const validData = getValidData();
+  }, []);
+
+  const calculateTotalSquareFeetForSheet = useCallback((sheet: Sheet | undefined) => {
+    if (!isClient || !sheet) return 0;
+    const validData = getValidDataForSheet(sheet);
     if (validData.length === 0) {
       return 0;
     }
     const totalAreaInches = validData.reduce((acc, m) => acc + m.length * m.width, 0);
     return totalAreaInches / 144;
-  }, [isClient, getValidData]);
+  }, [isClient, getValidDataForSheet]);
 
-  
   const handleClearAll = () => {
-    const newDefaultValues = { 
-      measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
-      color: '',
-    };
-    form.reset(newDefaultValues);
+    const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
+    form.reset({
+      sheets: [newSheet],
+      activeSheetId: newSheet.id,
+    });
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
+  
+  const addSheet = () => {
+    if (fields.length >= MAX_SHEETS) {
+      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
+      return;
+    }
+    const newSheetId = Date.now().toString();
+    const newSheet = createNewSheet(newSheetId, `Sheet ${fields.length + 1}`);
+    append(newSheet);
+    form.setValue('activeSheetId', newSheetId);
+  };
+
+  const duplicateSheet = () => {
+    if (fields.length >= MAX_SHEETS) {
+      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
+      return;
+    }
+    if (!activeSheet) return;
+    const newSheetId = Date.now().toString();
+    const newSheet = {
+      ...activeSheet,
+      id: newSheetId,
+      name: `${activeSheet.name} (copy)`,
+    };
+    append(newSheet);
+    form.setValue('activeSheetId', newSheetId);
+  };
+
+  const deleteSheet = (sheetId: string) => {
+    if (fields.length <= 1) {
+      alert("You cannot delete the last sheet.");
+      return;
+    }
+    const sheetIndex = fields.findIndex(s => s.id === sheetId);
+    if (sheetIndex > -1) {
+      remove(sheetIndex);
+      if (activeSheetId === sheetId) {
+        const newActiveIndex = Math.max(0, sheetIndex - 1);
+        form.setValue('activeSheetId', fields[newActiveIndex].id);
+      }
+    }
+  };
+
 
   const handleAddRows = () => {
+    if (!activeSheet) return;
     const numRowsToAdd = Number(rowsToAdd) || 1;
-    if (fields.length + numRowsToAdd > MAX_ROWS) {
+    const currentMeasurements = activeSheet.measurements || [];
+    
+    if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
       alert(`You can only add up to ${MAX_ROWS} rows in total.`);
       return;
     }
+    
     const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
-    append(newRows);
+    const updatedMeasurements = [...currentMeasurements, ...newRows];
+    
+    update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
 
   const handleExportMeasurementSheet = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const color = form.getValues('color');
+    if (!activeSheet) return;
+
+    const color = activeSheet.color;
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
     const filename = `measurement-sheet_${timestamp}.pdf`;
     
-    const tableData = fields.map((field, index) => {
-      const length = form.getValues(`measurements.${index}.length`);
-      const width = form.getValues(`measurements.${index}.width`);
+    const tableData = (activeSheet.measurements || []).map((field, index) => {
+      const length = field.length;
+      const width = field.width;
       const area = (parseFloat(length) * parseFloat(width)) / 144;
       return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
     }).filter(row => row[1] && row[2]);
 
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Measurement Sheet`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.text(`Measurement Sheet - ${activeSheet.name}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
@@ -251,15 +332,15 @@ export default function GraniteGridPage() {
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Square Feet: ${calculateTotalSquareFeet().toFixed(2)}`, 14, finalY + 15);
+    doc.text(`Total Square Feet: ${calculateTotalSquareFeetForSheet(activeSheet).toFixed(2)}`, 14, finalY + 15);
     
     doc.save(filename);
   };
-
+  
   if (!isClient) {
     return null; 
   }
-
+  
   return (
     <div className="space-y-4">
       <header className="space-y-2">
@@ -271,24 +352,67 @@ export default function GraniteGridPage() {
       
       <Card>
         <div className="p-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h2 className="text-xl font-semibold">Measurement Data</h2>
-                <div className="flex gap-2 flex-wrap items-center">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <MenuIcon className="mr-2 h-4 w-4" />
+                  Menu
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Sheet Actions</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Add New Sheet</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={duplicateSheet} disabled={fields.length >= MAX_SHEETS}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    <span>Duplicate Current Sheet</span>
+                  </DropdownMenuItem>
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete Current Sheet</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the current sheet. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => activeSheet && deleteSheet(activeSheet.id)}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                   <DropdownMenuItem asChild>
                     <Link href="/bill" passHref>
-                      <Button variant="outline" size="sm">
-                          <Eye className="mr-2" />View Bill
-                      </Button>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Bill
                     </Link>
-                    <Button variant="secondary" size="sm" onClick={handleExportMeasurementSheet}>
-                      <Download className="mr-2" />
-                      Export Sheet
-                    </Button>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportMeasurementSheet}>
+                    <Download className="mr-2 h-4 w-4" />
+                    <span>Export Current Sheet</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuGroup>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="mr-2" />
-                          All Clear
-                        </Button>
+                        <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Clear All Data</span>
+                        </DropdownMenuItem>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -303,52 +427,77 @@ export default function GraniteGridPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                </div>
-            </div>
-             <div className="flex flex-wrap items-center gap-4 mt-4">
-                <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
-                  <Label htmlFor="color" className="whitespace-nowrap">Color Name</Label>
-                  <Input id="color" placeholder="Enter color name" {...form.register('color')} className="w-full" />
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
-                  <span className="text-2xl font-bold">{calculateTotalSquareFeet().toFixed(2)}</span>
-                </div>
-            </div>
+                 </DropdownMenuGroup>
+                 <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-            
-            <div className="mt-4">
-              <GraniteTable
-                  fields={fields}
-                  register={form.register}
-                  errors={form.formState.errors}
-                  control={form.control}
-                  setValue={form.setValue}
-              />
-            </div>
-            <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
-                <div className="flex items-center gap-2">
-                    <Input 
-                        type="number"
-                        value={rowsToAdd}
-                        onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '') {
-                                setRowsToAdd('');
-                            } else {
-                                const num = parseInt(value, 10);
-                                setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
-                            }
-                        }}
-                        className="w-24 h-9"
-                        min="1"
-                    />
-                    <Button variant="secondary" onClick={handleAddRows} disabled={fields.length >= MAX_ROWS}>
-                        <Plus className="mr-2" />
-                        Add Row(s)
-                    </Button>
-                </div>
-            </div>
+          <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
+              <TabsList>
+                {fields.map((sheet, index) => (
+                  <TabsTrigger key={sheet.id} value={sheet.id} className={cn('pr-2', activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    {sheet.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+               {fields.map((sheet, sheetIndex) => (
+                  <TabsContent key={sheet.id} value={sheet.id}>
+                    <div className="flex flex-wrap items-center gap-4 mt-4">
+                      <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
+                        <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
+                        <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-full" />
+                      </div>
+                       <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
+                        <Label htmlFor={`rate-${sheet.id}`} className="whitespace-nowrap">Rate</Label>
+                        <Input id={`rate-${sheet.id}`} type="number" placeholder="Enter rate" {...form.register(`sheets.${sheetIndex}.rate`)} className="w-full" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
+                        <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(sheet).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <GraniteTable
+                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
+                          register={form.register}
+                          errors={form.formState.errors}
+                          control={form.control}
+                          setValue={form.setValue}
+                          sheetIndex={sheetIndex}
+                      />
+                    </div>
+                  </TabsContent>
+               ))}
+          </Tabs>
+
+          <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
+              <div className="flex items-center gap-2">
+                  <Input 
+                      type="number"
+                      value={rowsToAdd}
+                      onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '') {
+                              setRowsToAdd('');
+                          } else {
+                              const num = parseInt(value, 10);
+                              setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
+                          }
+                      }}
+                      className="w-24 h-9"
+                      min="1"
+                  />
+                  <Button variant="secondary" onClick={handleAddRows} disabled={(activeSheet?.measurements?.length ?? 0) >= MAX_ROWS}>
+                      <Plus className="mr-2" />
+                      Add Row(s)
+                  </Button>
+              </div>
+          </div>
         </div>
       </Card>
     </div>

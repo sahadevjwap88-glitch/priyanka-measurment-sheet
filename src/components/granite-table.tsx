@@ -11,15 +11,16 @@ import type { MeasurementRow } from '@/lib/types';
 import React, { useState, useRef } from 'react';
 
 interface GraniteTableProps {
-  fields: FieldArrayWithId<{ measurements: MeasurementRow[] }, 'measurements', 'id'>[];
-  register: UseFormRegister<{ measurements: MeasurementRow[] }>;
-  errors: FieldErrors<{ measurements: MeasurementRow[] }>;
-  control: Control<{ measurements: MeasurementRow[] }>;
-  setValue: (name: any, value: any) => void;
+  fields: { id: string; length: string; width: string; }[];
+  register: UseFormRegister<any>;
+  errors: FieldErrors<any>;
+  control: Control<any>;
+  setValue: (name: any, value: any, options?: any) => void;
+  sheetIndex: number;
 }
 
-export function GraniteTable({ fields, register, errors, control, setValue }: GraniteTableProps) {
-  const measurements = useWatch({ control, name: 'measurements' });
+export function GraniteTable({ fields, register, errors, control, setValue, sheetIndex }: GraniteTableProps) {
+  const measurements = useWatch({ control, name: `sheets.${sheetIndex}.measurements` });
   const [touchSourceIndex, setTouchSourceIndex] = useState<number | null>(null);
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -42,8 +43,8 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
 
             for (let i = start; i <= end; i++) {
                 if (i !== sourceIndex) {
-                    setValue(`measurements.${i}.length`, sourceData.length, { shouldDirty: true });
-                    setValue(`measurements.${i}.width`, sourceData.width, { shouldDirty: true });
+                    setValue(`sheets.${sheetIndex}.measurements.${i}.length`, sourceData.length, { shouldDirty: true });
+                    setValue(`sheets.${sheetIndex}.measurements.${i}.width`, sourceData.width, { shouldDirty: true });
                 }
             }
         }
@@ -122,8 +123,8 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
 
       const rowAbove = measurements[index - 1];
       if (rowAbove && rowAbove.length && rowAbove.width) {
-        setValue(`measurements.${index}.length`, rowAbove.length, { shouldDirty: true });
-        setValue(`measurements.${index}.width`, rowAbove.width, { shouldDirty: true });
+        setValue(`sheets.${sheetIndex}.measurements.${index}.length`, rowAbove.length, { shouldDirty: true });
+        setValue(`sheets.${sheetIndex}.measurements.${index}.width`, rowAbove.width, { shouldDirty: true });
       }
     }
   };
@@ -173,10 +174,10 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                   placeholder="e.g., 102.5"
                   step="0.1"
                   min="0"
-                  {...register(`measurements.${index}.length`)}
+                  {...register(`sheets.${sheetIndex}.measurements.${index}.length`)}
                   className={cn(
                     'w-full text-sm h-9 border bg-card',
-                    errors.measurements?.[index]?.length && 'border-destructive'
+                    errors.sheets?.[sheetIndex]?.measurements?.[index]?.length && 'border-destructive'
                   )}
                 />
               </TableCell>
@@ -186,10 +187,10 @@ export function GraniteTable({ fields, register, errors, control, setValue }: Gr
                   placeholder="e.g., 48.2"
                   step="0.1"
                   min="0"
-                  {...register(`measurements.${index}.width`)}
+                  {...register(`sheets.${sheetIndex}.measurements.${index}.width`)}
                   className={cn(
                     'w-full text-sm h-9 border bg-card',
-                    errors.measurements?.[index]?.width && 'border-destructive'
+                    errors.sheets?.[sheetIndex]?.measurements?.[index]?.width && 'border-destructive'
                   )}
                 />
               </TableCell>
