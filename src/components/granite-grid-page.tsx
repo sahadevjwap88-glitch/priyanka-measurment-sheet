@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, Share2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -244,22 +244,19 @@ export default function GraniteGridPage() {
     return totalArea;
   }, [isClient, getValidDataForSheet]);
 
-  const handleDownloadSheetPdf = useCallback(() => {
+  const generateSheetPdfDoc = useCallback(() => {
     const allSheets = watchedData.sheets || [];
-    if (allSheets.length === 0) return;
+    if (allSheets.length === 0) return null;
 
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    const date = new Date();
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `sheets_${timestamp}.pdf`;
-    
     let isFirstPage = true;
+    let hasData = false;
 
     allSheets.forEach(sheet => {
       const validData = getValidDataForSheet(sheet);
-
       if (validData.length === 0) return;
 
+      hasData = true;
       if (!isFirstPage) {
         doc.addPage();
       }
@@ -290,12 +287,49 @@ export default function GraniteGridPage() {
       });
     });
 
-    if (!isFirstPage) {
+    return hasData ? doc : null;
+  }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet]);
+
+  const handleDownloadSheetPdf = useCallback(() => {
+    const doc = generateSheetPdfDoc();
+    if (doc) {
+      const date = new Date();
+      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+      const filename = `sheets_${timestamp}.pdf`;
       doc.save(filename);
     } else {
       alert("No measurement data to export.");
     }
-  }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet]);
+  }, [generateSheetPdfDoc]);
+  
+  const handleShareSheetPdf = async () => {
+    const doc = generateSheetPdfDoc();
+    if (!doc) {
+      alert("No measurement data to share.");
+      return;
+    }
+    
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `sheets_${timestamp}.pdf`;
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({
+          files: [pdfFile],
+          title: 'Granite Measurement Sheets',
+          text: 'Here are the granite measurement sheets.',
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        alert('Could not share the file. Please try downloading instead.');
+      }
+    } else {
+      alert('Sharing files is not supported on this browser. Please use a mobile browser like Chrome or Safari, or download the file.');
+    }
+  };
 
   const handleClearAll = (removeFromStorage = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
@@ -453,6 +487,10 @@ export default function GraniteGridPage() {
                   <FileDown className="mr-2 h-4 w-4" />
                   Download
                 </Button>
+                 <Button variant="default" onClick={handleShareSheetPdf} size="sm">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
                 <Link href="/bill" passHref>
                   <Button variant="default" size="sm">
                     <Eye className="mr-2 h-4 w-4" />
@@ -542,8 +580,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
-
-    
-
