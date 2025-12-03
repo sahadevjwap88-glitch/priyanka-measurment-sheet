@@ -441,7 +441,7 @@ export default function GraniteGridPage() {
                         <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-full" />
                       </div>
                        <div className="flex items-center gap-2 flex-grow" style={{maxWidth: '20rem'}}>
-                        <Label htmlFor={`rate-${sheet.id}`} className="whitespace-nowrap">Rate</Label>
+                        <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
                         <Input id={`rate-${sheet.id}`} type="number" placeholder="Enter rate" {...form.register(`sheets.${sheetIndex}.rate`)} className="w-full" />
                       </div>
                       <div>
@@ -451,11 +451,11 @@ export default function GraniteGridPage() {
                     </div>
                     <div className="mt-4">
                       <GraniteTable
-                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` })),
-                          register={form.register},
-                          errors={form.formState.errors},
-                          control={form.control},
-                          setValue={form.setValue},
+                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
+                          register={form.register}
+                          errors={form.formState.errors}
+                          control={form.control}
+                          setValue={form.setValue}
                           sheetIndex={sheetIndex}
                       />
                     </div>
