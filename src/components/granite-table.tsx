@@ -130,7 +130,7 @@ export function GraniteTable({ fields, register, errors, control, setValue, shee
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-hidden">
       <Table>
         <TableHeader>
           <TableRow>
