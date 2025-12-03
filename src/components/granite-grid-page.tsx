@@ -298,17 +298,17 @@ export default function GraniteGridPage() {
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
 
-  const handleExportMeasurementSheet = () => {
+  const handleExportMeasurementSheet = (sheetToExport: Sheet) => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
-    if (!activeSheet) return;
+    if (!sheetToExport) return;
 
-    const color = activeSheet.color;
+    const color = sheetToExport.color;
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
     const filename = `measurement-sheet_${timestamp}.pdf`;
     
-    const tableData = (activeSheet.measurements || []).map((field, index) => {
+    const tableData = (sheetToExport.measurements || []).map((field, index) => {
       const length = field.length;
       const width = field.width;
       const area = (parseFloat(length) * parseFloat(width)) / 144;
@@ -317,7 +317,7 @@ export default function GraniteGridPage() {
 
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Measurement Sheet - ${activeSheet.name}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.text(`Measurement Sheet - ${sheetToExport.name}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
@@ -345,7 +345,7 @@ export default function GraniteGridPage() {
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Square Feet: ${calculateTotalSquareFeetForSheet(activeSheet).toFixed(2)}`, 14, finalY + 15);
+    doc.text(`Total Square Feet: ${calculateTotalSquareFeetForSheet(sheetToExport).toFixed(2)}`, 14, finalY + 15);
     
     doc.save(filename);
   };
@@ -444,7 +444,7 @@ export default function GraniteGridPage() {
                     View Bill
                   </Button>
                 </Link>
-                <Button onClick={handleExportMeasurementSheet}>
+                <Button onClick={() => activeSheet && handleExportMeasurementSheet(activeSheet)}>
                   <Download className="mr-2 h-4 w-4" />
                   Export Sheet
                 </Button>
