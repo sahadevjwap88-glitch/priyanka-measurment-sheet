@@ -175,29 +175,20 @@ export default function GraniteGridPage() {
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
 
-          const newActiveSheetId = parsedData.activeSheetId || cleanedSheets[0].id;
+          const newActiveSheetId = parsedData.activeSheetId && cleanedSheets.some((s: Sheet) => s.id === parsedData.activeSheetId) 
+              ? parsedData.activeSheetId 
+              : cleanedSheets[0]?.id;
+
           form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
         } else {
-           const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
-           form.reset({
-              sheets: [newSheet],
-              activeSheetId: newSheet.id,
-           });
+           handleClearAll(false);
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
-        const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
-        form.reset({
-           sheets: [newSheet],
-           activeSheetId: newSheet.id,
-        });
+        handleClearAll(false);
       }
     } else {
-        const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
-        form.reset({
-           sheets: [newSheet],
-           activeSheetId: newSheet.id,
-        });
+        handleClearAll(false);
     }
   }, [form]);
 
@@ -286,13 +277,15 @@ export default function GraniteGridPage() {
     }
   }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet]);
 
-  const handleClearAll = () => {
+  const handleClearAll = (removeFromStorage = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
     form.reset({
       sheets: [newSheet],
       activeSheetId: newSheet.id,
     });
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    if (removeFromStorage) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
   };
   
   const addSheet = () => {
@@ -356,7 +349,7 @@ export default function GraniteGridPage() {
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="default" size="sm">
                       <MenuIcon className="mr-2 h-4 w-4" />
                       Menu
                     </Button>
@@ -407,7 +400,7 @@ export default function GraniteGridPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleClearAll}>Continue</AlertDialogAction>
+                              <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -419,12 +412,12 @@ export default function GraniteGridPage() {
                       </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" onClick={handleDownloadSheetPdf} size="sm">
+                <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2 h-4 w-4" />
                   Download
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="outline" size="sm">
+                  <Button variant="default" size="sm">
                     <Eye className="mr-2 h-4 w-4" />
                     Bill
                   </Button>
@@ -504,6 +497,8 @@ export default function GraniteGridPage() {
     
 
 
+
+    
 
     
 
