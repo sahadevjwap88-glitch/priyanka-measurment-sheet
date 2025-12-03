@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Download, Trash2, Copy, Settings, Menu as MenuIcon } from 'lucide-react';
+import { Plus, Eye, Trash2, Copy, Settings, Menu as MenuIcon } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -159,8 +159,8 @@ export default function GraniteGridPage() {
   const watchedSheets = useWatch({ control: form.control, name: 'sheets' });
   const activeSheetId = useWatch({ control: form.control, name: 'activeSheetId' });
   
-  const activeSheetIndex = watchedSheets.findIndex(s => s.id === activeSheetId);
-  const activeSheet = activeSheetIndex !== -1 ? watchedSheets[activeSheetIndex] : undefined;
+  const activeSheetIndex = fields.findIndex(s => s.id === activeSheetId);
+  const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
   
   useEffect(() => {
     setIsClient(true);
@@ -297,58 +297,6 @@ export default function GraniteGridPage() {
     
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
-
-  const handleExportMeasurementSheet = (sheetToExport: Sheet) => {
-    const doc = new jsPDF() as jsPDFWithAutoTable;
-    if (!sheetToExport) return;
-
-    const color = sheetToExport.color;
-    const date = new Date();
-    const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `measurement-sheet_${timestamp}.pdf`;
-    
-    const tableData = (sheetToExport.measurements || []).map((field, index) => {
-      const length = field.length;
-      const width = field.width;
-      const area = (parseFloat(length) * parseFloat(width)) / 144;
-      return [index + 1, length, width, isNaN(area) ? '0.00' : area.toFixed(2)];
-    }).filter(row => row[1] && row[2]);
-
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Measurement Sheet - ${sheetToExport.name}`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Date: ${today}`, doc.internal.pageSize.width - 20, 30, { align: 'right' });
-    if(color){
-      doc.text(`Color: ${color}`, 14, 30);
-    }
-    
-    doc.autoTable({
-        head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
-        body: tableData,
-        startY: 40,
-        theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold', fontSize: 12 },
-        styles: { fontSize: 11, cellPadding: 2 },
-        columnStyles: {
-            0: { halign: 'center' },
-            1: { halign: 'right' },
-            2: { halign: 'right' },
-            3: { halign: 'right' },
-        }
-    });
-    
-    let finalY = (doc as any).lastAutoTable.finalY;
-    
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Square Feet: ${calculateTotalSquareFeetForSheet(sheetToExport).toFixed(2)}`, 14, finalY + 15);
-    
-    doc.save(filename);
-  };
   
   if (!isClient) {
     return null; 
@@ -381,13 +329,13 @@ export default function GraniteGridPage() {
                         <Plus className="mr-2 h-4 w-4" />
                         <span>Add New Sheet</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={duplicateSheet} disabled={fields.length >= MAX_SHEETS}>
+                      <DropdownMenuItem onClick={duplicateSheet} disabled={!activeSheet || fields.length >= MAX_SHEETS}>
                         <Copy className="mr-2 h-4 w-4" />
                         <span>Duplicate Current Sheet</span>
                       </DropdownMenuItem>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
-                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={!activeSheet || fields.length <= 1}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Delete Current Sheet</span>
                             </DropdownMenuItem>
@@ -444,10 +392,6 @@ export default function GraniteGridPage() {
                     View Bill
                   </Button>
                 </Link>
-                <Button onClick={() => activeSheet && handleExportMeasurementSheet(activeSheet)}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Sheet
-                </Button>
             </div>
           </div>
 
@@ -472,7 +416,7 @@ export default function GraniteGridPage() {
                       </div>
                       <div>
                         <span className="text-sm font-bold text-foreground">Total Square Feet: </span>
-                        <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(sheet).toFixed(2)}</span>
+                        <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="mt-4">
