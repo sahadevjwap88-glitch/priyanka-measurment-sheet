@@ -7,11 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
+import { LOCAL_STORAGE_KEY, SETTINGS_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, FileDown } from 'lucide-react';
+import { Download, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,6 +48,8 @@ type Sheet = z.infer<typeof sheetSchema>;
 export default function BillPage() {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
+  const [showLabourCharges, setShowLabourCharges] = useState(true);
+  const [showTransportCharges, setShowTransportCharges] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -76,6 +78,12 @@ export default function BillPage() {
         console.error("Failed to parse data from localStorage", error);
       }
     }
+    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+    if (savedSettings) {
+      const { showLabourCharges, showTransportCharges } = JSON.parse(savedSettings);
+      setShowLabourCharges(showLabourCharges);
+      setShowTransportCharges(showTransportCharges);
+    }
   }, [form]);
   
   useEffect(() => {
@@ -99,11 +107,11 @@ export default function BillPage() {
   const totalAreaAllSheets = watchedData.sheets?.reduce((acc, sheet) => acc + calculateTotalSquareFeetForSheet(sheet), 0) || 0;
 
   useEffect(() => {
-    if (!labourManuallyEdited && isClient) {
+    if (!labourManuallyEdited && isClient && showLabourCharges) {
       const calculatedLabour = Math.max(200, totalAreaAllSheets * 3);
       form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
     }
-  }, [totalAreaAllSheets, isClient, labourManuallyEdited, form]);
+  }, [totalAreaAllSheets, isClient, labourManuallyEdited, form, showLabourCharges]);
 
   const subtotalAllSheets = watchedData.sheets?.reduce((acc, sheet) => {
     const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
@@ -111,8 +119,8 @@ export default function BillPage() {
     return acc + (area * rate);
   }, 0) || 0;
 
-  const labourCharges = watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
-  const transportCharges = watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
+  const labourCharges = showLabourCharges && watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
+  const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
   const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
 
   const handleExportPdf = () => {
@@ -174,15 +182,21 @@ export default function BillPage() {
     finalY = (doc as any).lastAutoTable.finalY;
 
     // Grand Totals
-    const summaryData = [
+    const summaryRows = [
       [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${subtotalAllSheets.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
-      ['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`],
-      ['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`],
-      [{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]
     ];
+
+    if (showLabourCharges) {
+      summaryRows.push(['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`]);
+    }
+    if (showTransportCharges) {
+      summaryRows.push(['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`]);
+    }
+
+    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
     
     doc.autoTable({
-        body: summaryData,
+        body: summaryRows,
         startY: finalY + 10,
         theme: 'plain',
         columnStyles: { 0: {cellWidth: 145, fontStyle: 'bold'}, 1: { halign: 'right' } },
@@ -245,23 +259,27 @@ export default function BillPage() {
                     <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
                     <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
                 </div>
-                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
-                    <Label htmlFor="labourCharges">Labour Charges</Label>
-                    <Input 
-                      id="labourCharges" 
-                      type="number" 
-                      placeholder="Enter labour charges" 
-                      {...form.register('labourCharges')}
-                      onChange={(e) => {
-                        form.setValue('labourCharges', e.target.value);
-                        setLabourManuallyEdited(true);
-                      }}
-                    />
-                </div>
-                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
-                    <Label htmlFor="transportCharges">Transport Charges</Label>
-                    <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
-                </div>
+                {showLabourCharges && (
+                  <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                      <Label htmlFor="labourCharges">Labour Charges</Label>
+                      <Input 
+                        id="labourCharges" 
+                        type="number" 
+                        placeholder="Enter labour charges" 
+                        {...form.register('labourCharges')}
+                        onChange={(e) => {
+                          form.setValue('labourCharges', e.target.value);
+                          setLabourManuallyEdited(true);
+                        }}
+                      />
+                  </div>
+                )}
+                {showTransportCharges && (
+                  <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                      <Label htmlFor="transportCharges">Transport Charges</Label>
+                      <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -308,14 +326,18 @@ export default function BillPage() {
                     </div>
                     <Separator />
                     <div className="space-y-2">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Labour Charges</span>
-                            <span className="font-medium">₹{labourCharges.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Transport Charges</span>
-                            <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
-                        </div>
+                        {showLabourCharges && (
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Labour Charges</span>
+                              <span className="font-medium">₹{labourCharges.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {showTransportCharges && (
+                          <div className="flex justify-between items-center text-sm">
+                              <span className="text-muted-foreground">Transport Charges</span>
+                              <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
+                          </div>
+                        )}
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">

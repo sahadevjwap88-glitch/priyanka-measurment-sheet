@@ -26,6 +26,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,6 +42,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 
@@ -67,6 +75,7 @@ const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 const MAX_SHEETS = 4;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
+export const SETTINGS_KEY = 'priyanka-granite-settings';
 
 const createNewSheet = (id: string, name: string): Sheet => ({
   id,
@@ -144,6 +153,8 @@ function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
 export default function GraniteGridPage() {
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   const [isClient, setIsClient] = useState(false);
+  const [showLabourCharges, setShowLabourCharges] = useState(true);
+  const [showTransportCharges, setShowTransportCharges] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -186,6 +197,13 @@ export default function GraniteGridPage() {
     } else {
         handleClearAll(false);
     }
+
+    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+    if (savedSettings) {
+      const { showLabourCharges, showTransportCharges } = JSON.parse(savedSettings);
+      setShowLabourCharges(showLabourCharges);
+      setShowTransportCharges(showTransportCharges);
+    }
   }, []);
 
   useEffect(() => {
@@ -196,6 +214,12 @@ export default function GraniteGridPage() {
       return () => subscription.unsubscribe();
     }
   }, [isClient, form]);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ showLabourCharges, showTransportCharges }));
+    }
+  }, [showLabourCharges, showTransportCharges, isClient]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -402,10 +426,47 @@ export default function GraniteGridPage() {
                         </AlertDialog>
                      </DropdownMenuGroup>
                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Settings</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="show-labour" className="flex flex-col space-y-1">
+                                <span>Show Labour Charges</span>
+                                <span className="font-normal leading-snug text-muted-foreground">
+                                  Enable or disable the labour charges field on the bill page.
+                                </span>
+                              </Label>
+                              <Switch
+                                id="show-labour"
+                                checked={showLabourCharges}
+                                onCheckedChange={setShowLabourCharges}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="show-transport" className="flex flex-col space-y-1">
+                                <span>Show Transport Charges</span>
+                                <span className="font-normal leading-snug text-muted-foreground">
+                                  Enable or disable the transport charges field on the bill page.
+                                </span>
+                              </Label>
+                              <Switch
+                                id="show-transport"
+                                checked={showTransportCharges}
+                                onCheckedChange={setShowTransportCharges}
+                              />
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
@@ -489,5 +550,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
