@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY, SETTINGS_KEY } from '@/components/granite-grid-page'
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,12 +123,10 @@ export default function BillPage() {
   const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
   const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
 
-  const handleExportPdf = () => {
+  const generatePdfDoc = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `bill_${timestamp}.pdf`;
     
     // Party Details
     const details = [
@@ -205,9 +203,41 @@ export default function BillPage() {
     doc.setTextColor(150);
     doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
 
+    return doc;
+  };
+
+  const handleExportPdf = () => {
+    const doc = generatePdfDoc();
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `bill_${timestamp}.pdf`;
     doc.save(filename);
   };
   
+  const handleShareToWhatsApp = async () => {
+    const doc = generatePdfDoc();
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `bill_${timestamp}.pdf`;
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({
+          files: [pdfFile],
+          title: `Bill - ${watchedData?.partyName || ''}`,
+          text: `Here is the bill for ${watchedData?.partyName || 'your purchase'}.`,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        alert('Could not share the file. Please try downloading instead.');
+      }
+    } else {
+      alert('Sharing files is not supported on this browser. Please use a mobile browser like Chrome or Safari, or download the file.');
+    }
+  };
+
   if (!isClient) {
     return null;
   }
@@ -237,6 +267,10 @@ export default function BillPage() {
             <Button onClick={handleExportPdf}>
                 <Download className="mr-2" />
                 Export PDF
+            </Button>
+            <Button onClick={handleShareToWhatsApp}>
+                <Share2 className="mr-2" />
+                Share
             </Button>
           </div>
         </header>
@@ -351,3 +385,5 @@ export default function BillPage() {
     </div>
   );
 }
+
+    
