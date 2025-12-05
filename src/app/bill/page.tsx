@@ -231,6 +231,7 @@ export default function BillPage() {
     doc.setFontSize(10);
     doc.setTextColor(150);
     doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
+    doc.text("sahadev jaat", pageWidth / 2, finalY + 25, { align: 'center' });
 
     return doc;
   };
@@ -408,11 +409,14 @@ export default function BillPage() {
           
           <div className="mt-8 text-center text-xs text-muted-foreground">
               <p>Thank you for your business!</p>
+              <p>sahadev jaat</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+    
 
     
