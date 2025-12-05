@@ -605,31 +605,38 @@ export default function GraniteGridPage() {
 
           <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
               <TabsList>
-                {fields.map((sheet, index) => (
-                  <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
-                    {sheet.name}
+                {fields.map((sheet) => (
+                  <div key={sheet.id} className="relative">
+                    <TabsTrigger value={sheet.id} className={cn("pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                      {sheet.name}
+                    </TabsTrigger>
                     {fields.length > 1 && (
                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="absolute right-0.5 h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                                  <X className="h-4 w-4" />
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete {sheet.name}?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      Are you sure you want to delete this sheet? This action cannot be undone.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteSheet(sheet.id)}>Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0.5 top-0.5 h-6 w-6"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete {sheet.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this sheet? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteSheet(sheet.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
                       </AlertDialog>
                     )}
-                  </TabsTrigger>
+                  </div>
                 ))}
               </TabsList>
                {fields.map((sheet, sheetIndex) => (
@@ -707,6 +714,8 @@ export default function GraniteGridPage() {
 
 
 
+
+    
 
     
 
