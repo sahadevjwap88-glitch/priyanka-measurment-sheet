@@ -360,8 +360,8 @@ export default function GraniteGridPage() {
               <div className="flex items-center gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" className="h-7 px-1.5 text-xs">
-                      <MenuIcon className="mr-1 h-3 w-3" />
+                    <Button variant="default">
+                      <MenuIcon className="mr-2" />
                       Menu
                     </Button>
                   </DropdownMenuTrigger>
@@ -497,13 +497,13 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="default" onClick={handleDownloadSheetPdf} className="h-7 px-1.5 text-xs">
-                  <FileDown className="mr-1 h-3 w-3" />
+                <Button variant="default" onClick={handleDownloadSheetPdf}>
+                  <FileDown className="mr-2" />
                   Download
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="default" className="h-7 px-1.5 text-xs">
-                    <Eye className="mr-1 h-3 w-3" />
+                  <Button variant="default">
+                    <Eye className="mr-2" />
                     Bill
                   </Button>
                 </Link>
@@ -513,10 +513,31 @@ export default function GraniteGridPage() {
           <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
               <TabsList>
                 {fields.map((sheet, sheetIndex) => (
-                  <div key={sheet.id} className="relative">
-                    <TabsTrigger value={sheet.id} className={cn("pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                  <div key={sheet.id} className="relative group">
+                    <TabsTrigger value={sheet.id} className={cn("pr-2", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
                     </TabsTrigger>
+                    {fields.length > 1 && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 opacity-0 group-hover:opacity-100">
+                              <X className="h-3 w-3" />
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete {sheet.name}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this sheet and all its data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteSheet(sheet.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 ))}
               </TabsList>
