@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X, Share2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -347,35 +347,6 @@ export default function GraniteGridPage() {
       alert("No measurement data to export.");
     }
   }, [generateSheetPdfDoc]);
-  
-  const handleShareSheetPdf = async () => {
-    const doc = generateSheetPdfDoc();
-    if (!doc) {
-      alert("No measurement data to share.");
-      return;
-    }
-    
-    const date = new Date();
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `sheets_${timestamp}.pdf`;
-    const pdfBlob = doc.output('blob');
-    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-
-    if (window.isSecureContext && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      try {
-        await navigator.share({
-          files: [pdfFile],
-          title: 'Granite Measurement Sheets',
-          text: 'Here are the granite measurement sheets.',
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        alert('Could not share the file. Please try downloading instead.');
-      }
-    } else {
-      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari on HTTPS, or download the file.');
-    }
-  };
 
   const handleClearAll = (removeFromStorage = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
@@ -589,10 +560,6 @@ export default function GraniteGridPage() {
                 <Button variant="default" onClick={handleDownloadSheetPdf} className="h-7 px-1.5 text-xs">
                   <FileDown className="mr-1 h-3 w-3" />
                   Download
-                </Button>
-                <Button variant="default" onClick={handleShareSheetPdf} className="h-7 px-1.5 text-xs">
-                  <Share2 className="mr-1 h-3 w-3" />
-                  Share
                 </Button>
                 <Link href="/bill" passHref>
                   <Button variant="default" className="h-7 px-1.5 text-xs">
