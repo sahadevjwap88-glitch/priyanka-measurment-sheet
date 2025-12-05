@@ -44,6 +44,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const measurementSchema = z.object({
@@ -86,7 +87,7 @@ const createNewSheet = (id: string, name: string): Sheet => ({
 });
 
 const defaultValues: FormValues = {
-  sheets: [],
+  sheets: [createNewSheet(Date.now().toString(), 'Sheet 1')],
   activeSheetId: undefined,
 };
 
@@ -158,6 +159,12 @@ export default function GraniteGridPage() {
   const [labourRate, setLabourRate] = useState(3);
   const [minLabourCharges, setMinLabourCharges] = useState(200);
 
+  // New settings state
+  const [businessName, setBusinessName] = useState('Priyanka Granite');
+  const [contactName, setContactName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [address, setAddress] = useState('');
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -171,7 +178,7 @@ export default function GraniteGridPage() {
 
   const watchedData = useWatch({ control: form.control });
   const watchedSheets = watchedData.sheets || [];
-  const activeSheetId = watchedData.activeSheetId;
+  const activeSheetId = watchedData.activeSheetId || watchedSheets[0]?.id;
   
   const activeSheetIndex = fields.findIndex(s => s.id === activeSheetId);
   const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
@@ -187,7 +194,8 @@ export default function GraniteGridPage() {
             ...sheet,
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
-          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: parsedData.activeSheetId || cleanedSheets[0]?.id });
+          const initialActiveId = parsedData.activeSheetId || cleanedSheets[0]?.id;
+          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: initialActiveId });
         } else {
            handleClearAll(false);
         }
@@ -202,11 +210,15 @@ export default function GraniteGridPage() {
     const savedSettings = localStorage.getItem(SETTINGS_KEY);
     if (savedSettings) {
       try {
-        const { showLabourCharges, showTransportCharges, labourRate, minLabourCharges } = JSON.parse(savedSettings);
-        setShowLabourCharges(showLabourCharges);
-        setShowTransportCharges(showTransportCharges);
-        if (labourRate) setLabourRate(labourRate);
-        if (minLabourCharges) setMinLabourCharges(minLabourCharges);
+        const parsedSettings = JSON.parse(savedSettings);
+        setShowLabourCharges(parsedSettings.showLabourCharges);
+        setShowTransportCharges(parsedSettings.showTransportCharges);
+        if (parsedSettings.labourRate) setLabourRate(parsedSettings.labourRate);
+        if (parsedSettings.minLabourCharges) setMinLabourCharges(parsedSettings.minLabourCharges);
+        if (parsedSettings.businessName) setBusinessName(parsedSettings.businessName);
+        if (parsedSettings.contactName) setContactName(parsedSettings.contactName);
+        if (parsedSettings.phoneNumber) setPhoneNumber(parsedSettings.phoneNumber);
+        if (parsedSettings.address) setAddress(parsedSettings.address);
       } catch (error) {
         console.error("Failed to parse settings from localStorage", error);
       }
@@ -224,9 +236,18 @@ export default function GraniteGridPage() {
 
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ showLabourCharges, showTransportCharges, labourRate, minLabourCharges }));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ 
+        showLabourCharges, 
+        showTransportCharges, 
+        labourRate, 
+        minLabourCharges,
+        businessName,
+        contactName,
+        phoneNumber,
+        address
+      }));
     }
-  }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, isClient]);
+  }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, businessName, contactName, phoneNumber, address, isClient]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -269,20 +290,29 @@ export default function GraniteGridPage() {
       }
       isFirstPage = false;
       
+      // Business Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(businessName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const contactInfo = [contactName, phoneNumber, address].filter(Boolean).join(' | ');
+      doc.text(contactInfo, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       const sheetTitle = `${sheet.name} - ${sheet.color || 'N/A'}`;
-      doc.text(sheetTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      doc.text(sheetTitle, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
       
       const totalArea = calculateTotalSquareFeetForSheet(sheet);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(`SFT: ${totalArea.toFixed(2)}`, 14, 25);
+      doc.text(`SFT: ${totalArea.toFixed(2)}`, 14, 45);
       
       doc.autoTable({
         head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
         body: validData.map(m => [m.sno, m.length.toFixed(2), m.width.toFixed(2), m.area.toFixed(2)]),
-        startY: 30,
+        startY: 50,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
         columnStyles: {
@@ -295,7 +325,7 @@ export default function GraniteGridPage() {
     });
 
     return hasData ? doc : null;
-  }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet]);
+  }, [watchedData.sheets, getValidDataForSheet, calculateTotalSquareFeetForSheet, businessName, contactName, phoneNumber, address]);
 
   const handleDownloadSheetPdf = useCallback(() => {
     const doc = generateSheetPdfDoc();
@@ -400,7 +430,7 @@ export default function GraniteGridPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-3">
           <GraniteIcon />
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-destructive">Priyanka Granite</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-destructive">{businessName}</h1>
         </div>
       </header>
       
@@ -454,11 +484,48 @@ export default function GraniteGridPage() {
                             <span>Settings</span>
                           </DropdownMenuItem>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-[425px]">
                           <DialogHeader>
                             <DialogTitle>Settings</DialogTitle>
                           </DialogHeader>
-                          <div className="grid gap-4 py-4">
+                          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                            <div className="space-y-2">
+                               <Label htmlFor="business-name">Business Name</Label>
+                               <Input
+                                id="business-name"
+                                value={businessName}
+                                onChange={(e) => setBusinessName(e.target.value)}
+                                placeholder="e.g., Priyanka Granite"
+                               />
+                            </div>
+                             <div className="space-y-2">
+                               <Label htmlFor="contact-name">Name</Label>
+                               <Input
+                                id="contact-name"
+                                value={contactName}
+                                onChange={(e) => setContactName(e.target.value)}
+                                placeholder="Enter your name"
+                               />
+                            </div>
+                             <div className="space-y-2">
+                               <Label htmlFor="phone-number">Phone Number</Label>
+                               <Input
+                                id="phone-number"
+                                type="tel"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                placeholder="Enter phone number"
+                               />
+                            </div>
+                            <div className="space-y-2">
+                               <Label htmlFor="address">Address</Label>
+                               <Textarea
+                                id="address"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="Enter business address"
+                               />
+                            </div>
                             <div className="flex items-center justify-between">
                               <Label htmlFor="show-labour" className="flex flex-col space-y-1">
                                 <span>Show Labour Charges</span>
@@ -513,10 +580,6 @@ export default function GraniteGridPage() {
                 <Button variant="default" onClick={handleDownloadSheetPdf} className="h-7 px-1.5 text-xs">
                   <FileDown className="mr-1 h-3 w-3" />
                   Download
-                </Button>
-                 <Button variant="default" onClick={handleShareSheetPdf} className="h-7 px-1.5 text-xs">
-                  <Share2 className="mr-1 h-3 w-3" />
-                  Share
                 </Button>
                 <Link href="/bill" passHref>
                   <Button variant="default" className="h-7 px-1.5 text-xs">

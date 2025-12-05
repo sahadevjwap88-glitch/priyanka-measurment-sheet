@@ -48,10 +48,17 @@ type Sheet = z.infer<typeof sheetSchema>;
 export default function BillPage() {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
+  
+  // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
   const [showTransportCharges, setShowTransportCharges] = useState(true);
   const [labourRate, setLabourRate] = useState(3);
   const [minLabourCharges, setMinLabourCharges] = useState(200);
+  const [businessName, setBusinessName] = useState('Priyanka Granite');
+  const [contactName, setContactName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [address, setAddress] = useState('');
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,11 +89,19 @@ export default function BillPage() {
     }
     const savedSettings = localStorage.getItem(SETTINGS_KEY);
     if (savedSettings) {
-      const { showLabourCharges, showTransportCharges, labourRate, minLabourCharges } = JSON.parse(savedSettings);
-      setShowLabourCharges(showLabourCharges);
-      setShowTransportCharges(showTransportCharges);
-      if (labourRate) setLabourRate(labourRate);
-      if (minLabourCharges) setMinLabourCharges(minLabourCharges);
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setShowLabourCharges(parsedSettings.showLabourCharges);
+        setShowTransportCharges(parsedSettings.showTransportCharges);
+        if (parsedSettings.labourRate) setLabourRate(parsedSettings.labourRate);
+        if (parsedSettings.minLabourCharges) setMinLabourCharges(parsedSettings.minLabourCharges);
+        if (parsedSettings.businessName) setBusinessName(parsedSettings.businessName);
+        if (parsedSettings.contactName) setContactName(parsedSettings.contactName);
+        if (parsedSettings.phoneNumber) setPhoneNumber(parsedSettings.phoneNumber);
+        if (parsedSettings.address) setAddress(parsedSettings.address);
+      } catch (error) {
+        console.error("Failed to parse settings from localStorage", error);
+      }
     }
   }, [form]);
   
@@ -132,6 +147,16 @@ export default function BillPage() {
     const date = new Date();
     const today = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     
+    // Business Header
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(businessName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const contactInfo = [contactName, phoneNumber, address].filter(Boolean).join(' | ');
+    doc.text(contactInfo, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+
+
     // Party Details
     const details = [
         [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, watchedData?.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, today],
@@ -140,7 +165,7 @@ export default function BillPage() {
 
     doc.autoTable({
         body: details,
-        startY: 20,
+        startY: 30,
         theme: 'plain',
         styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: { 
@@ -218,30 +243,6 @@ export default function BillPage() {
     doc.save(filename);
   };
   
-  const handleShareToWhatsApp = async () => {
-    const doc = generatePdfDoc();
-    const date = new Date();
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `bill_${timestamp}.pdf`;
-    const pdfBlob = doc.output('blob');
-    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-    
-    if (window.isSecureContext && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      try {
-        await navigator.share({
-          files: [pdfFile],
-          title: `Bill - ${watchedData?.partyName || ''}`,
-          text: `Here is the bill for ${watchedData?.partyName || 'your purchase'}.`,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        alert('Could not share the file. Please try downloading instead.');
-      }
-    } else {
-      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari, or download the file.');
-    }
-  };
-
   if (!isClient) {
     return null;
   }
@@ -271,10 +272,6 @@ export default function BillPage() {
             <Button onClick={handleExportPdf} size="sm">
                 <Download className="mr-2" />
                 Export PDF
-            </Button>
-            <Button onClick={handleShareToWhatsApp} size="sm">
-                <Share2 className="mr-2" />
-                Share
             </Button>
           </div>
         </header>
@@ -389,7 +386,5 @@ export default function BillPage() {
     </div>
   );
 }
-
-    
 
     
