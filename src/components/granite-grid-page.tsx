@@ -279,10 +279,12 @@ export default function GraniteGridPage() {
   const handleDownloadSheetPdf = useCallback(() => {
     const doc = generateSheetPdfDoc();
     if (doc) {
-      const date = new Date();
-      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-      const filename = `sheets_${timestamp}.pdf`;
-      doc.save(filename);
+      const pdfDataUri = doc.output('dataurlstring');
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
+        newWindow.document.title = `sheets_${Date.now()}.pdf`;
+      }
     } else {
       alert("No measurement data to export.");
     }
@@ -360,7 +362,7 @@ export default function GraniteGridPage() {
               <div className="flex items-center gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default">
+                    <Button variant="default" size="lg">
                       <MenuIcon className="mr-2" />
                       Menu
                     </Button>
@@ -497,12 +499,12 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="default" onClick={handleDownloadSheetPdf}>
+                <Button variant="default" size="lg" onClick={handleDownloadSheetPdf}>
                   <FileDown className="mr-2" />
                   Download
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="default">
+                  <Button variant="default" size="lg">
                     <Eye className="mr-2" />
                     Bill
                   </Button>

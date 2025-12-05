@@ -238,10 +238,12 @@ export default function BillPage() {
 
   const handleExportPdf = () => {
     const doc = generatePdfDoc();
-    const date = new Date();
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `bill_${timestamp}.pdf`;
-    doc.save(filename);
+    const pdfDataUri = doc.output('dataurlstring');
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
+      newWindow.document.title = `bill_${Date.now()}.pdf`;
+    }
   };
   
 
@@ -266,12 +268,12 @@ export default function BillPage() {
           <h1 className="text-3xl font-bold">Bill Details</h1>
           <div className="flex gap-2">
             <Link href="/" passHref>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="lg">
                   <ArrowLeft className="mr-2" />
                   Back
               </Button>
             </Link>
-            <Button onClick={handleExportPdf} size="sm">
+            <Button onClick={handleExportPdf} size="lg">
                 <Download className="mr-2" />
                 Export PDF
             </Button>
