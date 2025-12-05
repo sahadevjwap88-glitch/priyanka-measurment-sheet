@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X, Share2 } from 'lucide-react';
+import { Plus, Eye, Settings, Menu as MenuIcon, FileDown, X, Share2, Trash2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -377,8 +377,8 @@ export default function GraniteGridPage() {
   return (
     <div className="space-y-4">
       <header className="space-y-2">
-        <div className="flex items-center justify-center gap-3">
-          <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-destructive">{businessName}</h1>
+        <div className="flex items-end justify-start">
+          <h1 className="text-xl md:text-2xl font-serif font-bold tracking-tight text-destructive">{businessName}</h1>
         </div>
       </header>
       
@@ -544,10 +544,12 @@ export default function GraniteGridPage() {
 
           <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
               <TabsList>
-                {fields.map((sheet) => (
-                  <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
-                    {sheet.name}
-                  </TabsTrigger>
+                {fields.map((sheet, sheetIndex) => (
+                  <div key={sheet.id} className="relative">
+                    <TabsTrigger value={sheet.id} className={cn("pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                      {sheet.name}
+                    </TabsTrigger>
+                  </div>
                 ))}
               </TabsList>
                {fields.map((sheet, sheetIndex) => (
@@ -622,6 +624,8 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
 
