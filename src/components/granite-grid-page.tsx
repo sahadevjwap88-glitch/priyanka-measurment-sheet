@@ -378,7 +378,7 @@ export default function GraniteGridPage() {
     <div className="space-y-4">
       <header className="space-y-2">
         <div className="flex items-end justify-start">
-          <h1 className="text-xl md:text-2xl font-serif font-bold tracking-tight text-destructive">{businessName}</h1>
+          <h1 className="text-xl md:text-2xl font-serif font-bold tracking-tight text-destructive mt-4">{businessName}</h1>
         </div>
       </header>
       
@@ -624,11 +624,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    
