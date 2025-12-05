@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, Share2, X } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,9 +86,11 @@ const createNewSheet = (id: string, name: string): Sheet => ({
   measurements: Array(INITIAL_ROWS).fill({ length: '', width: '' }),
 });
 
+const defaultInitialSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
+
 const defaultValues: FormValues = {
-  sheets: [createNewSheet(Date.now().toString(), 'Sheet 1')],
-  activeSheetId: undefined,
+  sheets: [defaultInitialSheet],
+  activeSheetId: defaultInitialSheet.id,
 };
 
 function GraniteIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -698,5 +700,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
