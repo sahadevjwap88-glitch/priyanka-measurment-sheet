@@ -50,6 +50,8 @@ export default function BillPage() {
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
   const [showLabourCharges, setShowLabourCharges] = useState(true);
   const [showTransportCharges, setShowTransportCharges] = useState(true);
+  const [labourRate, setLabourRate] = useState(3);
+  const [minLabourCharges, setMinLabourCharges] = useState(200);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,9 +82,11 @@ export default function BillPage() {
     }
     const savedSettings = localStorage.getItem(SETTINGS_KEY);
     if (savedSettings) {
-      const { showLabourCharges, showTransportCharges } = JSON.parse(savedSettings);
+      const { showLabourCharges, showTransportCharges, labourRate, minLabourCharges } = JSON.parse(savedSettings);
       setShowLabourCharges(showLabourCharges);
       setShowTransportCharges(showTransportCharges);
+      if (labourRate) setLabourRate(labourRate);
+      if (minLabourCharges) setMinLabourCharges(minLabourCharges);
     }
   }, [form]);
   
@@ -108,10 +112,10 @@ export default function BillPage() {
 
   useEffect(() => {
     if (!labourManuallyEdited && isClient && showLabourCharges) {
-      const calculatedLabour = Math.max(200, totalAreaAllSheets * 3);
+      const calculatedLabour = Math.max(minLabourCharges, totalAreaAllSheets * labourRate);
       form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
     }
-  }, [totalAreaAllSheets, isClient, labourManuallyEdited, form, showLabourCharges]);
+  }, [totalAreaAllSheets, isClient, labourManuallyEdited, form, showLabourCharges, labourRate, minLabourCharges]);
 
   const subtotalAllSheets = watchedData.sheets?.reduce((acc, sheet) => {
     const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
@@ -222,7 +226,7 @@ export default function BillPage() {
     const pdfBlob = doc.output('blob');
     const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
     
-    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    if (window.isSecureContext && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
       try {
         await navigator.share({
           files: [pdfFile],
@@ -234,7 +238,7 @@ export default function BillPage() {
         alert('Could not share the file. Please try downloading instead.');
       }
     } else {
-      alert('Sharing files is not supported on this browser. Please use a mobile browser like Chrome or Safari, or download the file.');
+      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari, or download the file.');
     }
   };
 
@@ -385,5 +389,7 @@ export default function BillPage() {
     </div>
   );
 }
+
+    
 
     

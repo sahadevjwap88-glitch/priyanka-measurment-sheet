@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, Share2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, Share2, X } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -155,6 +155,8 @@ export default function GraniteGridPage() {
   const [isClient, setIsClient] = useState(false);
   const [showLabourCharges, setShowLabourCharges] = useState(true);
   const [showTransportCharges, setShowTransportCharges] = useState(true);
+  const [labourRate, setLabourRate] = useState(3);
+  const [minLabourCharges, setMinLabourCharges] = useState(200);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -185,8 +187,7 @@ export default function GraniteGridPage() {
             ...sheet,
             measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
           }));
-          const newActiveSheetId = cleanedSheets[0]?.id; // Always default to the first sheet
-          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: newActiveSheetId });
+          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: parsedData.activeSheetId || cleanedSheets[0]?.id });
         } else {
            handleClearAll(false);
         }
@@ -200,9 +201,15 @@ export default function GraniteGridPage() {
 
     const savedSettings = localStorage.getItem(SETTINGS_KEY);
     if (savedSettings) {
-      const { showLabourCharges, showTransportCharges } = JSON.parse(savedSettings);
-      setShowLabourCharges(showLabourCharges);
-      setShowTransportCharges(showTransportCharges);
+      try {
+        const { showLabourCharges, showTransportCharges, labourRate, minLabourCharges } = JSON.parse(savedSettings);
+        setShowLabourCharges(showLabourCharges);
+        setShowTransportCharges(showTransportCharges);
+        if (labourRate) setLabourRate(labourRate);
+        if (minLabourCharges) setMinLabourCharges(minLabourCharges);
+      } catch (error) {
+        console.error("Failed to parse settings from localStorage", error);
+      }
     }
   }, []);
 
@@ -217,9 +224,9 @@ export default function GraniteGridPage() {
 
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ showLabourCharges, showTransportCharges }));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ showLabourCharges, showTransportCharges, labourRate, minLabourCharges }));
     }
-  }, [showLabourCharges, showTransportCharges, isClient]);
+  }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, isClient]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -315,7 +322,7 @@ export default function GraniteGridPage() {
     const pdfBlob = doc.output('blob');
     const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
 
-    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+    if (window.isSecureContext && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
       try {
         await navigator.share({
           files: [pdfFile],
@@ -327,7 +334,7 @@ export default function GraniteGridPage() {
         alert('Could not share the file. Please try downloading instead.');
       }
     } else {
-      alert('Sharing files is not supported on this browser. Please use a mobile browser like Chrome or Safari, or download the file.');
+      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari, or download the file.');
     }
   };
 
@@ -478,6 +485,26 @@ export default function GraniteGridPage() {
                                 onCheckedChange={setShowTransportCharges}
                               />
                             </div>
+                            <div className="space-y-2">
+                               <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
+                               <Input
+                                id="labour-rate"
+                                type="number"
+                                value={labourRate}
+                                onChange={(e) => setLabourRate(Number(e.target.value))}
+                                placeholder="e.g., 3"
+                               />
+                            </div>
+                            <div className="space-y-2">
+                               <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
+                               <Input
+                                id="min-labour-charges"
+                                type="number"
+                                value={minLabourCharges}
+                                onChange={(e) => setMinLabourCharges(Number(e.target.value))}
+                                placeholder="e.g., 200"
+                               />
+                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -501,11 +528,39 @@ export default function GraniteGridPage() {
           </div>
 
           <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
-              <TabsList>
+              <TabsList className="relative">
                 {fields.map((sheet, index) => (
-                  <TabsTrigger key={sheet.id} value={sheet.id} className={cn('pr-2', activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
-                    {sheet.name}
-                  </TabsTrigger>
+                  <div key={sheet.id} className="relative pr-2">
+                    <TabsTrigger value={sheet.id} className={cn('pr-8', activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                      {sheet.name}
+                    </TabsTrigger>
+                     {fields.length > 1 && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1/2 right-2 -translate-y-1/2 h-6 w-6 z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to delete {sheet.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this sheet and all its measurements.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteSheet(sheet.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 ))}
               </TabsList>
                {fields.map((sheet, sheetIndex) => (
