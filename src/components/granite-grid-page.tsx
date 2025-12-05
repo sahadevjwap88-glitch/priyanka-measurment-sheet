@@ -350,11 +350,11 @@ export default function GraniteGridPage() {
       <Card className="mt-4">
         <div className="p-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" className="h-7 px-1.5 text-xs">
-                      <MenuIcon className="mr-1 h-3 w-3" />
+                    <Button variant="default" size="sm">
+                      <MenuIcon className="mr-2" />
                       Menu
                     </Button>
                   </DropdownMenuTrigger>
@@ -490,13 +490,13 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="default" onClick={handleDownloadSheetPdf} className="h-7 px-1.5 text-xs">
-                  <FileDown className="mr-1 h-3 w-3" />
+                <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
+                  <FileDown className="mr-2" />
                   Download
                 </Button>
                 <Link href="/bill" passHref>
-                  <Button variant="default" className="h-7 px-1.5 text-xs">
-                    <Eye className="mr-1 h-3 w-3" />
+                  <Button variant="default" size="sm">
+                    <Eye className="mr-2" />
                     Bill
                   </Button>
                 </Link>
@@ -583,5 +583,7 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
