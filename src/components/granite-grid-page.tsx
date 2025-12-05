@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X, Share2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -366,7 +366,7 @@ export default function GraniteGridPage() {
         alert('Could not share the file. Please try downloading instead.');
       }
     } else {
-      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari, or download the file.');
+      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari on HTTPS, or download the file.');
     }
   };
 
@@ -583,6 +583,10 @@ export default function GraniteGridPage() {
                   <FileDown className="mr-1 h-3 w-3" />
                   Download
                 </Button>
+                <Button variant="default" onClick={handleShareSheetPdf} className="h-7 px-1.5 text-xs">
+                  <Share2 className="mr-1 h-3 w-3" />
+                  Share
+                </Button>
                 <Link href="/bill" passHref>
                   <Button variant="default" className="h-7 px-1.5 text-xs">
                     <Eye className="mr-1 h-3 w-3" />
@@ -700,3 +704,4 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+

@@ -243,6 +243,30 @@ export default function BillPage() {
     doc.save(filename);
   };
   
+  const handleSharePdf = async () => {
+    const doc = generatePdfDoc();
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
+    const filename = `bill_${timestamp}.pdf`;
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+    if (window.isSecureContext && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({
+          files: [pdfFile],
+          title: 'Bill',
+          text: 'Here is the bill.',
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        alert('Could not share the file. Please try downloading instead.');
+      }
+    } else {
+      alert('Sharing is not supported on this browser or you are on an insecure connection (HTTP). Please use a mobile browser like Chrome or Safari on HTTPS, or download the file.');
+    }
+  };
+
   if (!isClient) {
     return null;
   }
@@ -272,6 +296,10 @@ export default function BillPage() {
             <Button onClick={handleExportPdf} size="sm">
                 <Download className="mr-2" />
                 Export PDF
+            </Button>
+            <Button onClick={handleSharePdf} size="sm">
+                <Share2 className="mr-2" />
+                Share
             </Button>
           </div>
         </header>
