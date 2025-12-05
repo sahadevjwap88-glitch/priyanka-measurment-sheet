@@ -437,7 +437,7 @@ export default function GraniteGridPage() {
   return (
     <div className="space-y-4">
       <header className="space-y-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <GraniteIcon />
           <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-destructive">{businessName}</h1>
         </div>
@@ -683,5 +683,7 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
