@@ -493,12 +493,13 @@ export default function GraniteGridPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
+                      <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        <span>Add New Sheet</span>
+                      </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="default" onClick={addSheet} size="sm" disabled={fields.length >= MAX_SHEETS}>
-                  <Plus className="mr-2" />
-                  Add Sheet
-                </Button>
+                
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2" />
                   Download
@@ -513,6 +514,10 @@ export default function GraniteGridPage() {
                     Bill
                   </Button>
                 </Link>
+                <Button variant="default" onClick={addSheet} size="sm" disabled={fields.length >= MAX_SHEETS}>
+                  <Plus className="mr-2" />
+                  Add Sheet
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">
@@ -540,11 +545,11 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
-                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-2" onClick={(e) => { e.stopPropagation(); deleteSheet(sheet.id); }}>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 inline-flex items-center justify-center rounded-sm hover:bg-white/20" onClick={(e) => { e.stopPropagation(); deleteSheet(sheet.id); }}>
                           <X className="h-4 w-4" />
-                      </Button>
+                      </span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -662,6 +667,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
-    
