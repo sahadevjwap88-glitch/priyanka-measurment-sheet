@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X, Share2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, X, Share2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,15 +32,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -381,120 +372,104 @@ export default function GraniteGridPage() {
         <div className="p-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="default" size="sm">
-                      <MenuIcon className="mr-2" />
-                      Menu
+                <Dialog>
+                  <DialogTrigger asChild>
+                     <Button variant="default" size="sm">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                     <DropdownMenuSeparator />
-                     <DropdownMenuGroup>
-                        
-                     </DropdownMenuGroup>
-                     
-                      <Dialog>
-                        <DialogTrigger asChild>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                          </DropdownMenuItem>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Settings</DialogTitle>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                            <div className="space-y-2">
-                               <Label htmlFor="business-name">Business Name</Label>
-                               <Input
-                                id="business-name"
-                                value={businessName}
-                                onChange={(e) => setBusinessName(e.target.value)}
-                                placeholder="e.g., Priyanka Granite"
-                               />
-                            </div>
-                             <div className="space-y-2">
-                               <Label htmlFor="contact-name">Name</Label>
-                               <Input
-                                id="contact-name"
-                                value={contactName}
-                                onChange={(e) => setContactName(e.target.value)}
-                                placeholder="Enter your name"
-                               />
-                            </div>
-                             <div className="space-y-2">
-                               <Label htmlFor="phone-number">Phone Number</Label>
-                               <Input
-                                id="phone-number"
-                                type="tel"
-                                value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder="Enter phone number"
-                               />
-                            </div>
-                            <div className="space-y-2">
-                               <Label htmlFor="address">Address</Label>
-                               <Textarea
-                                id="address"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                placeholder="Enter business address"
-                               />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="show-labour" className="flex flex-col space-y-1">
-                                <span>Show Labour Charges</span>
-                                <span className="font-normal leading-snug text-muted-foreground">
-                                  Enable or disable the labour charges field on the bill page.
-                                </span>
-                              </Label>
-                              <Switch
-                                id="show-labour"
-                                checked={showLabourCharges}
-                                onCheckedChange={setShowLabourCharges}
-                              />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="show-transport" className="flex flex-col space-y-1">
-                                <span>Show Transport Charges</span>
-                                <span className="font-normal leading-snug text-muted-foreground">
-                                  Enable or disable the transport charges field on the bill page.
-                                </span>
-                              </Label>
-                              <Switch
-                                id="show-transport"
-                                checked={showTransportCharges}
-                                onCheckedChange={setShowTransportCharges}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                               <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
-                               <Input
-                                id="labour-rate"
-                                type="number"
-                                value={labourRate}
-                                onChange={(e) => setLabourRate(Number(e.target.value))}
-                                placeholder="e.g., 3"
-                               />
-                            </div>
-                            <div className="space-y-2">
-                               <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
-                               <Input
-                                id="min-labour-charges"
-                                type="number"
-                                value={minLabourCharges}
-                                onChange={(e) => setMinLabourCharges(Number(e.target.value))}
-                                placeholder="e.g., 200"
-                               />
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                      <div className="space-y-2">
+                         <Label htmlFor="business-name">Business Name</Label>
+                         <Input
+                          id="business-name"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          placeholder="e.g., Priyanka Granite"
+                         />
+                      </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="contact-name">Name</Label>
+                         <Input
+                          id="contact-name"
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder="Enter your name"
+                         />
+                      </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="phone-number">Phone Number</Label>
+                         <Input
+                          id="phone-number"
+                          type="tel"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          placeholder="Enter phone number"
+                         />
+                      </div>
+                      <div className="space-y-2">
+                         <Label htmlFor="address">Address</Label>
+                         <Textarea
+                          id="address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="Enter business address"
+                         />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-labour" className="flex flex-col space-y-1">
+                          <span>Show Labour Charges</span>
+                          <span className="font-normal leading-snug text-muted-foreground">
+                            Enable or disable the labour charges field on the bill page.
+                          </span>
+                        </Label>
+                        <Switch
+                          id="show-labour"
+                          checked={showLabourCharges}
+                          onCheckedChange={setShowLabourCharges}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-transport" className="flex flex-col space-y-1">
+                          <span>Show Transport Charges</span>
+                          <span className="font-normal leading-snug text-muted-foreground">
+                            Enable or disable the transport charges field on the bill page.
+                          </span>
+                        </Label>
+                        <Switch
+                          id="show-transport"
+                          checked={showTransportCharges}
+                          onCheckedChange={setShowTransportCharges}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                         <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
+                         <Input
+                          id="labour-rate"
+                          type="number"
+                          value={labourRate}
+                          onChange={(e) => setLabourRate(Number(e.target.value))}
+                          placeholder="e.g., 3"
+                         />
+                      </div>
+                      <div className="space-y-2">
+                         <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
+                         <Input
+                          id="min-labour-charges"
+                          type="number"
+                          value={minLabourCharges}
+                          onChange={(e) => setMinLabourCharges(Number(e.target.value))}
+                          placeholder="e.g., 200"
+                         />
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2" />
@@ -663,3 +638,5 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
