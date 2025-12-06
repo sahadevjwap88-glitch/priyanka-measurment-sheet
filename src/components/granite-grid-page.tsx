@@ -370,38 +370,148 @@ export default function GraniteGridPage() {
     <div className="space-y-4">
       <Card className="mt-4">
         <div className="p-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
-                  <FileDown className="mr-2" />
-                  Download
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-start gap-2">
+              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
+                <FileDown className="mr-2" />
+                Download
+              </Button>
+              <Link href="/bill" passHref>
+                <Button variant="default" size="sm">
+                  <Eye className="mr-2" />
+                  Bill
                 </Button>
-                <Link href="/bill" passHref>
-                  <Button variant="default" size="sm">
-                    <Eye className="mr-2" />
-                    Bill
+              </Link>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clear All
                   </Button>
-                </Link>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Clear All
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete all your data.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete all your data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            <div className="flex items-center justify-start gap-2">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                        <Settings className="mr-2" />
+                        Settings
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="business-name">Business Name</Label>
+                            <Input
+                            id="business-name"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            placeholder="e.g., Priyanka Granite"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contact-name">Name</Label>
+                            <Input
+                            id="contact-name"
+                            value={contactName}
+                            onChange={(e) => setContactName(e.target.value)}
+                            placeholder="Enter your name"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="phone-number">Phone Number</Label>
+                            <Input
+                            id="phone-number"
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            placeholder="Enter phone number"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="address">Address</Label>
+                            <Textarea
+                            id="address"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            placeholder="Enter business address"
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                        <Label htmlFor="show-labour" className="flex flex-col space-y-1">
+                            <span>Show Labour Charges</span>
+                            <span className="font-normal leading-snug text-muted-foreground">
+                            Enable or disable the labour charges field on the bill page.
+                            </span>
+                        </Label>
+                        <Switch
+                            id="show-labour"
+                            checked={showLabourCharges}
+                            onCheckedChange={setShowLabourCharges}
+                        />
+                        </div>
+                        <div className="flex items-center justify-between">
+                        <Label htmlFor="show-transport" className="flex flex-col space-y-1">
+                            <span>Show Transport Charges</span>
+                            <span className="font-normal leading-snug text-muted-foreground">
+                            Enable or disable the transport charges field on the bill page.
+                            </span>
+                        </Label>
+                        <Switch
+                            id="show-transport"
+                            checked={showTransportCharges}
+                            onCheckedChange={setShowTransportCharges}
+                        />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
+                            <Input
+                            id="labour-rate"
+                            type="number"
+                            value={labourRate}
+                            onChange={(e) => setLabourRate(Number(e.target.value))}
+                            placeholder="e.g., 3"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
+                            <Input
+                            id="min-labour-charges"
+                            type="number"
+                            value={minLabourCharges}
+                            onChange={(e) => setMinLabourCharges(Number(e.target.value))}
+                            placeholder="e.g., 200"
+                            />
+                        </div>
+                    </div>
+                    </DialogContent>
+                </Dialog>
+
+                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
+                  <Plus className="mr-2" />
+                  Add Sheet
+                </Button>
+
+                <Button variant="ghost" size="sm" onClick={handleSharePdf}>
+                  <Share2 className="mr-2" />
+                  Share
+                </Button>
             </div>
           </div>
 
@@ -528,120 +638,10 @@ export default function GraniteGridPage() {
           )}
         </div>
       </Card>
-      <footer className="fixed bottom-0 left-0 right-0 bg-background border-t p-2 z-10">
-        <div className="container mx-auto flex justify-around items-center">
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" className="flex flex-col h-auto">
-                    <Settings className="h-6 w-6" />
-                    <span className="text-xs">Settings</span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Settings</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="business-name">Business Name</Label>
-                        <Input
-                        id="business-name"
-                        value={businessName}
-                        onChange={(e) => setBusinessName(e.target.value)}
-                        placeholder="e.g., Priyanka Granite"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="contact-name">Name</Label>
-                        <Input
-                        id="contact-name"
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Enter your name"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="phone-number">Phone Number</Label>
-                        <Input
-                        id="phone-number"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="Enter phone number"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Textarea
-                        id="address"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Enter business address"
-                        />
-                    </div>
-                    <div className="flex items-center justify-between">
-                    <Label htmlFor="show-labour" className="flex flex-col space-y-1">
-                        <span>Show Labour Charges</span>
-                        <span className="font-normal leading-snug text-muted-foreground">
-                        Enable or disable the labour charges field on the bill page.
-                        </span>
-                    </Label>
-                    <Switch
-                        id="show-labour"
-                        checked={showLabourCharges}
-                        onCheckedChange={setShowLabourCharges}
-                    />
-                    </div>
-                    <div className="flex items-center justify-between">
-                    <Label htmlFor="show-transport" className="flex flex-col space-y-1">
-                        <span>Show Transport Charges</span>
-                        <span className="font-normal leading-snug text-muted-foreground">
-                        Enable or disable the transport charges field on the bill page.
-                        </span>
-                    </Label>
-                    <Switch
-                        id="show-transport"
-                        checked={showTransportCharges}
-                        onCheckedChange={setShowTransportCharges}
-                    />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
-                        <Input
-                        id="labour-rate"
-                        type="number"
-                        value={labourRate}
-                        onChange={(e) => setLabourRate(Number(e.target.value))}
-                        placeholder="e.g., 3"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
-                        <Input
-                        id="min-labour-charges"
-                        type="number"
-                        value={minLabourCharges}
-                        onChange={(e) => setMinLabourCharges(Number(e.target.value))}
-                        placeholder="e.g., 200"
-                        />
-                    </div>
-                </div>
-                </DialogContent>
-            </Dialog>
-
-            <Button variant="ghost" className="flex flex-col h-auto" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
-              <Plus className="h-6 w-6" />
-              <span className="text-xs">Add Sheet</span>
-            </Button>
-
-            <Button variant="ghost" className="flex flex-col h-auto" onClick={handleSharePdf}>
-              <Share2 className="h-6 w-6" />
-              <span className="text-xs">Share</span>
-            </Button>
-        </div>
-      </footer>
     </div>
   );
 }
+
+    
 
     
