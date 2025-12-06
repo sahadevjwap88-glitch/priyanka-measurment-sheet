@@ -30,7 +30,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <div className="pb-20">
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>
