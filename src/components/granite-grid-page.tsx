@@ -493,10 +493,6 @@ export default function GraniteGridPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
-                      <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Add New Sheet</span>
-                      </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
