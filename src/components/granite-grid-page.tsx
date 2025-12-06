@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Menu as MenuIcon, FileDown, X, Share2 } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -268,7 +268,7 @@ export default function GraniteGridPage() {
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFontSize(10);
             doc.setTextColor(150);
-            doc.text('sahadev jaat', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+            doc.text('Priyanka Granite', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
         }
       });
     });
@@ -287,6 +287,36 @@ export default function GraniteGridPage() {
       alert("No measurement data to export.");
     }
   }, [generateSheetPdfDoc]);
+
+  const handleSharePdf = async () => {
+    const doc = generateSheetPdfDoc();
+    if (!doc) {
+      alert("No measurement data to export.");
+      return;
+    }
+    
+    try {
+      const pdfBlob = doc.output('blob');
+      const date = new Date();
+      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+      const filename = `sheets_${timestamp}.pdf`;
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: 'Granite Sheets Measurement',
+          text: 'Here are the granite sheet measurements.',
+        });
+      } else {
+        handleDownloadSheetPdf();
+      }
+    } catch (error) {
+      console.error('Error sharing PDF:', error);
+      alert('Sharing failed. The PDF will be downloaded instead.');
+      handleDownloadSheetPdf();
+    }
+  };
 
   const handleClearAll = (removeFromStorage = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
@@ -359,31 +389,12 @@ export default function GraniteGridPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuLabel>Sheet Actions</DropdownMenuLabel>
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                      <DropdownMenuSeparator />
                      <DropdownMenuGroup>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Clear All Data</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete all your data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        
                      </DropdownMenuGroup>
-                     <DropdownMenuSeparator />
+                     
                       <Dialog>
                         <DialogTrigger asChild>
                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -484,13 +495,17 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                 <Button variant="default" onClick={addSheet} size="sm" disabled={fields.length >= MAX_SHEETS}>
+                <Button variant="default" onClick={addSheet} size="sm" disabled={fields.length >= MAX_SHEETS}>
                   <Plus className="mr-2" />
                   Add Sheet
                 </Button>
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2" />
                   Download
+                </Button>
+                <Button variant="default" onClick={handleSharePdf} size="sm">
+                  <Share2 className="mr-2" />
+                  Share
                 </Button>
                 <Link href="/bill" passHref>
                   <Button variant="default" size="sm">
@@ -521,55 +536,101 @@ export default function GraniteGridPage() {
             </div>
           </div>
 
-          <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
-              <TabsList>
-                {fields.map((sheet) => (
-                  <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
-                    {sheet.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-               {fields.map((sheet, sheetIndex) => (
-                  <TabsContent key={sheet.id} value={sheet.id}>
-                    <div className="flex flex-wrap items-end gap-4 mt-4">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
-                        <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[135px]" />
+          {fields.length > 1 && (
+            <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
+                <TabsList>
+                  {fields.map((sheet) => (
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                      {sheet.name}
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-2" onClick={(e) => { e.stopPropagation(); deleteSheet(sheet.id); }}>
+                          <X className="h-4 w-4" />
+                      </Button>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                 {fields.map((sheet, sheetIndex) => (
+                    <TabsContent key={sheet.id} value={sheet.id}>
+                      <div className="flex flex-wrap items-end gap-4 mt-4">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
+                          <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[135px]" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
+                          <Input
+                              id={`rate-${sheet.id}`}
+                              type="number"
+                              placeholder="Enter rate"
+                              {...form.register(`sheets.${sheetIndex}.rate`)}
+                              onChange={(e) => {
+                                if (e.target.value.length > 4) {
+                                  e.target.value = e.target.value.slice(0, 4);
+                                }
+                                form.setValue(`sheets.${sheetIndex}.rate`, e.target.value, { shouldValidate: true });
+                              }}
+                              className="w-[70px]"
+                            />
+                        </div>
+                        <div className="ml-auto">
+                          <span className="text-sm font-bold text-foreground">SFT: </span>
+                          <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
-                        <Input
-                            id={`rate-${sheet.id}`}
-                            type="number"
-                            placeholder="Enter rate"
-                            {...form.register(`sheets.${sheetIndex}.rate`)}
-                            onChange={(e) => {
-                              if (e.target.value.length > 4) {
-                                e.target.value = e.target.value.slice(0, 4);
-                              }
-                              form.setValue(`sheets.${sheetIndex}.rate`, e.target.value, { shouldValidate: true });
-                            }}
-                            className="w-[70px]"
-                          />
+                      <div className="mt-4">
+                        <GraniteTable
+                            fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
+                            register={form.register}
+                            errors={form.formState.errors}
+                            control={form.control}
+                            setValue={form.setValue}
+                            sheetIndex={sheetIndex}
+                        />
                       </div>
-                      <div className="ml-auto">
-                        <span className="text-sm font-bold text-foreground">SFT: </span>
-                        <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <GraniteTable
-                          fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
-                          register={form.register}
-                          errors={form.formState.errors}
-                          control={form.control}
-                          setValue={form.setValue}
-                          sheetIndex={sheetIndex}
+                    </TabsContent>
+                 ))}
+            </Tabs>
+          )}
+
+          {fields.length === 1 && activeSheet && (
+             <div className="mt-4">
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`color-${activeSheet.id}`} className="whitespace-nowrap">Color Name</Label>
+                    <Input id={`color-${activeSheet.id}`} placeholder="Enter color name" {...form.register(`sheets.0.color`)} className="w-[135px]" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`rate-${activeSheet.id}`} className="whitespace-rap">Rate</Label>
+                    <Input
+                        id={`rate-${activeSheet.id}`}
+                        type="number"
+                        placeholder="Enter rate"
+                        {...form.register(`sheets.0.rate`)}
+                        onChange={(e) => {
+                          if (e.target.value.length > 4) {
+                            e.target.value = e.target.value.slice(0, 4);
+                          }
+                          form.setValue(`sheets.0.rate`, e.target.value, { shouldValidate: true });
+                        }}
+                        className="w-[70px]"
                       />
-                    </div>
-                  </TabsContent>
-               ))}
-          </Tabs>
+                  </div>
+                  <div className="ml-auto">
+                    <span className="text-sm font-bold text-foreground">SFT: </span>
+                    <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(activeSheet).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <GraniteTable
+                      fields={(activeSheet.measurements || []).map((m, i) => ({ ...m, id: `${activeSheet.id}-${i}` }))}
+                      register={form.register}
+                      errors={form.formState.errors}
+                      control={form.control}
+                      setValue={form.setValue}
+                      sheetIndex={0}
+                  />
+                </div>
+              </div>
+          )}
           
           {activeSheet && (
             <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
@@ -603,9 +664,4 @@ export default function GraniteGridPage() {
 }
 
     
-
-    
-
-    
-
     
