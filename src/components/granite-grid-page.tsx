@@ -331,21 +331,6 @@ export default function GraniteGridPage() {
     form.setValue('activeSheetId', newSheetId);
   };
 
-  const deleteSheet = (sheetId: string) => {
-    if (fields.length <= 1) {
-      alert("You cannot delete the last sheet.");
-      return;
-    }
-    const sheetIndex = fields.findIndex(s => s.id === sheetId);
-    if (sheetIndex > -1) {
-      remove(sheetIndex);
-      if (activeSheetId === sheetId) {
-        const newActiveIndex = Math.max(0, sheetIndex - 1);
-        form.setValue('activeSheetId', fields[newActiveIndex].id);
-      }
-    }
-  };
-
   const handleAddRows = () => {
     if (!activeSheet) return;
     const numRowsToAdd = Number(rowsToAdd) || 1;
@@ -519,11 +504,8 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative pr-8", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 inline-flex items-center justify-center rounded-sm hover:bg-white/20" onClick={(e) => { e.stopPropagation(); deleteSheet(sheet.id); }}>
-                          <X className="h-4 w-4" />
-                      </span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -641,6 +623,8 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
 
