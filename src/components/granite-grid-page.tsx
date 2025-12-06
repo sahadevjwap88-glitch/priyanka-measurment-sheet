@@ -360,12 +360,6 @@ export default function GraniteGridPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuLabel>Sheet Actions</DropdownMenuLabel>
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Add New Sheet</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
                      <DropdownMenuSeparator />
                      <DropdownMenuGroup>
                         <AlertDialog>
@@ -490,6 +484,10 @@ export default function GraniteGridPage() {
                       </Dialog>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                 <Button variant="default" onClick={addSheet} size="sm" disabled={fields.length >= MAX_SHEETS}>
+                  <Plus className="mr-2" />
+                  Add Sheet
+                </Button>
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                   <FileDown className="mr-2" />
                   Download
@@ -603,6 +601,8 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     
 
