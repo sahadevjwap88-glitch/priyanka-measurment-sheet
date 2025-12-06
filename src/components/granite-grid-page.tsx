@@ -500,7 +500,7 @@ export default function GraniteGridPage() {
             </div>
           </div>
 
-          {fields.length > 1 && (
+          {fields.length > 0 && (
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
@@ -550,47 +550,6 @@ export default function GraniteGridPage() {
                     </TabsContent>
                  ))}
             </Tabs>
-          )}
-
-          {fields.length === 1 && activeSheet && (
-             <div className="mt-4">
-                <div className="flex flex-wrap items-end gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`color-${activeSheet.id}`} className="whitespace-nowrap">Color Name</Label>
-                    <Input id={`color-${activeSheet.id}`} placeholder="Enter color name" {...form.register(`sheets.0.color`)} className="w-[135px]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`rate-${activeSheet.id}`} className="whitespace-rap">Rate</Label>
-                    <Input
-                        id={`rate-${activeSheet.id}`}
-                        type="number"
-                        placeholder="Enter rate"
-                        {...form.register(`sheets.0.rate`)}
-                        onChange={(e) => {
-                          if (e.target.value.length > 4) {
-                            e.target.value = e.target.value.slice(0, 4);
-                          }
-                          form.setValue(`sheets.0.rate`, e.target.value, { shouldValidate: true });
-                        }}
-                        className="w-[70px]"
-                      />
-                  </div>
-                  <div className="ml-auto">
-                    <span className="text-sm font-bold text-foreground">SFT: </span>
-                    <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(activeSheet).toFixed(2)}</span>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <GraniteTable
-                      fields={(activeSheet.measurements || []).map((m, i) => ({ ...m, id: `${activeSheet.id}-${i}` }))}
-                      register={form.register}
-                      errors={form.formState.errors}
-                      control={form.control}
-                      setValue={form.setValue}
-                      sheetIndex={0}
-                  />
-                </div>
-              </div>
           )}
           
           {activeSheet && (
