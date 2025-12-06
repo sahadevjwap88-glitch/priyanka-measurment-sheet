@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, X, Share2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, X } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -279,36 +279,6 @@ export default function GraniteGridPage() {
     }
   }, [generateSheetPdfDoc]);
 
-  const handleSharePdf = async () => {
-    const doc = generateSheetPdfDoc();
-    if (!doc) {
-      alert("No measurement data to export.");
-      return;
-    }
-    
-    try {
-      const pdfBlob = doc.output('blob');
-      const date = new Date();
-      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-      const filename = `sheets_${timestamp}.pdf`;
-      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-
-      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-        await navigator.share({
-          files: [pdfFile],
-          title: 'Granite Sheets Measurement',
-          text: 'Here are the granite sheet measurements.',
-        });
-      } else {
-        handleDownloadSheetPdf();
-      }
-    } catch (error) {
-      console.error('Error sharing PDF:', error);
-      alert('Sharing failed. The PDF will be downloaded instead.');
-      handleDownloadSheetPdf();
-    }
-  };
-
   const handleClearAll = (removeFromStorage = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
     form.reset({
@@ -491,11 +461,6 @@ export default function GraniteGridPage() {
                 <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
                   <Plus className="mr-2" />
                   Add Sheet
-                </Button>
-
-                <Button variant="ghost" size="sm" onClick={handleSharePdf}>
-                  <Share2 className="mr-2" />
-                  Share
                 </Button>
             </div>
           </div>
