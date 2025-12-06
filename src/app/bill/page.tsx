@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY, SETTINGS_KEY } from '@/components/granite-grid-page'
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -243,6 +243,38 @@ export default function BillPage() {
     const filename = `bill_${timestamp}.pdf`;
     doc.save(filename);
   };
+  
+  const handleSharePdf = async () => {
+    const doc = generatePdfDoc();
+    if (!doc) {
+      alert("No bill data to share.");
+      return;
+    }
+    
+    try {
+      const pdfBlob = doc.output('blob');
+      const date = new Date();
+      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+      const filename = `bill_${timestamp}.pdf`;
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: 'Bill',
+          text: 'Here is the bill.',
+        });
+      } else {
+        // Fallback for browsers that don't support sharing files
+        handleExportPdf();
+      }
+    } catch (error) {
+      console.error('Error sharing PDF:', error);
+      alert('Sharing failed. The PDF will be downloaded instead.');
+      handleExportPdf();
+    }
+  };
+
 
   if (!isClient) {
     return null;
@@ -273,6 +305,10 @@ export default function BillPage() {
             <Button onClick={handleExportPdf} size="sm">
                 <Download className="mr-2" />
                 Export PDF
+            </Button>
+            <Button onClick={handleSharePdf} size="sm">
+                <Share2 className="mr-2" />
+                Share
             </Button>
           </div>
         </header>
@@ -388,9 +424,3 @@ export default function BillPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
