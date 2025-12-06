@@ -258,14 +258,14 @@ export default function BillPage() {
       const filename = `bill_${timestamp}.pdf`;
       const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
 
-      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         await navigator.share({
           files: [pdfFile],
           title: 'Bill',
           text: 'Here is the bill.',
         });
       } else {
-        // Fallback for browsers that don't support sharing files
+        alert("Sharing is not supported on this browser. The PDF will be downloaded instead.");
         handleExportPdf();
       }
     } catch (error) {
