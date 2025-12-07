@@ -544,12 +544,9 @@ export default function GraniteGridPage() {
           )}
         </div>
       </Card>
+      <footer className="text-center text-sm text-muted-foreground py-4">
+        Priyanka Granites
+      </footer>
     </div>
   );
 }
-
-    
-
-    
-
-    
