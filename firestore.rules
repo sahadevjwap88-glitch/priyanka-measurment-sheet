@@ -1,0 +1,122 @@
+/**
+ * This ruleset enforces a strict user-ownership security model for the Granite Grid application.
+ *
+ * Core Philosophy:
+ * The security model ensures that all user-generated data is completely private. A user can only ever
+ * access data that exists within their own dedicated document tree. There is no concept of public
+ * data or shared access between users. The default posture is to deny all access unless explicitly
+ * granted to the document owner.
+ *
+ * Data Structure:
+ * All application data is organized hierarchically under the top-level `/users` collection. Each user
+ * has a document at `/users/{userId}`, and all their specific data, such as granite measurements,
+ * is stored in subcollections under that path (e.g., `/users/{userId}/graniteMeasurements/{measurementId}`).
+ * This path-based ownership simplifies security rules significantly.
+ *
+ * Key Security Decisions:
+ * - User Enumeration Disabled: Listing the top-level `/users` collection is explicitly forbidden to
+ *   prevent malicious actors from harvesting a list of all application users.
+ * - Strict Data Isolation: All rules are scoped by the `{userId}` wildcard in the path, ensuring
+ *   users can never read or write data outside of their own document tree.
+ * - No Public Access: There are no publicly readable collections. All access requires authentication.
+ *
+ * Denormalization for Authorization:
+ * This ruleset leverages a path-based ownership strategy, which is an implicit form of denormalization.
+ * By placing a user's data in a subcollection under their unique ID (e.g., `/users/{userId}/...`),
+ * we can write simple, fast, and highly secure rules like `request.auth.uid == userId` without needing
+ * costly `get()` or `exists()` calls to other documents to verify ownership.
+ *
+ * Structural Segregation:
+ * The data model naturally segregates each user's data into its own document tree, which is the most
+ * secure and performant way to manage private user data. This avoids the anti-pattern of mixing
+ * private data from different users in a single top-level collection.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Helper Functions
+    // ----------------------------------------------------------------------
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the given userId.
+     * This is the primary function for enforcing data ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document.
+     * CRITICAL: Used for all update and delete operations to prevent acting on
+     * non-existent documents, which is a security best practice.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+    
+    /**
+     * On create, validates that the document's internal 'id' field matches
+     * the user's UID from the path. This enforces relational integrity.
+     */
+    function hasValidUserIdOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * On update, ensures that the document's internal 'id' field is immutable.
+     * This prevents re-assigning ownership or breaking relational links.
+     */
+    function isIdImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    // ----------------------------------------------------------------------
+    // User Profile Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Manages user profile documents. A user can create, read, update,
+     *   and delete their own profile, but cannot see other users' profiles.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own profile document, e.g., POST /users/user_abc with auth.uid = 'user_abc'.
+     * @deny (list) Any user attempting to list all documents in the `/users` collection to prevent user enumeration.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
+      allow update: if isExistingOwner(userId) && isIdImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    // ----------------------------------------------------------------------
+    // Granite Measurement Rules
+    // ----------------------------------------------------------------------
+
+    /**
+     * @description Manages granite measurement records, which are private to each user.
+     *   A user has full control over their own measurements.
+     * @path /users/{userId}/graniteMeasurements/{graniteMeasurementId}
+     * @allow (create) An authenticated user 'user_abc' creating a new measurement in their own subcollection, e.g., POST /users/user_abc/graniteMeasurements.
+     * @deny (get) User 'user_xyz' trying to read a measurement belonging to 'user_abc', e.g., GET /users/user_abc/graniteMeasurements/meas_123.
+     * @principle Enforces document ownership for all operations within a user-specific subcollection.
+     */
+    match /users/{userId}/graniteMeasurements/{graniteMeasurementId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
