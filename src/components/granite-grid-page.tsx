@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, X } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, Calculator } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -322,11 +322,11 @@ export default function GraniteGridPage() {
   }
   
   return (
-    <div className="space-y-4">
-      <Card className="mt-4">
+    <div className="space-y-4 pt-4">
+      <Card>
         <div className="p-4">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-start gap-2">
+            <div className="flex items-center justify-start gap-2 flex-wrap">
               <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                 <FileDown className="mr-2" />
                 Download
@@ -335,6 +335,12 @@ export default function GraniteGridPage() {
                 <Button variant="default" size="sm">
                   <Eye className="mr-2" />
                   Bill
+                </Button>
+              </Link>
+              <Link href="/calculator" passHref>
+                <Button variant="secondary" size="sm">
+                  <Calculator className="mr-2" />
+                  Calculator
                 </Button>
               </Link>
               <AlertDialog>
@@ -357,9 +363,7 @@ export default function GraniteGridPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
-            <div className="flex items-center justify-start gap-2">
-                <Dialog>
+               <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="ghost" size="sm">
                         <Settings className="mr-2" />
@@ -469,7 +473,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn(activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
