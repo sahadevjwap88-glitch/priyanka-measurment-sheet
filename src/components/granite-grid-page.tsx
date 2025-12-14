@@ -305,6 +305,12 @@ export default function GraniteGridPage() {
                   Bill
                 </Button>
               </Link>
+               <Link href="/sales" passHref>
+                <Button variant="default" size="sm">
+                  <BookCopy className="mr-2" />
+                  All Sales
+                </Button>
+              </Link>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
@@ -325,12 +331,6 @@ export default function GraniteGridPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-               <Link href="/sales" passHref>
-                <Button variant="default" size="sm">
-                  <BookCopy className="mr-2" />
-                  All Sales
-                </Button>
-              </Link>
                <Link href="/account" passHref>
                 <Button variant="ghost" size="sm">
                     <Settings className="mr-2" />
@@ -340,7 +340,7 @@ export default function GraniteGridPage() {
 
                 <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
                   <Plus className="mr-2" />
-                  Add Sheet
+                  Add Color
                 </Button>
             </div>
           </div>
