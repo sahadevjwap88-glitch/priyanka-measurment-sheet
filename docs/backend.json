@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "GraniteMeasurement": {
@@ -74,6 +75,9 @@
           "type": "number"
         },
         "transportCharges": {
+          "type": "number"
+        },
+        "discount": {
           "type": "number"
         },
         "subtotal": {

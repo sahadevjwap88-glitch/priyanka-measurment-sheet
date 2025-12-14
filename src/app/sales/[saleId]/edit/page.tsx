@@ -40,6 +40,7 @@ const formSchema = z.object({
   partyPhoneNumber: z.string().optional(),
   labourCharges: z.string().optional(),
   transportCharges: z.string().optional(),
+  discount: z.string().optional(),
   sheets: z.array(sheetSchema),
 });
 
@@ -75,6 +76,7 @@ function EditSalePage() {
       partyPhoneNumber: '',
       labourCharges: '',
       transportCharges: '',
+      discount: '',
       sheets: [],
     },
     mode: 'onBlur',
@@ -110,6 +112,7 @@ function EditSalePage() {
         partyPhoneNumber: saleData.partyPhoneNumber,
         labourCharges: saleData.labourCharges?.toString(),
         transportCharges: saleData.transportCharges?.toString(),
+        discount: saleData.discount?.toString(),
         sheets: saleData.sheets.map((s: any) => ({
             ...s, 
             rate: s.rate?.toString(),
@@ -148,7 +151,8 @@ function EditSalePage() {
 
   const labourCharges = showLabourCharges && watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
   const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
-  const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
+  const discount = watchedData?.discount ? parseFloat(watchedData.discount) : 0;
+  const grandTotal = subtotalAllSheets + labourCharges + transportCharges - discount;
 
   const handleUpdateBill = async () => {
     if (!user || !saleDocRef) {
@@ -162,6 +166,7 @@ function EditSalePage() {
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
       labourCharges: labourCharges,
       transportCharges: transportCharges,
+      discount: discount,
       sheets: watchedData.sheets?.map(s => ({
           ...s,
           rate: s.rate ? parseFloat(s.rate) : 0,
@@ -255,6 +260,10 @@ function EditSalePage() {
                       <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
                   </div>
                 )}
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="discount">Discount</Label>
+                    <Input id="discount" type="number" placeholder="Enter discount" {...form.register('discount')} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -321,6 +330,12 @@ function EditSalePage() {
                               <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
                           </div>
                         )}
+                        {discount > 0 && (
+                          <div className="flex justify-between items-center text-sm text-green-600">
+                            <span className="text-muted-foreground">Discount</span>
+                            <span className="font-medium">- ₹{discount.toFixed(2)}</span>
+                          </div>
+                        )}
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
@@ -344,4 +359,3 @@ export default function EditSalePageWithAuth() {
         </AuthGuard>
     );
 }
-

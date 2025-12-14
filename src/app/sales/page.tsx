@@ -1,3 +1,4 @@
+
 'use client';
 import { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -96,12 +97,18 @@ function SalesPage() {
                                 </CardContent>
                                 <CardFooter className="bg-muted/50 p-4 rounded-b-lg">
                                     <div className="flex justify-between w-full text-sm">
-                                         <div className="flex gap-4">
+                                         <div className="flex gap-4 flex-wrap">
                                             <span>Subtotal: <span className="font-medium">₹{sale.subtotal.toFixed(2)}</span></span>
                                             <Separator orientation="vertical" className="h-5"/>
                                             <span>Labour: <span className="font-medium">₹{sale.labourCharges.toFixed(2)}</span></span>
                                             <Separator orientation="vertical" className="h-5"/>
                                             <span>Transport: <span className="font-medium">₹{sale.transportCharges.toFixed(2)}</span></span>
+                                            {sale.discount > 0 && (
+                                                <>
+                                                 <Separator orientation="vertical" className="h-5"/>
+                                                 <span>Discount: <span className="font-medium text-green-600">- ₹{sale.discount.toFixed(2)}</span></span>
+                                                </>
+                                            )}
                                          </div>
                                     </div>
                                 </CardFooter>

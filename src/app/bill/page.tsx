@@ -44,6 +44,7 @@ const formSchema = z.object({
   partyPhoneNumber: z.string().optional(),
   labourCharges: z.string().optional(),
   transportCharges: z.string().optional(),
+  discount: z.string().optional(),
   sheets: z.array(sheetSchema).optional(),
 });
 
@@ -76,6 +77,7 @@ function BillPage() {
       partyPhoneNumber: '',
       labourCharges: '',
       transportCharges: '',
+      discount: '',
       sheets: [],
     },
     mode: 'onBlur',
@@ -149,7 +151,8 @@ function BillPage() {
 
   const labourCharges = showLabourCharges && watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
   const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
-  const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
+  const discount = watchedData?.discount ? parseFloat(watchedData.discount) : 0;
+  const grandTotal = subtotalAllSheets + labourCharges + transportCharges - discount;
 
   const handleSaveBill = async () => {
     if (!user) {
@@ -163,6 +166,7 @@ function BillPage() {
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
       labourCharges: labourCharges,
       transportCharges: transportCharges,
+      discount: discount,
       sheets: watchedData.sheets?.map(s => ({
           ...s,
           measurements: s.measurements.filter(m => m.length && m.width)
@@ -252,6 +256,9 @@ function BillPage() {
     }
     if (showTransportCharges) {
       summaryRows.push(['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`]);
+    }
+    if (discount > 0) {
+      summaryRows.push(['Discount', `Rs. ${discount.toFixed(2)}`]);
     }
 
     summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
@@ -356,6 +363,10 @@ function BillPage() {
                       <Input id="transportCharges" type="number" placeholder="Enter transport charges" {...form.register('transportCharges')} />
                   </div>
                 )}
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label htmlFor="discount">Discount</Label>
+                    <Input id="discount" type="number" placeholder="Enter discount" {...form.register('discount')} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -412,6 +423,12 @@ function BillPage() {
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Transport Charges</span>
                               <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {discount > 0 && (
+                          <div className="flex justify-between items-center text-sm text-green-600">
+                              <span className="text-muted-foreground">Discount</span>
+                              <span className="font-medium">- ₹{discount.toFixed(2)}</span>
                           </div>
                         )}
                     </div>

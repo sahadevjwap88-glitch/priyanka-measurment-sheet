@@ -1,3 +1,4 @@
+
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -106,6 +107,7 @@ function SaleDetailPage() {
         ];
         if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${sale.labourCharges.toFixed(2)}`]);
         if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${sale.transportCharges.toFixed(2)}`]);
+        if (sale.discount > 0) summaryRows.push(['Discount', `Rs. ${sale.discount.toFixed(2)}`]);
         summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(sale.grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
         
         doc.autoTable({
@@ -267,6 +269,12 @@ function SaleDetailPage() {
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-muted-foreground">Transport Charges</span>
                                             <span className="font-medium">₹{sale.transportCharges.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {sale.discount > 0 && (
+                                        <div className="flex justify-between items-center text-sm text-green-600">
+                                            <span className="text-muted-foreground">Discount</span>
+                                            <span className="font-medium">- ₹{sale.discount.toFixed(2)}</span>
                                         </div>
                                     )}
                                 </div>
