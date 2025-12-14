@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { SETTINGS_KEY } from '@/components/granite-grid-page';
-import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -29,6 +28,7 @@ function AccountPage() {
     const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     
     useEffect(() => {
         const savedSettings = localStorage.getItem(SETTINGS_KEY);
@@ -47,9 +47,12 @@ function AccountPage() {
             console.error("Failed to parse settings from localStorage", error);
         }
         }
+        setIsInitialLoad(false);
     }, []);
 
-    const handleSaveChanges = () => {
+    useEffect(() => {
+        if (isInitialLoad) return;
+
         localStorage.setItem(SETTINGS_KEY, JSON.stringify({ 
             showLabourCharges, 
             showTransportCharges, 
@@ -60,11 +63,8 @@ function AccountPage() {
             phoneNumber,
             address
         }));
-        toast({
-            title: 'Settings Saved',
-            description: 'Your changes have been saved successfully.',
-        });
-    };
+    }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, businessName, contactName, phoneNumber, address, isInitialLoad]);
+
 
     const handleSignOut = async () => {
         const auth = getAuth();
@@ -95,7 +95,7 @@ function AccountPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Application Settings</CardTitle>
-                    <CardDescription>These settings customize the bill generation.</CardDescription>
+                    <CardDescription>These settings customize the bill generation and are saved automatically.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-4">
@@ -193,9 +193,6 @@ function AccountPage() {
                                 />
                             </div>
                         </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <Button onClick={handleSaveChanges}>Save Changes</Button>
                     </div>
                 </CardContent>
             </Card>
