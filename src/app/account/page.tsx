@@ -13,7 +13,8 @@ import { SETTINGS_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 function AccountPage() {
     const { user } = useUser();
@@ -74,9 +75,17 @@ function AccountPage() {
 
     return (
         <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-8">
-            <header>
-                <h1 className="text-3xl font-bold">My Account</h1>
-                <p className="text-muted-foreground">Manage your account and application settings.</p>
+            <header className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold">My Account</h1>
+                    <p className="text-muted-foreground">Manage your account and application settings.</p>
+                </div>
+                 <Link href="/" passHref>
+                    <Button variant="outline">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Button>
+                </Link>
             </header>
 
             <Card>
