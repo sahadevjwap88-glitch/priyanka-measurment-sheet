@@ -118,5 +118,18 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
+
+    // ----------------------------------------------------------------------
+    // Sales Record Rules
+    // ----------------------------------------------------------------------
+    
+    /**
+     * @description Manages sales records, which are private to each user.
+     * @path /users/{userId}/sales/{saleId}
+     * @allow A user can create, read, update, and delete their own sales records.
+     */
+     match /users/{userId}/sales/{saleId} {
+        allow read, write: if isOwner(userId);
+     }
   }
 }

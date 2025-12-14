@@ -55,6 +55,69 @@
         "username",
         "email"
       ]
+    },
+    "Sale": {
+      "title": "Sale",
+      "type": "object",
+      "description": "Represents a completed sale or bill.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "partyName": {
+          "type": "string"
+        },
+        "partyPhoneNumber": {
+          "type": "string"
+        },
+        "labourCharges": {
+          "type": "number"
+        },
+        "transportCharges": {
+          "type": "number"
+        },
+        "subtotal": {
+          "type": "number"
+        },
+        "grandTotal": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sheets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "rate": {
+                "type": "string"
+              },
+              "measurements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/backend/entities/GraniteMeasurement"
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "id",
+        "grandTotal",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -101,8 +164,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/sales/{saleId}",
+        "definition": {
+          "entityName": "Sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Stores sales records for a specific user. The 'userId' parameter identifies the user, and 'saleId' identifies the specific sale.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the sale."
+            },
+            {
+              "name": "saleId",
+              "description": "The unique identifier of the sale."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to prioritize security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. Since users only measure granite, there is no need for collaborative entities. The structure implements path-based ownership for granite measurements to simplify the security rules.\n\nAuthorization Independence is achieved by storing granite measurements under the user's document. There is no need to read any other documents besides the user's record and the granite measurement record.\n\nThis structure supports QAPs by ensuring that listing operations are always scoped to a user. The security rules can then easily enforce that a user can only list the granite measurements that belong to them.\n"
+    "reasoning": "The Firestore structure is designed to prioritize security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. Since users only measure granite, there is no need for collaborative entities. The structure implements path-based ownership for granite measurements and sales to simplify the security rules.\n\nAuthorization Independence is achieved by storing granite measurements and sales under the user's document. There is no need to read any other documents besides the user's record and the granite measurement or sale record.\n\nThis structure supports QAPs by ensuring that listing operations are always scoped to a user. The security rules can then easily enforce that a user can only list the records that belong to them.\n"
   }
 }

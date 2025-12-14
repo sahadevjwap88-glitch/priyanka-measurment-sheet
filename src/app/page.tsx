@@ -1,29 +1,16 @@
 'use client';
 
 import GraniteGridPage from '@/components/granite-grid-page';
-import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import AuthGuard from '@/components/auth-guard';
 
 export default function Home() {
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || !user) {
-    return <p>Loading...</p>;
-  }
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="container mx-auto">
-        <GraniteGridPage />
-      </main>
-    </div>
+    <AuthGuard>
+      <div className="min-h-screen bg-background text-foreground">
+        <main className="container mx-auto">
+          <GraniteGridPage />
+        </main>
+      </div>
+    </AuthGuard>
   );
 }

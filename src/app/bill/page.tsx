@@ -11,11 +11,16 @@ import { LOCAL_STORAGE_KEY, SETTINGS_KEY } from '@/components/granite-grid-page'
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useUser, useFirestore, useFirebase } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import AuthGuard from '@/components/auth-guard';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -45,7 +50,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type Sheet = z.infer<typeof sheetSchema>;
 
-export default function BillPage() {
+function BillPage() {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
   
@@ -58,6 +63,10 @@ export default function BillPage() {
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
 
 
   const form = useForm<FormValues>({
@@ -141,6 +150,37 @@ export default function BillPage() {
   const labourCharges = showLabourCharges && watchedData?.labourCharges ? parseFloat(watchedData.labourCharges) : 0;
   const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
   const grandTotal = subtotalAllSheets + labourCharges + transportCharges;
+
+  const handleSaveBill = async () => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save a bill.' });
+      return;
+    }
+    const salesCollectionRef = collection(firestore, 'users', user.uid, 'sales');
+
+    const billData = {
+      partyName: watchedData.partyName || '',
+      partyPhoneNumber: watchedData.partyPhoneNumber || '',
+      labourCharges: labourCharges,
+      transportCharges: transportCharges,
+      sheets: watchedData.sheets?.map(s => ({
+          ...s,
+          measurements: s.measurements.filter(m => m.length && m.width)
+      })) || [],
+      subtotal: subtotalAllSheets,
+      grandTotal: grandTotal,
+      createdAt: serverTimestamp()
+    };
+    
+    try {
+      await addDoc(salesCollectionRef, billData);
+      toast({ title: 'Success', description: 'Bill saved successfully!' });
+      router.push('/sales');
+    } catch(e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save bill.' });
+    }
+  }
 
   const generatePdfDoc = () => {
     const doc = new jsPDF() as jsPDFWithAutoTable;
@@ -271,6 +311,10 @@ export default function BillPage() {
                   Back
               </Button>
             </Link>
+            <Button onClick={handleSaveBill} size="sm" variant="outline">
+                <Save className="mr-2" />
+                Save Bill
+            </Button>
             <Button onClick={handleExportPdf} size="sm">
                 <Download className="mr-2" />
                 Export PDF
@@ -388,4 +432,13 @@ export default function BillPage() {
       </div>
     </div>
   );
+}
+
+
+export default function BillPageWithAuth() {
+    return (
+        <AuthGuard>
+            <BillPage />
+        </AuthGuard>
+    );
 }
