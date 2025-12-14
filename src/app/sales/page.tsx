@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Label } from '@/components/ui/label';
 
 interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -272,3 +273,5 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
