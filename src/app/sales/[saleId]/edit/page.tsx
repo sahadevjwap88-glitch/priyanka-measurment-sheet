@@ -9,17 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SETTINGS_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { useParams, useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { GraniteTable } from '@/components/granite-table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 const measurementSchema = z.object({
@@ -42,6 +46,7 @@ const formSchema = z.object({
   transportCharges: z.string().optional(),
   discount: z.string().optional(),
   sheets: z.array(sheetSchema),
+  createdAt: z.date().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -78,6 +83,7 @@ function EditSalePage() {
       transportCharges: '',
       discount: '',
       sheets: [],
+      createdAt: new Date(),
     },
     mode: 'onBlur',
   });
@@ -121,6 +127,7 @@ function EditSalePage() {
                 width: m.width?.toString() || ''
             }))
         })),
+        createdAt: saleData.createdAt?.toDate(),
       });
     }
   }, [saleData, form]);
@@ -161,7 +168,7 @@ function EditSalePage() {
     }
 
     const updatedBillData = {
-      ...saleData, // Keep original data like createdAt
+      ...saleData, // Keep original data like id
       partyName: watchedData.partyName || '',
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
       labourCharges: labourCharges,
@@ -177,6 +184,7 @@ function EditSalePage() {
       })) || [],
       subtotal: subtotalAllSheets,
       grandTotal: grandTotal,
+      createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : saleData.createdAt,
     };
     
     try {
@@ -263,6 +271,31 @@ function EditSalePage() {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="discount">Discount</Label>
                     <Input id="discount" type="number" placeholder="Enter discount" {...form.register('discount')} />
+                </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                  <Label>Bill Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !watchedData.createdAt && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {watchedData.createdAt ? format(watchedData.createdAt, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={watchedData.createdAt}
+                        onSelect={(date) => form.setValue('createdAt', date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </CardContent>
@@ -359,3 +392,5 @@ export default function EditSalePageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
