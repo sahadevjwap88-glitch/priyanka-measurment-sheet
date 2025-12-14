@@ -12,9 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { SETTINGS_KEY } from '@/components/granite-grid-page';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { getAuth, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 
 function AccountPage() {
     const { user } = useUser();
+    const router = useRouter();
 
     // Settings state
     const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -60,6 +64,12 @@ function AccountPage() {
             title: 'Settings Saved',
             description: 'Your changes have been saved successfully.',
         });
+    };
+
+    const handleSignOut = async () => {
+        const auth = getAuth();
+        await signOut(auth);
+        router.push('/login');
     };
 
     return (
@@ -189,6 +199,20 @@ function AccountPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Account Actions</CardTitle>
+                    <CardDescription>Log out of your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button variant="destructive" onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log Out
+                    </Button>
+                </CardContent>
+            </Card>
+
         </div>
     );
 }
