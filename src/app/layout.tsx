@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
-import Header from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'Priyanka Granite Sheet',
@@ -33,7 +32,6 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
-          <Header />
           <div className="pb-20">
             {children}
           </div>
