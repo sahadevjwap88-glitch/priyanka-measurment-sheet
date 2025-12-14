@@ -240,6 +240,31 @@ function EditSalePage() {
             <CardContent className="grid gap-4 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                  <Label>Bill Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !watchedData.createdAt && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {watchedData.createdAt ? format(watchedData.createdAt, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={watchedData.createdAt}
+                        onSelect={(date) => form.setValue('createdAt', date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyName">Party Name</Label>
                     <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
                 </div>
@@ -271,31 +296,6 @@ function EditSalePage() {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="discount">Discount</Label>
                     <Input id="discount" type="number" placeholder="Enter discount" {...form.register('discount')} />
-                </div>
-                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
-                  <Label>Bill Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] justify-start text-left font-normal",
-                          !watchedData.createdAt && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {watchedData.createdAt ? format(watchedData.createdAt, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={watchedData.createdAt}
-                        onSelect={(date) => form.setValue('createdAt', date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
                 </div>
               </div>
             </CardContent>
@@ -392,5 +392,7 @@ export default function EditSalePageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
 
     
