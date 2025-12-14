@@ -1,17 +1,36 @@
 'use client';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth-guard';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from '@/hooks/use-toast';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
 
 function SaleDetailPage() {
     const { saleId } = useParams();
+    const router = useRouter();
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -30,6 +49,105 @@ function SaleDetailPage() {
             .reduce((acc: number, m: any) => acc + m.length * m.width, 0);
         return totalAreaInches / 144;
     };
+    
+    const generatePdfDoc = () => {
+        if (!sale) return null;
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        const saleDate = sale.createdAt?.toDate() || new Date();
+        const formattedDate = `${saleDate.getDate().toString().padStart(2, '0')}/${(saleDate.getMonth() + 1).toString().padStart(2, '0')}/${saleDate.getFullYear()}`;
+
+        // TODO: Get business details from a shared config or settings context
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Priyanka Granite', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        const details = [
+            [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, sale.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, formattedDate],
+            [{content: 'Party Phone:', styles: {fontStyle: 'bold'}}, sale.partyPhoneNumber || 'N.A', '', ''],
+        ];
+
+        doc.autoTable({
+            body: details,
+            startY: 30,
+            theme: 'plain',
+            styles: { fontSize: 11, cellPadding: 2 },
+            columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 60}, 2: { cellWidth: 35 } }
+        });
+
+        let finalY = (doc as any).lastAutoTable.finalY + 10;
+        
+        const summaryBody = sale.sheets.map((sheet: any) => {
+          const area = calculateTotalSquareFeetForSheet(sheet);
+          const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
+          const total = area * rate;
+          return [
+            sheet.color || 'N/A',
+            area.toFixed(2),
+            `Rs. ${rate.toFixed(2)}`,
+            `Rs. ${total.toFixed(2)}`
+          ];
+        });
+
+        doc.autoTable({
+          head: [['Color', 'SFT', 'Rate', 'Total Amount']],
+          body: summaryBody,
+          startY: finalY,
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+          columnStyles: { 3: { halign: 'right' } }
+        });
+
+        finalY = (doc as any).lastAutoTable.finalY;
+
+        const summaryRows = [
+          [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${sale.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
+        ];
+        if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${sale.labourCharges.toFixed(2)}`]);
+        if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${sale.transportCharges.toFixed(2)}`]);
+        summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(sale.grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+        
+        doc.autoTable({
+            body: summaryRows,
+            startY: finalY + 10,
+            theme: 'plain',
+            columnStyles: { 0: {cellWidth: 145, fontStyle: 'bold'}, 1: { halign: 'right' } },
+            styles: { fontSize: 12, cellPadding: 2 },
+        });
+
+        finalY = (doc as any).lastAutoTable.finalY;
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text("Thank you for your business!", pageWidth / 2, finalY + 20, { align: 'center' });
+        doc.text("sahadev jaat", pageWidth / 2, finalY + 25, { align: 'center' });
+
+        return doc;
+      };
+
+    const handleExportPdf = () => {
+        const doc = generatePdfDoc();
+        if (doc) {
+            const date = new Date();
+            const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
+            const filename = `bill_${timestamp}.pdf`;
+            doc.save(filename);
+        }
+    };
+    
+    const handleDeleteSale = async () => {
+        if (!saleDocRef) return;
+        try {
+            await deleteDoc(saleDocRef);
+            toast({ title: 'Success', description: 'Sale record deleted successfully.' });
+            router.push('/sales');
+        } catch (error) {
+            console.error('Error deleting sale:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete sale record.' });
+        }
+    }
 
 
     if (isLoading) return <p className="text-center p-8">Loading sale details...</p>;
@@ -46,12 +164,44 @@ function SaleDetailPage() {
             <div className="max-w-4xl mx-auto">
                 <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
                     <h1 className="text-3xl font-bold">Sale Details</h1>
-                    <Link href="/sales" passHref>
-                        <Button variant="outline" size="sm">
-                            <ArrowLeft className="mr-2" />
-                            Back to Sales
+                    <div className="flex gap-2">
+                        <Link href="/sales" passHref>
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="mr-2" />
+                                Back
+                            </Button>
+                        </Link>
+                         <Link href={`/sales/${sale.id}/edit`} passHref>
+                            <Button variant="outline" size="sm">
+                                <Edit className="mr-2" />
+                                Edit
+                            </Button>
+                        </Link>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                 <Button variant="destructive" size="sm">
+                                    <Trash2 className="mr-2" />
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this sales record.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteSale}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        <Button onClick={handleExportPdf} size="sm">
+                            <Download className="mr-2" />
+                            Download PDF
                         </Button>
-                    </Link>
+                    </div>
                 </header>
 
                 <div className="py-8 border rounded-lg" id="bill-content">
@@ -80,12 +230,12 @@ function SaleDetailPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {sale.sheets.map((sheet: any) => {
+                                    {sale.sheets.map((sheet: any, index: number) => {
                                         const area = calculateTotalSquareFeetForSheet(sheet);
                                         const rate = sheet.rate ? parseFloat(sheet.rate) : 0;
                                         const total = area * rate;
                                         return (
-                                            <TableRow key={sheet.id}>
+                                            <TableRow key={sheet.id || index}>
                                                 <TableCell>{sheet.color || 'N/A'}</TableCell>
                                                 <TableCell className="text-right">{area.toFixed(2)}</TableCell>
                                                 <TableCell className="text-right">₹{rate.toFixed(2)}</TableCell>
