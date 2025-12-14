@@ -295,19 +295,19 @@ export default function GraniteGridPage() {
         <div className="p-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-start gap-2 flex-wrap">
-              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
+              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm" className="px-2">
                 <FileDown className="mr-2" />
                 Download
               </Button>
               <Link href="/bill" passHref>
-                <Button variant="default" size="sm">
+                <Button variant="default" size="sm" className="px-2">
                   <Eye className="mr-2" />
                   Bill
                 </Button>
               </Link>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
+                  <Button variant="destructive" size="sm" className="px-2">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Clear All
                   </Button>
@@ -326,19 +326,19 @@ export default function GraniteGridPage() {
                 </AlertDialogContent>
               </AlertDialog>
                <Link href="/sales" passHref>
-                <Button variant="default" size="sm">
+                <Button variant="default" size="sm" className="px-2">
                   <BookCopy className="mr-2" />
                   All Sales
                 </Button>
               </Link>
                <Link href="/account" passHref>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="px-2">
                     <Settings className="mr-2" />
                     Settings
                 </Button>
                </Link>
 
-                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
+                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-2">
                   <Plus className="mr-2" />
                   Add Color
                 </Button>
