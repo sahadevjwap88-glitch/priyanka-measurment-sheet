@@ -1,6 +1,6 @@
 
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -8,14 +8,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Download } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+interface jsPDFWithAutoTable extends jsPDF {
+    autoTable: (options: any) => jsPDF;
+}
+
 
 function SalesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
+    const [startDate, setStartDate] = useState<Date | undefined>();
+    const [endDate, setEndDate] = useState<Date | undefined>();
 
     const salesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -28,8 +41,80 @@ function SalesPage() {
 
     const { data: sales, isLoading } = useCollection(salesQuery);
 
+    const filteredSales = useMemo(() => {
+        if (!sales) return [];
+        return sales.filter(sale => {
+            const saleDate = sale.createdAt?.toDate();
+            if (!saleDate) return false;
+
+            const start = startDate ? new Date(startDate.setHours(0, 0, 0, 0)) : null;
+            const end = endDate ? new Date(endDate.setHours(23, 59, 59, 999)) : null;
+
+            if (start && saleDate < start) return false;
+            if (end && saleDate > end) return false;
+            
+            return true;
+        });
+    }, [sales, startDate, endDate]);
+
     const handleRowClick = (saleId: string) => {
         router.push(`/sales/${saleId}`);
+    };
+
+    const handleExportReport = () => {
+        if (filteredSales.length === 0) {
+            alert("No sales to export in the selected date range.");
+            return;
+        }
+
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        doc.setFontSize(18);
+        doc.text("Sales Report", 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Date Range: ${startDate ? format(startDate, 'PPP') : 'N/A'} - ${endDate ? format(endDate, 'PPP') : 'N/A'}`, 14, 30);
+        
+        const tableColumn = ["Date", "Party Name", "Subtotal", "Labour", "Transport", "Discount", "Grand Total"];
+        const tableRows: any[][] = [];
+
+        let totalGrandTotal = 0;
+
+        filteredSales.forEach(sale => {
+            const saleDate = sale.createdAt?.toDate() ? format(sale.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A';
+            const rowData = [
+                saleDate,
+                sale.partyName || 'N/A',
+                sale.subtotal.toFixed(2),
+                sale.labourCharges.toFixed(2),
+                sale.transportCharges.toFixed(2),
+                (sale.discount || 0).toFixed(2),
+                Math.round(sale.grandTotal).toLocaleString('en-IN')
+            ];
+            tableRows.push(rowData);
+            totalGrandTotal += sale.grandTotal;
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 35,
+            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+            didDrawPage: (data) => {
+                // Footer
+                doc.setFontSize(10);
+                const pageCount = doc.internal.pages.length;
+                doc.text(`Page ${data.pageNumber} of ${pageCount - 1}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+            }
+        });
+        
+        const finalY = (doc as any).lastAutoTable.finalY;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total of all Sales:', 14, finalY + 10);
+        doc.text(`Rs. ${Math.round(totalGrandTotal).toLocaleString('en-IN')}`, 150, finalY + 10, {align: 'right'});
+
+        const date = new Date();
+        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+        doc.save(`sales_report_${timestamp}.pdf`);
     };
 
     return (
@@ -44,22 +129,81 @@ function SalesPage() {
                         </Button>
                     </Link>
                 </header>
+
+                <Card className="mb-8">
+                    <CardContent className="p-4 flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Label>From</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                    "w-[240px] justify-start text-left font-normal",
+                                    !startDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={startDate}
+                                    onSelect={setStartDate}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            <Label>To</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                    "w-[240px] justify-start text-left font-normal",
+                                    !endDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={endDate}
+                                    onSelect={setEndDate}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <Button onClick={handleExportReport} size="sm" className="ml-auto">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Report
+                        </Button>
+                    </CardContent>
+                </Card>
                 
                 {isLoading && (
                     <div className="text-center">Loading sales records...</div>
                 )}
 
-                {!isLoading && sales?.length === 0 && (
+                {!isLoading && filteredSales.length === 0 && (
                     <Card>
                         <CardContent className="p-8 text-center text-muted-foreground">
-                            No sales records found.
+                            No sales records found for the selected date range.
                         </CardContent>
                     </Card>
                 )}
 
-                {!isLoading && sales && sales.length > 0 && (
+                {!isLoading && filteredSales.length > 0 && (
                     <div className="space-y-6">
-                        {sales.map(sale => (
+                        {filteredSales.map(sale => (
                             <Card key={sale.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleRowClick(sale.id)}>
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
