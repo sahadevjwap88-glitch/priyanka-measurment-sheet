@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -335,6 +335,12 @@ export default function GraniteGridPage() {
                 <Button variant="default" size="sm">
                   <Eye className="mr-2" />
                   Bill
+                </Button>
+              </Link>
+               <Link href="/sales" passHref>
+                <Button variant="default" size="sm">
+                  <BookCopy className="mr-2" />
+                  All Sales
                 </Button>
               </Link>
               <AlertDialog>
