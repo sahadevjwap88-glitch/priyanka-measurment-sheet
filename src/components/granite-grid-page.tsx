@@ -25,17 +25,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { Textarea } from '@/components/ui/textarea';
 
 
 const measurementSchema = z.object({
@@ -87,12 +78,8 @@ const defaultValues: FormValues = {
 export default function GraniteGridPage() {
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   const [isClient, setIsClient] = useState(false);
-  const [showLabourCharges, setShowLabourCharges] = useState(true);
-  const [showTransportCharges, setShowTransportCharges] = useState(true);
-  const [labourRate, setLabourRate] = useState(3);
-  const [minLabourCharges, setMinLabourCharges] = useState(200);
-
-  // New settings state
+  
+  // Settings state
   const [businessName, setBusinessName] = useState('Priyanka Granite');
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -144,10 +131,6 @@ export default function GraniteGridPage() {
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
-        setShowLabourCharges(parsedSettings.showLabourCharges);
-        setShowTransportCharges(parsedSettings.showTransportCharges);
-        if (parsedSettings.labourRate) setLabourRate(parsedSettings.labourRate);
-        if (parsedSettings.minLabourCharges) setMinLabourCharges(parsedSettings.minLabourCharges);
         if (parsedSettings.businessName) setBusinessName(parsedSettings.businessName);
         if (parsedSettings.contactName) setContactName(parsedSettings.contactName);
         if (parsedSettings.phoneNumber) setPhoneNumber(parsedSettings.phoneNumber);
@@ -166,21 +149,6 @@ export default function GraniteGridPage() {
       return () => subscription.unsubscribe();
     }
   }, [isClient, form]);
-
-  useEffect(() => {
-    if (isClient) {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ 
-        showLabourCharges, 
-        showTransportCharges, 
-        labourRate, 
-        minLabourCharges,
-        businessName,
-        contactName,
-        phoneNumber,
-        address
-      }));
-    }
-  }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, businessName, contactName, phoneNumber, address, isClient]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -363,104 +331,12 @@ export default function GraniteGridPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-               <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                        <Settings className="mr-2" />
-                        Settings
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Settings</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="business-name">Business Name</Label>
-                            <Input
-                            id="business-name"
-                            value={businessName}
-                            onChange={(e) => setBusinessName(e.target.value)}
-                            placeholder="e.g., Priyanka Granite"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="contact-name">Name</Label>
-                            <Input
-                            id="contact-name"
-                            value={contactName}
-                            onChange={(e) => setContactName(e.target.value)}
-                            placeholder="Enter your name"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone-number">Phone Number</Label>
-                            <Input
-                            id="phone-number"
-                            type="tel"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="Enter phone number"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="address">Address</Label>
-                            <Textarea
-                            id="address"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            placeholder="Enter business address"
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
-                        <Label htmlFor="show-labour" className="flex flex-col space-y-1">
-                            <span>Show Labour Charges</span>
-                            <span className="font-normal leading-snug text-muted-foreground">
-                            Enable or disable the labour charges field on the bill page.
-                            </span>
-                        </Label>
-                        <Switch
-                            id="show-labour"
-                            checked={showLabourCharges}
-                            onCheckedChange={setShowLabourCharges}
-                        />
-                        </div>
-                        <div className="flex items-center justify-between">
-                        <Label htmlFor="show-transport" className="flex flex-col space-y-1">
-                            <span>Show Transport Charges</span>
-                            <span className="font-normal leading-snug text-muted-foreground">
-                            Enable or disable the transport charges field on the bill page.
-                            </span>
-                        </Label>
-                        <Switch
-                            id="show-transport"
-                            checked={showTransportCharges}
-                            onCheckedChange={setShowTransportCharges}
-                        />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="labour-rate">Labour Rate (per SFT)</Label>
-                            <Input
-                            id="labour-rate"
-                            type="number"
-                            value={labourRate}
-                            onChange={(e) => setLabourRate(Number(e.target.value))}
-                            placeholder="e.g., 3"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="min-labour-charges">Minimum Labour Charges</Label>
-                            <Input
-                            id="min-labour-charges"
-                            type="number"
-                            value={minLabourCharges}
-                            onChange={(e) => setMinLabourCharges(Number(e.target.value))}
-                            placeholder="e.g., 200"
-                            />
-                        </div>
-                    </div>
-                    </DialogContent>
-                </Dialog>
+               <Link href="/account" passHref>
+                <Button variant="ghost" size="sm">
+                    <Settings className="mr-2" />
+                    Settings
+                </Button>
+               </Link>
 
                 <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS}>
                   <Plus className="mr-2" />

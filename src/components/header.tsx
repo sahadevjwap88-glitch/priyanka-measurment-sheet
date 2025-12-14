@@ -4,7 +4,7 @@ import { useUser } from '@/firebase';
 import { getAuth, signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon, BookCopy } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,9 +64,9 @@ export default function Header() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
              <DropdownMenuItem asChild>
-                <Link href="/sales">
-                  <BookCopy className="mr-2 h-4 w-4" />
-                  <span>Sales Records</span>
+                <Link href="/account">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Account</span>
                 </Link>
               </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>
@@ -88,10 +88,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <Link href="/" className="mr-auto">
-          
-        </Link>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 ml-auto">
           {renderAuthContent()}
         </div>
       </div>
