@@ -2,13 +2,14 @@
 import { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 function SalesPage() {
     const { user } = useUser();
@@ -42,46 +43,72 @@ function SalesPage() {
                         </Button>
                     </Link>
                 </header>
+                
+                {isLoading && (
+                    <div className="text-center">Loading sales records...</div>
+                )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>All Sales</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Party Name</TableHead>
-                                    <TableHead className="text-right">Grand Total</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading && (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                                    </TableRow>
-                                )}
-                                {!isLoading && sales?.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="text-center">No sales records found.</TableCell>
-                                    </TableRow>
-                                )}
-                                {sales?.map((sale) => (
-                                    <TableRow key={sale.id} onClick={() => handleRowClick(sale.id)} className="cursor-pointer">
-                                        <TableCell>
-                                            {sale.createdAt?.toDate().toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>{sale.partyName || 'N/A'}</TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            ₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                {!isLoading && sales?.length === 0 && (
+                    <Card>
+                        <CardContent className="p-8 text-center text-muted-foreground">
+                            No sales records found.
+                        </CardContent>
+                    </Card>
+                )}
+
+                {!isLoading && sales && sales.length > 0 && (
+                    <div className="space-y-6">
+                        {sales.map(sale => (
+                            <Card key={sale.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleRowClick(sale.id)}>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle>{sale.partyName || 'N/A'}</CardTitle>
+                                            <CardDescription>
+                                                {sale.createdAt?.toDate().toLocaleDateString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric'
+                                                })}
+                                            </CardDescription>
+                                        </div>
+                                         <div className="text-right">
+                                            <p className="text-sm text-muted-foreground">Grand Total</p>
+                                            <p className="text-2xl font-bold">₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}</p>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Color</TableHead>
+                                                <TableHead className="text-right">Rate</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sale.sheets?.map((sheet: any, index: number) => (
+                                                <TableRow key={index}>
+                                                    <TableCell>{sheet.color || 'N/A'}</TableCell>
+                                                    <TableCell className="text-right">₹{parseFloat(sheet.rate || '0').toFixed(2)}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                                <CardFooter className="bg-muted/50 p-4 rounded-b-lg">
+                                    <div className="flex justify-between w-full text-sm">
+                                         <div className="flex gap-4">
+                                            <span>Subtotal: <span className="font-medium">₹{sale.subtotal.toFixed(2)}</span></span>
+                                            <Separator orientation="vertical" className="h-5"/>
+                                            <span>Labour: <span className="font-medium">₹{sale.labourCharges.toFixed(2)}</span></span>
+                                            <Separator orientation="vertical" className="h-5"/>
+                                            <span>Transport: <span className="font-medium">₹{sale.transportCharges.toFixed(2)}</span></span>
+                                         </div>
+                                    </div>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
