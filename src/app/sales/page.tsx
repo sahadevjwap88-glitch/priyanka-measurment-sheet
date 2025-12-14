@@ -77,6 +77,10 @@ function SalesPage() {
         const tableColumn = ["Date", "Party Name", "Subtotal", "Labour", "Transport", "Discount", "Grand Total"];
         const tableRows: any[][] = [];
 
+        let totalSubtotal = 0;
+        let totalLabour = 0;
+        let totalTransport = 0;
+        let totalDiscount = 0;
         let totalGrandTotal = 0;
 
         filteredSales.forEach(sale => {
@@ -91,8 +95,24 @@ function SalesPage() {
                 Math.round(sale.grandTotal).toLocaleString('en-IN')
             ];
             tableRows.push(rowData);
+            totalSubtotal += sale.subtotal;
+            totalLabour += sale.labourCharges;
+            totalTransport += sale.transportCharges;
+            totalDiscount += sale.discount || 0;
             totalGrandTotal += sale.grandTotal;
         });
+
+        // Add total row
+        const totalRow = [
+            { content: 'Total', colSpan: 2, styles: { fontStyle: 'bold' } },
+            { content: totalSubtotal.toFixed(2), styles: { fontStyle: 'bold' } },
+            { content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } },
+            { content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } },
+            { content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } },
+            { content: Math.round(totalGrandTotal).toLocaleString('en-IN'), styles: { fontStyle: 'bold' } }
+        ];
+        tableRows.push(totalRow);
+
 
         doc.autoTable({
             head: [tableColumn],
@@ -107,12 +127,6 @@ function SalesPage() {
             }
         });
         
-        const finalY = (doc as any).lastAutoTable.finalY;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Total of all Sales:', 14, finalY + 10);
-        doc.text(`Rs. ${Math.round(totalGrandTotal).toLocaleString('en-IN')}`, 150, finalY + 10, {align: 'right'});
-
         const date = new Date();
         const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
         doc.save(`sales_report_${timestamp}.pdf`);
@@ -273,5 +287,3 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
