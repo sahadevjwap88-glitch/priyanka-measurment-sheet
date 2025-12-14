@@ -4,7 +4,7 @@ import { useUser } from '@/firebase';
 import { getAuth, signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,9 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                <Avatar className="h-8 w-8">
-                 <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                 <AvatarFallback>
+                    <UserIcon className="h-5 w-5" />
+                 </AvatarFallback>
                </Avatar>
             </Button>
           </DropdownMenuTrigger>
