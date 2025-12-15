@@ -12,12 +12,23 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -36,6 +47,9 @@ export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,6 +58,8 @@ export default function LoginPage() {
       password: '',
     },
   });
+
+  const loginEmail = form.watch('email');
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -59,9 +75,9 @@ export default function LoginPage() {
         setUnverifiedEmail(values.email);
         await auth.signOut();
         toast({
-          variant: "destructive",
-          title: "Email not verified",
-          description: "Please verify your email before logging in.",
+          variant: 'destructive',
+          title: 'Email not verified',
+          description: 'Please verify your email before logging in.',
         });
         return;
       }
@@ -79,13 +95,14 @@ export default function LoginPage() {
             break;
           case 'auth/operation-not-allowed':
             title = 'Sign-in method disabled';
-            description = 'Email/password sign-in is not enabled. Please enable it in your Firebase project settings.';
+            description =
+              'Email/password sign-in is not enabled. Please enable it in your Firebase project settings.';
             break;
         }
       }
-      
+
       toast({
-        variant: "destructive",
+        variant: 'destructive',
         title: title,
         description: description,
       });
@@ -100,13 +117,13 @@ export default function LoginPage() {
       router.push('/');
     } catch (error: any) {
       console.error('Google sign in failed', error);
-       let title = 'Google Sign-in failed';
+      let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
 
       if (error.code) {
         switch (error.code) {
           case 'auth/operation-not-allowed':
-             title = 'Sign-in method disabled';
+            title = 'Sign-in method disabled';
             description = 'Google sign-in is not enabled. Please enable it in your Firebase project settings.';
             break;
           case 'auth/popup-closed-by-user':
@@ -117,12 +134,42 @@ export default function LoginPage() {
       }
 
       toast({
-        variant: "destructive",
+        variant: 'destructive',
         title: title,
         description: description,
       });
     }
   };
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({
+        variant: 'destructive',
+        title: 'Email required',
+        description: 'Please enter your email address.',
+      });
+      return;
+    }
+    const auth = getAuth();
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetEmailSent(true);
+    } catch (error: any) {
+      console.error('Password reset failed', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send password reset email. Please try again.',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isForgotPasswordOpen) {
+      setResetEmail(loginEmail);
+      setResetEmailSent(false);
+    }
+  }, [isForgotPasswordOpen, loginEmail]);
 
 
   if (isUserLoading || user) {
@@ -130,68 +177,126 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription>to access your granite measurements</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full">Sign In</Button>
-            </form>
-          </Form>
+    <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Card className="w-full max-w-md mx-4">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+            <CardDescription>to access your granite measurements</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="name@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center">
+                        <FormLabel>Password</FormLabel>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="p-0 h-auto text-xs text-primary"
+                          >
+                            Forgot password?
+                          </Button>
+                        </DialogTrigger>
+                      </div>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">Sign In</Button>
+              </form>
+            </Form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t"></span>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-            Sign in with Google
-          </Button>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Register
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+              Sign in with Google
+            </Button>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="font-semibold text-primary hover:underline">
+                Register
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      <DialogContent>
+        {!resetEmailSent ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Forgot Password</DialogTitle>
+              <DialogDescription>
+                Enter your email address and we&apos;ll send you a link to reset your password.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={handlePasswordReset}>
+                Get Reset Link
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Check Your Email</DialogTitle>
+              <DialogDescription>
+                We&apos;ve sent a password reset link to <span className="font-medium text-foreground">{resetEmail}</span>.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button">
+                  Sign In
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
