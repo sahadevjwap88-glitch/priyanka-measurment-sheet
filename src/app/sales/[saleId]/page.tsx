@@ -129,7 +129,7 @@ function SaleDetailPage() {
         ];
         if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${sale.labourCharges.toFixed(2)}`]);
         if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${sale.transportCharges.toFixed(2)}`]);
-        if (sale.discount > 0) summaryRows.push(['Discount', `Rs. ${sale.discount.toFixed(2)}`]);
+        if (sale.discount > 0) summaryRows.push(['Discount', `- Rs. ${sale.discount.toFixed(2)}`]);
         summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(sale.grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
         
         doc.autoTable({

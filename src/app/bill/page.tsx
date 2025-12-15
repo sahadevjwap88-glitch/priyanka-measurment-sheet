@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -271,7 +270,7 @@ function BillPage() {
       summaryRows.push(['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`]);
     }
     if (discount > 0) {
-      summaryRows.push(['Discount', `Rs. ${discount.toFixed(2)}`]);
+      summaryRows.push(['Discount', `- Rs. ${discount.toFixed(2)}`]);
     }
 
     summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
@@ -497,7 +496,3 @@ export default function BillPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
-
-    
