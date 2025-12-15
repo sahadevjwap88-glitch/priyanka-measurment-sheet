@@ -20,23 +20,41 @@ import {
   signInWithPopup,
   sendEmailVerification,
   signOut,
+  User,
 } from 'firebase/auth';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useEffect } from 'react';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
+async function createUserDocument(firestore: any, user: User) {
+    const userRef = doc(firestore, 'users', user.uid);
+    await setDoc(userRef, {
+      id: user.uid,
+      email: user.email,
+      displayName: user.displayName || 'Anonymous',
+      createdAt: serverTimestamp(),
+      photoUrl: user.photoURL || '',
+      address: '',
+      isAdmin: false,
+    });
+}
+
+
 export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,6 +65,7 @@ export default function RegisterPage() {
   });
 
    useEffect(() => {
+    // Redirect if user is already logged in
     if (!isUserLoading && user) {
       router.push('/');
     }
@@ -56,6 +75,7 @@ export default function RegisterPage() {
     const auth = getAuth();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      await createUserDocument(firestore, userCredential.user);
       await sendEmailVerification(userCredential.user);
       await signOut(auth);
       router.push(`/verify-email?email=${values.email}`);
@@ -94,6 +114,8 @@ export default function RegisterPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      // On successful sign-in, the useEffect hook on the login page will handle document creation and redirection.
+      // A small delay might be needed for auth state to propagate before redirecting.
       router.push('/');
     } catch (error: any) {
       console.error('Google sign in failed', error);

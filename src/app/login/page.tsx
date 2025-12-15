@@ -29,8 +29,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  User,
 } from 'firebase/auth';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
@@ -38,15 +39,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
+async function updateUserDocument(firestore: any, user: User) {
+  const userRef = doc(firestore, 'users', user.uid);
+  const userDoc = await getDoc(userRef);
+  if (!userDoc.exists()) {
+    await setDoc(userRef, {
+      id: user.uid,
+      email: user.email,
+      displayName: user.displayName || 'Anonymous',
+      createdAt: serverTimestamp(),
+      photoUrl: user.photoURL || '',
+      address: '',
+      isAdmin: false,
+    });
+  }
+}
+
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -64,9 +83,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      updateUserDocument(firestore, user).then(() => {
+        router.push('/');
+      });
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
@@ -82,7 +103,7 @@ export default function LoginPage() {
         });
         return;
       }
-      router.push('/');
+      // User will be redirected by the useEffect hook
     } catch (error: any) {
       console.error('Failed to sign in', error);
       let title = 'Sign-in failed';
@@ -115,7 +136,7 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/');
+       // User will be redirected by the useEffect hook
     } catch (error: any) {
       console.error('Google sign in failed', error);
       let title = 'Google Sign-in failed';
