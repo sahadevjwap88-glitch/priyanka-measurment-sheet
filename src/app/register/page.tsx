@@ -122,10 +122,8 @@ export default function RegisterPage() {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // On successful sign-in, the useEffect hook on the login page will handle document creation and redirection.
-      // A small delay might be needed for auth state to propagate before redirecting.
-      router.push('/');
+      const userCredential = await signInWithPopup(auth, provider);
+      // The useEffect hook will handle document creation and redirection.
     } catch (error: any) {
       console.error('Google sign in failed', error);
        let title = 'Google Sign-in failed';
