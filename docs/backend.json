@@ -1,127 +1,168 @@
-
 {
   "entities": {
-    "GraniteMeasurement": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GraniteMeasurement",
-      "type": "object",
-      "description": "Represents a single granite measurement record.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the GraniteMeasurement entity."
-        },
-        "rowNumber": {
-          "type": "number",
-          "description": "The row number for this measurement (1-100)."
-        },
-        "length": {
-          "type": "number",
-          "description": "Length measurement of the granite."
-        },
-        "width": {
-          "type": "number",
-          "description": "Width measurement of the granite."
-        }
-      },
-      "required": [
-        "id",
-        "rowNumber",
-        "length",
-        "width"
-      ]
-    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the Granite Grid application.",
+      "description": "Represents a user account in the e-commerce application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "username": {
-          "type": "string",
-          "description": "The username of the user."
+          "description": "The unique identifier for the user, matching their Firebase Auth UID."
         },
         "email": {
           "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        }
-      },
-      "required": [
-        "id",
-        "username",
-        "email"
-      ]
-    },
-    "Sale": {
-      "title": "Sale",
-      "type": "object",
-      "description": "Represents a completed sale or bill.",
-      "properties": {
-        "id": {
-          "type": "string"
+          "format": "email",
+          "description": "The user's email address."
         },
-        "partyName": {
-          "type": "string"
-        },
-        "partyPhoneNumber": {
-          "type": "string"
-        },
-        "labourCharges": {
-          "type": "number"
-        },
-        "transportCharges": {
-          "type": "number"
-        },
-        "discount": {
-          "type": "number"
-        },
-        "subtotal": {
-          "type": "number"
-        },
-        "grandTotal": {
-          "type": "number"
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The timestamp when the user account was created."
         },
-        "sheets": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "color": {
-                "type": "string"
-              },
-              "rate": {
-                "type": "string"
-              },
-              "measurements": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/backend/entities/GraniteMeasurement"
-                }
-              }
-            }
-          }
+        "photoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        },
+        "address": {
+          "type": "string",
+          "description": "The user's shipping or billing address."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Flag indicating if the user has administrative privileges."
         }
       },
-      "required": [
-        "id",
-        "grandTotal",
-        "createdAt"
-      ]
+      "required": ["id", "email", "displayName", "createdAt"]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product available for sale in the store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the product."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the product was created."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the product's image."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the product belongs to."
+        },
+        "stockQuantity": {
+          "type": "number",
+          "description": "The available quantity of the product in stock."
+        }
+      },
+      "required": ["id", "name", "price", "description", "createdAt"]
+    },
+    "CartItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CartItem",
+      "type": "object",
+      "description": "Represents an item within a user's shopping cart.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the cart item."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product's ID."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product in the cart."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the item was added to the cart."
+        }
+      },
+      "required": ["id", "productId", "quantity", "createdAt"]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer's order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the order."
+        },
+        "orderDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the order was placed."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the order (e.g., 'pending', 'shipped', 'delivered')."
+        },
+        "shippingAddress": {
+          "type": "string",
+          "description": "The address where the order will be shipped."
+        }
+      },
+      "required": ["id", "orderDate", "totalAmount", "status"]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents a single item within an order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the order item."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product's ID."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product ordered."
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "The price of a single unit of the product at the time of order."
+        }
+      },
+      "required": ["id", "productId", "quantity", "unitPrice"]
     }
   },
   "auth": {
@@ -140,56 +181,49 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. The 'userId' parameter identifies the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
+          "description": "Stores public user profile information. The document ID is the same as the Firebase Auth UID."
         }
       },
       {
-        "path": "/users/{userId}/graniteMeasurements/{graniteMeasurementId}",
+        "path": "/products/{productId}",
         "definition": {
-          "entityName": "GraniteMeasurement",
+          "entityName": "Product",
           "schema": {
-            "$ref": "#/backend/entities/GraniteMeasurement"
+            "$ref": "#/backend/entities/Product"
           },
-          "description": "Stores granite measurements for a specific user. The 'userId' parameter identifies the user, and 'graniteMeasurementId' identifies the specific measurement.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the measurement."
-            },
-            {
-              "name": "graniteMeasurementId",
-              "description": "The unique identifier of the granite measurement."
-            }
-          ]
+          "description": "Top-level collection for all products available in the store."
         }
       },
       {
-        "path": "/users/{userId}/sales/{saleId}",
+        "path": "/users/{userId}/cart/{cartItemId}",
         "definition": {
-          "entityName": "Sale",
+          "entityName": "CartItem",
           "schema": {
-            "$ref": "#/backend/entities/Sale"
+            "$ref": "#/backend/entities/CartItem"
           },
-          "description": "Stores sales records for a specific user. The 'userId' parameter identifies the user, and 'saleId' identifies the specific sale.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the sale."
-            },
-            {
-              "name": "saleId",
-              "description": "The unique identifier of the sale."
-            }
-          ]
+          "description": "A subcollection under a user document storing items in their shopping cart. This ensures a user can only access their own cart."
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "A subcollection under a user document storing their order history. This ensures a user can only see their own orders."
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}/items/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "A subcollection under an order document listing the specific products in that order."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to prioritize security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. Since users only measure granite, there is no need for collaborative entities. The structure implements path-based ownership for granite measurements and sales to simplify the security rules.\n\nAuthorization Independence is achieved by storing granite measurements and sales under the user's document. There is no need to read any other documents besides the user's record and the granite measurement or sale record.\n\nThis structure supports QAPs by ensuring that listing operations are always scoped to a user. The security rules can then easily enforce that a user can only list the records that belong to them.\n"
+    ]
   }
 }
