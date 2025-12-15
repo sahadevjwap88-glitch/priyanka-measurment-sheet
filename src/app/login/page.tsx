@@ -74,8 +74,6 @@ export default function LoginPage() {
       if (error.code) {
         switch (error.code) {
           case 'auth/invalid-credential':
-          case 'auth/wrong-password':
-          case 'auth/user-not-found':
             title = 'Password or Email Incorrect';
             description = 'The email or password you entered is incorrect. Please try again.';
             break;
@@ -100,7 +98,7 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       router.push('/');
-    } catch (error: any) {
+    } catch (error: any) => {
       console.error('Google sign in failed', error);
        let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
