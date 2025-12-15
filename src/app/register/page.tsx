@@ -22,14 +22,14 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useEffect } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
 
 
 const formSchema = z.object({
@@ -37,9 +37,9 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-async function createUserDocument(firestore: any, user: User) {
+function createUserDocument(firestore: Firestore, user: User) {
     const userRef = doc(firestore, 'users', user.uid);
-    await setDoc(userRef, {
+    const userData = {
       id: user.uid,
       email: user.email,
       displayName: user.displayName || 'Anonymous',
@@ -47,6 +47,15 @@ async function createUserDocument(firestore: any, user: User) {
       photoUrl: user.photoURL || '',
       address: '',
       isAdmin: false,
+    };
+    
+    setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 }
 
@@ -75,7 +84,7 @@ export default function RegisterPage() {
     const auth = getAuth();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      await createUserDocument(firestore, userCredential.user);
+      createUserDocument(firestore, userCredential.user);
       await sendEmailVerification(userCredential.user);
       await signOut(auth);
       router.push(`/verify-email?email=${values.email}`);

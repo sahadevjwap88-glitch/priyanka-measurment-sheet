@@ -31,7 +31,7 @@ import {
   sendPasswordResetEmail,
   User,
 } from 'firebase/auth';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
@@ -39,27 +39,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-async function updateUserDocument(firestore: any, user: User) {
-  const userRef = doc(firestore, 'users', user.uid);
-  const userDoc = await getDoc(userRef);
-  if (!userDoc.exists()) {
-    await setDoc(userRef, {
-      id: user.uid,
-      email: user.email,
-      displayName: user.displayName || 'Anonymous',
-      createdAt: serverTimestamp(),
-      photoUrl: user.photoURL || '',
-      address: '',
-      isAdmin: false,
+function updateUserDocument(firestore: Firestore, user: User) {
+    const userRef = doc(firestore, 'users', user.uid);
+    
+    getDoc(userRef).then(userDoc => {
+        if (!userDoc.exists()) {
+            const userData = {
+                id: user.uid,
+                email: user.email,
+                displayName: user.displayName || 'Anonymous',
+                createdAt: serverTimestamp(),
+                photoUrl: user.photoURL || '',
+                address: '',
+                isAdmin: false,
+            };
+            setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: userRef.path,
+                    operation: 'create',
+                    requestResourceData: userData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+        }
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
-  }
 }
 
 export default function LoginPage() {
@@ -83,9 +99,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      updateUserDocument(firestore, user).then(() => {
-        router.push('/');
-      });
+      updateUserDocument(firestore, user);
+      router.push('/');
     }
   }, [user, isUserLoading, router, firestore]);
 
