@@ -28,7 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 const measurementSchema = z.object({
@@ -108,30 +108,6 @@ export default function GraniteGridPage() {
   
   useEffect(() => {
     setIsClient(true);
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        if (parsedData && parsedData.sheets && parsedData.sheets.length > 0) {
-           const cleanedSheets = parsedData.sheets.map((sheet: any) => ({
-            ...sheet,
-            measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
-          }));
-          const initialActiveId = parsedData.activeSheetId || cleanedSheets[0]?.id;
-          form.reset({ ...parsedData, sheets: cleanedSheets, activeSheetId: initialActiveId });
-        } else {
-           handleClearAll(false);
-        }
-      } catch (error) {
-        console.error("Failed to parse data from localStorage", error);
-        handleClearAll(false);
-      }
-    } else {
-        handleClearAll(false);
-    }
-  }, []);
-
-  useEffect(() => {
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -141,19 +117,40 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
+
+          if (data.sheets && data.sheets.length > 0) {
+            const cleanedSheets = data.sheets.map((sheet: any) => ({
+              ...sheet,
+              measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
+            }));
+            const initialActiveId = data.activeSheetId || cleanedSheets[0]?.id;
+            form.reset({ sheets: cleanedSheets, activeSheetId: initialActiveId });
+          } else {
+            handleClearAll(false);
+          }
+        } else {
+          handleClearAll(false);
         }
       });
+    } else if (!user) {
+        handleClearAll(false);
     }
   }, [user, firestore]);
 
   useEffect(() => {
-    if (isClient) {
+    if (isClient && user && firestore) {
       const subscription = form.watch((value) => {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        setDoc(userDocRef, { 
+            sheets: value.sheets,
+            activeSheetId: value.activeSheetId 
+        }, { merge: true });
+        // Also update local storage for bill page
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
       });
       return () => subscription.unsubscribe();
     }
-  }, [isClient, form]);
+  }, [isClient, form, user, firestore]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -252,15 +249,23 @@ export default function GraniteGridPage() {
     }
   }, [generateSheetPdfDoc]);
 
-  const handleClearAll = (removeFromStorage = true) => {
+  const handleClearAll = (saveToDb = true) => {
     const newSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
-    form.reset({
+    const newFormState = {
       sheets: [newSheet],
       activeSheetId: newSheet.id,
-    });
-    if (removeFromStorage) {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    };
+    form.reset(newFormState);
+
+    if (user && firestore && saveToDb) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        setDoc(userDocRef, { 
+            sheets: newFormState.sheets,
+            activeSheetId: newFormState.activeSheetId
+        }, { merge: true });
     }
+     // Also update local storage for bill page
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newFormState));
   };
   
   const addSheet = () => {

@@ -60,6 +60,17 @@
         "minLabourCharges": {
           "type": "number",
           "description": "The minimum charge for labour."
+        },
+        "sheets": {
+            "type": "array",
+            "description": "The user's saved granite measurement sheets.",
+            "items": {
+                "type": "object"
+            }
+        },
+        "activeSheetId": {
+            "type": "string",
+            "description": "The ID of the currently active sheet."
         }
       },
       "required": ["id", "email", "displayName", "createdAt"]

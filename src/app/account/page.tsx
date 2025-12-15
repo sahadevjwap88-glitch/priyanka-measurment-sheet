@@ -31,6 +31,8 @@ function AccountPage() {
     const [businessName, setBusinessName] = useState('Priyanka Granite');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
+    const [sheets, setSheets] = useState([]);
+    const [activeSheetId, setActiveSheetId] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
@@ -48,6 +50,8 @@ function AccountPage() {
                         setBusinessName(data.businessName || 'Priyanka Granite');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
+                        setSheets(data.sheets || []);
+                        setActiveSheetId(data.activeSheetId || '');
                     }
                 })
                 .catch((error) => {
@@ -80,6 +84,8 @@ function AccountPage() {
                 businessName,
                 phoneNumber,
                 address,
+                sheets,
+                activeSheetId
             }, { merge: true });
 
             toast({
