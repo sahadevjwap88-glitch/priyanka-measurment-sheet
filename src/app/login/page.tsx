@@ -65,7 +65,7 @@ export default function LoginPage() {
           case 'auth/invalid-credential':
           case 'auth/wrong-password':
           case 'auth/user-not-found':
-            title = 'Invalid Credentials';
+            title = 'Password or Email Incorrect';
             description = 'The email or password you entered is incorrect. Please try again.';
             break;
           case 'auth/operation-not-allowed':

@@ -63,8 +63,8 @@ export default function RegisterPage() {
       if (error.code) {
         switch (error.code) {
           case 'auth/email-already-in-use':
-            title = 'Email already exists';
-            description = 'This email is already associated with an account. Please sign in instead.';
+            title = 'User already exists';
+            description = 'This email is already associated with an account. Sign in?';
             break;
           case 'auth/weak-password':
             title = 'Weak Password';
