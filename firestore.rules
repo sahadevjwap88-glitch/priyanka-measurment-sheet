@@ -97,35 +97,19 @@ service cloud.firestore {
       allow create: if isOwner(userId) && hasValidUserIdOnCreate(userId);
       allow update: if isExistingOwner(userId) && isIdImmutable();
       allow delete: if isExistingOwner(userId);
+
+      // ----------------------------------------------------------------------
+      // Sales Record Rules
+      // ----------------------------------------------------------------------
+      
+      /**
+       * @description Manages sales records, which are private to each user.
+       * @path /users/{userId}/sales/{saleId}
+       * @allow A user can create, read, update, and delete their own sales records.
+       */
+       match /sales/{saleId} {
+          allow read, write: if isOwner(userId);
+       }
     }
-
-    // ----------------------------------------------------------------------
-    // Granite Measurement Rules
-    // ----------------------------------------------------------------------
-
-    /**
-     * @description Manages granite measurement records, which are private to each user.
-     *   A user has full control over their own measurements.
-     * @path /users/{userId}/graniteMeasurements/{graniteMeasurementId}
-     * @allow (create) An authenticated user 'user_abc' creating a new measurement in their own subcollection, e.g., POST /users/user_abc/graniteMeasurements.
-     * @deny (get) User 'user_xyz' trying to read a measurement belonging to 'user_abc', e.g., GET /users/user_abc/graniteMeasurements/meas_123.
-     * @principle Enforces document ownership for all operations within a user-specific subcollection.
-     */
-    match /users/{userId}/graniteMeasurements/{graniteMeasurementId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // ----------------------------------------------------------------------
-    // Sales Record Rules
-    // ----------------------------------------------------------------------
-    
-    /**
-     * @description Manages sales records, which are private to each user.
-     * @path /users/{userId}/sales/{saleId}
-     * @allow A user can create, read, update, and delete their own sales records.
-     */
-     match /users/{userId}/sales/{saleId} {
-        allow read, write: if isOwner(userId);
-     }
   }
 }
