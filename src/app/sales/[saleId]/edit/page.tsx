@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SETTINGS_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Save, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -15,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { useParams, useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
@@ -97,19 +96,22 @@ function EditSalePage() {
 
   useEffect(() => {
     setIsClient(true);
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setShowLabourCharges(parsedSettings.showLabourCharges);
-        setShowTransportCharges(parsedSettings.showTransportCharges);
-        if (parsedSettings.labourRate) setLabourRate(parsedSettings.labourRate);
-        if (parsedSettings.minLabourCharges) setMinLabourCharges(parsedSettings.minLabourCharges);
-      } catch (error) {
-        console.error("Failed to parse settings from localStorage", error);
-      }
-    }
   }, []);
+
+  useEffect(() => {
+    if (user && firestore) {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      getDoc(userDocRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setShowLabourCharges(data.showLabourCharges ?? true);
+          setShowTransportCharges(data.showTransportCharges ?? true);
+          setLabourRate(data.labourRate ?? 3);
+          setMinLabourCharges(data.minLabourCharges ?? 200);
+        }
+      });
+    }
+  }, [user, firestore]);
 
   useEffect(() => {
     if (saleData) {
@@ -392,7 +394,3 @@ export default function EditSalePageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
-
-    
