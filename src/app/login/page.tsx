@@ -98,7 +98,7 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       router.push('/');
-    } catch (error: any) => {
+    } catch (error: any) {
       console.error('Google sign in failed', error);
        let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
