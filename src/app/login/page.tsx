@@ -32,7 +32,7 @@ import {
   User,
 } from 'firebase/auth';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,6 +81,7 @@ function updateUserDocument(firestore: Firestore, user: User) {
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const firestore = useFirestore();
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
@@ -98,11 +99,11 @@ export default function LoginPage() {
   const loginEmail = form.watch('email');
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!isUserLoading && user && pathname !== '/') {
       updateUserDocument(firestore, user);
       router.push('/');
     }
-  }, [user, isUserLoading, router, firestore]);
+  }, [user, isUserLoading, router, firestore, pathname]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
