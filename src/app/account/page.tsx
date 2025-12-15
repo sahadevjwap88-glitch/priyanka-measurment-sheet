@@ -1,77 +1,110 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import AuthGuard from '@/components/auth-guard';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { SETTINGS_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { LogOut, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 function AccountPage() {
     const { user } = useUser();
+    const firestore = useFirestore();
     const router = useRouter();
 
-    // Settings state
+    // Settings state with initial defaults
+    const [displayName, setDisplayName] = useState('');
     const [showLabourCharges, setShowLabourCharges] = useState(true);
     const [showTransportCharges, setShowTransportCharges] = useState(true);
     const [labourRate, setLabourRate] = useState(3);
     const [minLabourCharges, setMinLabourCharges] = useState(200);
     const [businessName, setBusinessName] = useState('Priyanka Granite');
-    const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-        const savedSettings = localStorage.getItem(SETTINGS_KEY);
-        if (savedSettings) {
+        if (user && firestore) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            getDoc(userDocRef)
+                .then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        setDisplayName(data.displayName || '');
+                        setShowLabourCharges(data.showLabourCharges ?? true);
+                        setShowTransportCharges(data.showTransportCharges ?? true);
+                        setLabourRate(data.labourRate ?? 3);
+                        setMinLabourCharges(data.minLabourCharges ?? 200);
+                        setBusinessName(data.businessName || 'Priyanka Granite');
+                        setPhoneNumber(data.phoneNumber || '');
+                        setAddress(data.address || '');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching user settings:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Could not load your settings.",
+                    });
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }
+    }, [user, firestore]);
+
+    const handleProfileUpdate = async () => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to save changes.' });
+            return;
+        }
+        const userDocRef = doc(firestore, 'users', user.uid);
         try {
-            const parsedSettings = JSON.parse(savedSettings);
-            setShowLabourCharges(parsedSettings.showLabourCharges ?? true);
-            setShowTransportCharges(parsedSettings.showTransportCharges ?? true);
-            if (parsedSettings.labourRate) setLabourRate(parsedSettings.labourRate);
-            if (parsedSettings.minLabourCharges) setMinLabourCharges(parsedSettings.minLabourCharges);
-            if (parsedSettings.businessName) setBusinessName(parsedSettings.businessName);
-            if (parsedSettings.contactName) setContactName(parsedSettings.contactName);
-            if (parsedSettings.phoneNumber) setPhoneNumber(parsedSettings.phoneNumber);
-            if (parsedSettings.address) setAddress(parsedSettings.address);
+            await setDoc(userDocRef, {
+                displayName,
+                showLabourCharges,
+                showTransportCharges,
+                labourRate,
+                minLabourCharges,
+                businessName,
+                phoneNumber,
+                address,
+            }, { merge: true });
+
+            toast({
+                title: "Settings Saved",
+                description: "Your new settings have been saved successfully.",
+            });
         } catch (error) {
-            console.error("Failed to parse settings from localStorage", error);
+            console.error("Failed to update profile", error);
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.",
+                description: "Could not save your settings.",
+            });
         }
-        }
-        setIsInitialLoad(false);
-    }, []);
-
-    useEffect(() => {
-        if (isInitialLoad) return;
-
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ 
-            showLabourCharges, 
-            showTransportCharges, 
-            labourRate, 
-            minLabourCharges,
-            businessName,
-            contactName,
-            phoneNumber,
-            address
-        }));
-    }, [showLabourCharges, showTransportCharges, labourRate, minLabourCharges, businessName, contactName, phoneNumber, address, isInitialLoad]);
-
+    };
 
     const handleSignOut = async () => {
         const auth = getAuth();
         await signOut(auth);
         router.push('/login');
     };
+    
+    if (isLoading) {
+        return <div className="p-8 text-center">Loading account details...</div>
+    }
 
     return (
         <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-8">
@@ -98,13 +131,22 @@ function AccountPage() {
                         <Label>Email</Label>
                         <Input value={user?.email || ''} readOnly disabled />
                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="display-name">Display Name</Label>
+                        <Input
+                        id="display-name"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Enter your display name"
+                        />
+                    </div>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Application Settings</CardTitle>
-                    <CardDescription>These settings customize the bill generation and are saved automatically.</CardDescription>
+                    <CardDescription>These settings customize the bill generation and are saved to your profile.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-4">
@@ -120,15 +162,6 @@ function AccountPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="contact-name">Your Name</Label>
-                                <Input
-                                id="contact-name"
-                                value={contactName}
-                                onChange={(e) => setContactName(e.target.value)}
-                                placeholder="Enter your name"
-                                />
-                            </div>
-                            <div className="space-y-2">
                                 <Label htmlFor="phone-number">Phone Number</Label>
                                 <Input
                                 id="phone-number"
@@ -138,7 +171,7 @@ function AccountPage() {
                                 placeholder="Enter phone number"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="address">Address</Label>
                                 <Textarea
                                 id="address"
@@ -204,6 +237,12 @@ function AccountPage() {
                         </div>
                     </div>
                 </CardContent>
+                <CardFooter>
+                    <Button onClick={handleProfileUpdate}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                    </Button>
+                </CardFooter>
             </Card>
 
             <Card>

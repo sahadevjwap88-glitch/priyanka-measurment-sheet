@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 
 const measurementSchema = z.object({
@@ -58,7 +60,6 @@ const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
 const MAX_SHEETS = 4;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
-export const SETTINGS_KEY = 'priyanka-granite-settings';
 
 const createNewSheet = (id: string, name: string): Sheet => ({
   id,
@@ -78,6 +79,8 @@ const defaultValues: FormValues = {
 export default function GraniteGridPage() {
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   const [isClient, setIsClient] = useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
   
   // Settings state
   const [businessName, setBusinessName] = useState('Priyanka Granite');
@@ -126,20 +129,22 @@ export default function GraniteGridPage() {
     } else {
         handleClearAll(false);
     }
-
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        if (parsedSettings.businessName) setBusinessName(parsedSettings.businessName);
-        if (parsedSettings.contactName) setContactName(parsedSettings.contactName);
-        if (parsedSettings.phoneNumber) setPhoneNumber(parsedSettings.phoneNumber);
-        if (parsedSettings.address) setAddress(parsedSettings.address);
-      } catch (error) {
-        console.error("Failed to parse settings from localStorage", error);
-      }
-    }
   }, []);
+
+  useEffect(() => {
+    if (user && firestore) {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      getDoc(userDocRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setBusinessName(data.businessName || 'Priyanka Granite');
+          setContactName(data.displayName || '');
+          setPhoneNumber(data.phoneNumber || '');
+          setAddress(data.address || '');
+        }
+      });
+    }
+  }, [user, firestore]);
 
   useEffect(() => {
     if (isClient) {

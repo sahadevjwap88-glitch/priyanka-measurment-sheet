@@ -2,7 +2,7 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -35,12 +36,32 @@ function SaleDetailPage() {
     const { user } = useUser();
     const firestore = useFirestore();
 
+    const [businessName, setBusinessName] = useState('Priyanka Granite');
+    const [contactName, setContactName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [address, setAddress] = useState('');
+
     const saleDocRef = useMemoFirebase(() => {
         if (!user || !saleId) return null;
         return doc(firestore, 'users', user.uid, 'sales', Array.isArray(saleId) ? saleId[0] : saleId);
     }, [user, firestore, saleId]);
 
     const { data: sale, isLoading } = useDoc(saleDocRef);
+
+    useEffect(() => {
+        if (user && firestore) {
+          const userDocRef = doc(firestore, 'users', user.uid);
+          getDoc(userDocRef).then((docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              setBusinessName(data.businessName || 'Priyanka Granite');
+              setContactName(data.displayName || '');
+              setPhoneNumber(data.phoneNumber || '');
+              setAddress(data.address || '');
+            }
+          });
+        }
+    }, [user, firestore]);
     
     const calculateTotalSquareFeetForSheet = (sheet: any) => {
         if (!sheet || !sheet.measurements) return 0;
@@ -57,12 +78,13 @@ function SaleDetailPage() {
         const saleDate = sale.createdAt?.toDate() || new Date();
         const formattedDate = `${saleDate.getDate().toString().padStart(2, '0')}/${(saleDate.getMonth() + 1).toString().padStart(2, '0')}/${saleDate.getFullYear()}`;
 
-        // TODO: Get business details from a shared config or settings context
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text('Priyanka Granite', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+        doc.text(businessName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
+        const contactInfo = [contactName, phoneNumber, address].filter(Boolean).join(' | ');
+        doc.text(contactInfo, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
         
         const details = [
             [{content: 'Party Name:', styles: {fontStyle: 'bold'}}, sale.partyName || 'N/A', {content: 'Date:', styles: {fontStyle: 'bold'}}, formattedDate],

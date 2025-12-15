@@ -36,6 +36,30 @@
         "isAdmin": {
           "type": "boolean",
           "description": "Flag indicating if the user has administrative privileges."
+        },
+        "businessName": {
+          "type": "string",
+          "description": "The name of the user's business."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's contact phone number."
+        },
+        "showLabourCharges": {
+          "type": "boolean",
+          "description": "Setting to show/hide labour charges on bills."
+        },
+        "showTransportCharges": {
+          "type": "boolean",
+          "description": "Setting to show/hide transport charges on bills."
+        },
+        "labourRate": {
+          "type": "number",
+          "description": "The rate charged for labour per square foot."
+        },
+        "minLabourCharges": {
+          "type": "number",
+          "description": "The minimum charge for labour."
         }
       },
       "required": ["id", "email", "displayName", "createdAt"]
