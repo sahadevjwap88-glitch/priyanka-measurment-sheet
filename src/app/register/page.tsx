@@ -18,6 +18,8 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendEmailVerification,
+  signOut,
 } from 'firebase/auth';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -53,8 +55,10 @@ export default function RegisterPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/');
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      await sendEmailVerification(userCredential.user);
+      await signOut(auth);
+      router.push(`/verify-email?email=${values.email}`);
     } catch (error: any) {
       console.error('Failed to register', error);
       let title = 'Registration failed';

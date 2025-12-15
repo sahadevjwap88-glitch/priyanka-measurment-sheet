@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -35,6 +35,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,7 +54,17 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      if (!userCredential.user.emailVerified) {
+        setUnverifiedEmail(values.email);
+        await auth.signOut();
+        toast({
+          variant: "destructive",
+          title: "Email not verified",
+          description: "Please verify your email before logging in.",
+        });
+        return;
+      }
       router.push('/');
     } catch (error: any) {
       console.error('Failed to sign in', error);
