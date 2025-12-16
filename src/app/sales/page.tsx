@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar as CalendarIcon, Download } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Download, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,14 @@ import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -30,6 +38,15 @@ function SalesPage() {
     const router = useRouter();
     const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
+    const [columns, setColumns] = useState({
+        date: true,
+        partyName: true,
+        subtotal: true,
+        labour: true,
+        transport: true,
+        discount: true,
+        grandTotal: true,
+      });
 
     const salesQuery = useMemoFirebase(() => {
         if (!user) return null;
@@ -74,7 +91,15 @@ function SalesPage() {
         doc.setFontSize(11);
         doc.text(`Date Range: ${startDate ? format(startDate, 'PPP') : 'N/A'} - ${endDate ? format(endDate, 'PPP') : 'N/A'}`, 14, 30);
         
-        const tableColumn = ["Date", "Party Name", "Subtotal", "Labour", "Transport", "Discount", "Grand Total"];
+        const tableColumn: string[] = [];
+        if (columns.date) tableColumn.push("Date");
+        if (columns.partyName) tableColumn.push("Party Name");
+        if (columns.subtotal) tableColumn.push("Subtotal");
+        if (columns.labour) tableColumn.push("Labour");
+        if (columns.transport) tableColumn.push("Transport");
+        if (columns.discount) tableColumn.push("Discount");
+        if (columns.grandTotal) tableColumn.push("Grand Total");
+        
         const tableRows: any[][] = [];
 
         let totalSubtotal = 0;
@@ -85,16 +110,17 @@ function SalesPage() {
 
         filteredSales.forEach(sale => {
             const saleDate = sale.createdAt?.toDate() ? format(sale.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A';
-            const rowData = [
-                saleDate,
-                sale.partyName || 'N/A',
-                sale.subtotal.toFixed(2),
-                sale.labourCharges.toFixed(2),
-                sale.transportCharges.toFixed(2),
-                (sale.discount || 0).toFixed(2),
-                Math.round(sale.grandTotal).toLocaleString('en-IN')
-            ];
+            const rowData = [];
+            if (columns.date) rowData.push(saleDate);
+            if (columns.partyName) rowData.push(sale.partyName || 'N/A');
+            if (columns.subtotal) rowData.push(sale.subtotal.toFixed(2));
+            if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
+            if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
+            if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
+            if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
+            
             tableRows.push(rowData);
+
             totalSubtotal += sale.subtotal;
             totalLabour += sale.labourCharges;
             totalTransport += sale.transportCharges;
@@ -102,17 +128,22 @@ function SalesPage() {
             totalGrandTotal += sale.grandTotal;
         });
 
-        // Add total row
-        const totalRow = [
-            { content: 'Total', colSpan: 2, styles: { fontStyle: 'bold' } },
-            { content: totalSubtotal.toFixed(2), styles: { fontStyle: 'bold' } },
-            { content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } },
-            { content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } },
-            { content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } },
-            { content: Math.round(totalGrandTotal).toLocaleString('en-IN'), styles: { fontStyle: 'bold' } }
-        ];
-        tableRows.push(totalRow);
+        const totalRow: any[] = [];
+        const colSpan = (columns.date ? 1 : 0) + (columns.partyName ? 1 : 0) -1;
+        
+        if (colSpan >= 0) {
+            totalRow.push({ content: 'Total', colSpan: colSpan + 1, styles: { fontStyle: 'bold' } });
+        }
+        
+        if (columns.subtotal) totalRow.push({ content: totalSubtotal.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.labour) totalRow.push({ content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.transport) totalRow.push({ content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.discount) totalRow.push({ content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.grandTotal) totalRow.push({ content: Math.round(totalGrandTotal).toLocaleString('en-IN'), styles: { fontStyle: 'bold' } });
 
+        if(totalRow.some(c => c.content !== undefined)){
+             tableRows.push(totalRow);
+        }
 
         doc.autoTable({
             head: [tableColumn],
@@ -197,10 +228,36 @@ function SalesPage() {
                                 </PopoverContent>
                             </Popover>
                         </div>
-                        <Button onClick={handleExportReport} size="sm" className="ml-auto">
-                            <Download className="mr-2 h-4 w-4" />
-                            Export Report
-                        </Button>
+                        <div className="flex gap-2 ml-auto">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        Columns
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {Object.keys(columns).map((key) => {
+                                        const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={key}
+                                                checked={columns[key as keyof typeof columns]}
+                                                onCheckedChange={(checked) => setColumns(prev => ({...prev, [key]: checked}))}
+                                            >
+                                                {formattedKey}
+                                            </DropdownMenuCheckboxItem>
+                                        )
+                                    })}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button onClick={handleExportReport} size="sm">
+                                <Download className="mr-2 h-4 w-4" />
+                                Export Report
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
                 
@@ -287,3 +344,5 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
