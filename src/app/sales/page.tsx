@@ -41,6 +41,9 @@ function SalesPage() {
     const [columns, setColumns] = useState({
         date: true,
         partyName: true,
+        colorName: true,
+        sft: true,
+        rate: true,
         subtotal: true,
         labour: true,
         transport: true,
@@ -78,6 +81,16 @@ function SalesPage() {
     const handleRowClick = (saleId: string) => {
         router.push(`/sales/${saleId}`);
     };
+    
+    const calculateTotalSquareFeetForSheet = (sheet: any) => {
+        if (!sheet || !sheet.measurements) return 0;
+        const totalAreaInches = sheet.measurements
+            .map((m: any) => ({ length: parseFloat(m.length), width: parseFloat(m.width) }))
+            .filter((m: any) => !isNaN(m.length) && m.length > 0 && !isNaN(m.width) && m.width > 0)
+            .reduce((acc: number, m: any) => acc + m.length * m.width, 0);
+        return totalAreaInches / 144;
+    };
+
 
     const handleExportReport = () => {
         if (filteredSales.length === 0) {
@@ -94,6 +107,9 @@ function SalesPage() {
         const tableColumn: string[] = [];
         if (columns.date) tableColumn.push("Date");
         if (columns.partyName) tableColumn.push("Party Name");
+        if (columns.colorName) tableColumn.push("Color Name");
+        if (columns.sft) tableColumn.push("SFT");
+        if (columns.rate) tableColumn.push("Rate");
         if (columns.subtotal) tableColumn.push("Subtotal");
         if (columns.labour) tableColumn.push("Labour");
         if (columns.transport) tableColumn.push("Transport");
@@ -102,6 +118,7 @@ function SalesPage() {
         
         const tableRows: any[][] = [];
 
+        let totalSft = 0;
         let totalSubtotal = 0;
         let totalLabour = 0;
         let totalTransport = 0;
@@ -110,17 +127,52 @@ function SalesPage() {
 
         filteredSales.forEach(sale => {
             const saleDate = sale.createdAt?.toDate() ? format(sale.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A';
-            const rowData = [];
-            if (columns.date) rowData.push(saleDate);
-            if (columns.partyName) rowData.push(sale.partyName || 'N/A');
-            if (columns.subtotal) rowData.push(sale.subtotal.toFixed(2));
-            if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
-            if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
-            if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
-            if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
-            
-            tableRows.push(rowData);
+            if (sale.sheets && sale.sheets.length > 0) {
+                sale.sheets.forEach((sheet: any, index: number) => {
+                    const sft = calculateTotalSquareFeetForSheet(sheet);
+                    const rate = parseFloat(sheet.rate || '0');
+                    const itemSubtotal = sft * rate;
+                    
+                    const isFirstSheet = index === 0;
 
+                    const rowData = [];
+                    if (columns.date) rowData.push(saleDate);
+                    if (columns.partyName) rowData.push(sale.partyName || 'N/A');
+                    if (columns.colorName) rowData.push(sheet.color || 'N/A');
+                    if (columns.sft) rowData.push(sft.toFixed(2));
+                    if (columns.rate) rowData.push(rate.toFixed(2));
+                    if (columns.subtotal) rowData.push(itemSubtotal.toFixed(2));
+                    
+                    if (isFirstSheet) {
+                        if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
+                        if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
+                        if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
+                        if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
+                    } else {
+                        if (columns.labour) rowData.push('');
+                        if (columns.transport) rowData.push('');
+                        if (columns.discount) rowData.push('');
+                        if (columns.grandTotal) rowData.push('');
+                    }
+                    
+                    tableRows.push(rowData);
+                });
+            } else {
+                 const rowData = [];
+                 if (columns.date) rowData.push(saleDate);
+                 if (columns.partyName) rowData.push(sale.partyName || 'N/A');
+                 if (columns.colorName) rowData.push('N/A');
+                 if (columns.sft) rowData.push('0.00');
+                 if (columns.rate) rowData.push('0.00');
+                 if (columns.subtotal) rowData.push(sale.subtotal.toFixed(2));
+                 if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
+                 if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
+                 if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
+                 if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
+                 tableRows.push(rowData);
+            }
+
+            totalSft += sale.sheets.reduce((acc: number, sheet: any) => acc + calculateTotalSquareFeetForSheet(sheet), 0);
             totalSubtotal += sale.subtotal;
             totalLabour += sale.labourCharges;
             totalTransport += sale.transportCharges;
@@ -129,19 +181,21 @@ function SalesPage() {
         });
 
         const totalRow: any[] = [];
-        const colSpan = (columns.date ? 1 : 0) + (columns.partyName ? 1 : 0) -1;
+        const colSpan = (columns.date ? 1 : 0) + (columns.partyName ? 1 : 0) + (columns.colorName ? 1 : 0) -1;
         
         if (colSpan >= 0) {
-            totalRow.push({ content: 'Total', colSpan: colSpan + 1, styles: { fontStyle: 'bold' } });
+            totalRow.push({ content: 'Grand Total', colSpan: colSpan + 1, styles: { fontStyle: 'bold' } });
         }
         
+        if (columns.sft) totalRow.push({ content: totalSft.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.rate) totalRow.push(''); // No total for rate
         if (columns.subtotal) totalRow.push({ content: totalSubtotal.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.labour) totalRow.push({ content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.transport) totalRow.push({ content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.discount) totalRow.push({ content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.grandTotal) totalRow.push({ content: Math.round(totalGrandTotal).toLocaleString('en-IN'), styles: { fontStyle: 'bold' } });
 
-        if(totalRow.some(c => c.content !== undefined)){
+        if(totalRow.some(c => c.content !== undefined && c.content !== '')){
              tableRows.push(totalRow);
         }
 
@@ -344,5 +398,3 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
