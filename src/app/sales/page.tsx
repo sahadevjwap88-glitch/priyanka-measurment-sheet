@@ -136,8 +136,8 @@ function SalesPage() {
                     const isFirstSheet = index === 0;
 
                     const rowData = [];
-                    if (columns.date) rowData.push(saleDate);
-                    if (columns.partyName) rowData.push(sale.partyName || 'N/A');
+                    if (columns.date) rowData.push(isFirstSheet ? saleDate : '');
+                    if (columns.partyName) rowData.push(isFirstSheet ? sale.partyName || 'N/A' : '');
                     if (columns.colorName) rowData.push(sheet.color || 'N/A');
                     if (columns.sft) rowData.push(sft.toFixed(2));
                     if (columns.rate) rowData.push(rate.toFixed(2));
@@ -149,10 +149,11 @@ function SalesPage() {
                         if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
                         if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
                     } else {
-                        if (columns.labour) rowData.push('');
-                        if (columns.transport) rowData.push('');
-                        if (columns.discount) rowData.push('');
-                        if (columns.grandTotal) rowData.push('');
+                        // For subsequent rows of the same sale, leave these columns blank
+                        const emptyColsNeeded = [columns.labour, columns.transport, columns.discount, columns.grandTotal].filter(Boolean).length;
+                        for(let i=0; i < emptyColsNeeded; i++) {
+                            rowData.push('');
+                        }
                     }
                     
                     tableRows.push(rowData);
@@ -300,6 +301,7 @@ function SalesPage() {
                                                 key={key}
                                                 checked={columns[key as keyof typeof columns]}
                                                 onCheckedChange={(checked) => setColumns(prev => ({...prev, [key]: checked}))}
+                                                onSelect={(e) => e.preventDefault()}
                                             >
                                                 {formattedKey}
                                             </DropdownMenuCheckboxItem>
@@ -376,7 +378,7 @@ function SalesPage() {
                                             {sale.discount > 0 && (
                                                 <>
                                                  <Separator orientation="vertical" className="h-5"/>
-                                                 <span>Discount: <span className="font-medium text-green-600">- ₹{sale.discount.toFixed(2)}</span></span>
+                                                 <span>Discount: <span className="font-medium">₹{sale.discount.toFixed(2)}</span></span>
                                                 </>
                                             )}
                                          </div>
