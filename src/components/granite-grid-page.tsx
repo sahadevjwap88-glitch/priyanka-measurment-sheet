@@ -348,7 +348,7 @@ export default function GraniteGridPage() {
                 Download
               </Button>
               <Link href="/bill" passHref>
-                <Button variant="default" size="sm" className="px-2">
+                <Button variant="default" size="sm" className="px-2" disabled={plan === 'free'}>
                   <Eye className="mr-2" />
                   Bill
                 </Button>
@@ -376,7 +376,7 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2 flex-wrap">
                <Link href="/sales" passHref>
-                <Button variant="default" size="sm" className="px-1 h-8">
+                <Button variant="default" size="sm" className="px-1 h-8" disabled={plan === 'free'}>
                   <BookCopy className="mr-2" />
                   All Sales
                 </Button>
