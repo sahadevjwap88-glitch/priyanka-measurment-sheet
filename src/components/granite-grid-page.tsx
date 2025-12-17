@@ -370,19 +370,19 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2 flex-wrap">
                <Link href="/sales" passHref>
-                <Button variant="default" size="sm" className="px-2 h-8">
+                <Button variant="default" size="sm" className="px-1 h-8">
                   <BookCopy className="mr-2" />
                   All Sales
                 </Button>
               </Link>
                <Link href="/account" passHref>
-                <Button variant="ghost" size="sm" className="px-2 h-8">
+                <Button variant="ghost" size="sm" className="px-1 h-8">
                     <Settings className="mr-2" />
                     Settings
                 </Button>
                </Link>
 
-                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-2">
+                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-1">
                   <Plus className="mr-2" />
                   Add Color
                 </Button>
