@@ -81,6 +81,7 @@ export default function GraniteGridPage() {
   const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
+  const [plan, setPlan] = useState('free');
   
   // Settings state
   const [businessName, setBusinessName] = useState('Priyanka Granite');
@@ -135,6 +136,7 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
+          setPlan(data.plan || 'free');
   
           if (data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
@@ -301,6 +303,10 @@ export default function GraniteGridPage() {
   };
   
   const addSheet = () => {
+    if (plan === 'free') {
+      alert("Upgrade to a paid plan to add more sheets.");
+      return;
+    }
     if (fields.length >= MAX_SHEETS) {
       alert(`You can only add up to ${MAX_SHEETS} sheets.`);
       return;
@@ -382,7 +388,7 @@ export default function GraniteGridPage() {
                 </Button>
                </Link>
 
-                <Button variant="default" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-1">
+                <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="h-8 px-1">
                   <Plus className="mr-2" />
                   Add Color
                 </Button>
@@ -393,7 +399,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")} disabled={plan === 'free' && sheet.name !== 'Sheet 1'}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}

@@ -59,6 +59,7 @@ function updateUserDocument(firestore: Firestore, user: User) {
                 photoUrl: user.photoURL || '',
                 address: '',
                 isAdmin: false,
+                plan: "free",
             };
             setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
                 const permissionError = new FirestorePermissionError({
@@ -68,6 +69,18 @@ function updateUserDocument(firestore: Firestore, user: User) {
                 });
                 errorEmitter.emit('permission-error', permissionError);
             });
+        } else {
+            const data = userDoc.data();
+            if (!data.plan) {
+                setDoc(userRef, { plan: "free" }, { merge: true }).catch(async (serverError) => {
+                    const permissionError = new FirestorePermissionError({
+                        path: userRef.path,
+                        operation: 'update',
+                        requestResourceData: { plan: 'free' },
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
+            }
         }
     }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({

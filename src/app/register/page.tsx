@@ -47,6 +47,7 @@ function createUserDocument(firestore: Firestore, user: User) {
       photoUrl: user.photoURL || '',
       address: '',
       isAdmin: false,
+      plan: 'free',
     };
     
     setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {

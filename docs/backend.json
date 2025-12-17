@@ -71,6 +71,10 @@
         "activeSheetId": {
             "type": "string",
             "description": "The ID of the currently active sheet."
+        },
+        "plan": {
+            "type": "string",
+            "description": "The user's current subscription plan."
         }
       },
       "required": ["id", "email", "displayName", "createdAt"]

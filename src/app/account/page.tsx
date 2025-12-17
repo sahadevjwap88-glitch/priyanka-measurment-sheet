@@ -33,6 +33,7 @@ function AccountPage() {
     const [address, setAddress] = useState('');
     const [sheets, setSheets] = useState([]);
     const [activeSheetId, setActiveSheetId] = useState('');
+    const [plan, setPlan] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
@@ -52,6 +53,7 @@ function AccountPage() {
                         setAddress(data.address || '');
                         setSheets(data.sheets || []);
                         setActiveSheetId(data.activeSheetId || '');
+                        setPlan(data.plan || 'free');
                     }
                 })
                 .catch((error) => {
@@ -85,7 +87,8 @@ function AccountPage() {
                 phoneNumber,
                 address,
                 sheets,
-                activeSheetId
+                activeSheetId,
+                plan,
             }, { merge: true });
 
             toast({
@@ -126,6 +129,16 @@ function AccountPage() {
                     </Button>
                 </Link>
             </header>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Current Plan</CardTitle>
+                </CardHeader>
+                <CardContent className='flex justify-between items-center'>
+                    <p className="font-bold capitalize">{plan} Plan</p>
+                    <Button disabled>Upgrade</Button>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>
