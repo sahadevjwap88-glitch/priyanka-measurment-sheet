@@ -370,13 +370,13 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2 flex-wrap">
                <Link href="/sales" passHref>
-                <Button variant="default" size="sm" className="px-2">
+                <Button variant="default" size="sm" className="px-2 h-8">
                   <BookCopy className="mr-2" />
                   All Sales
                 </Button>
               </Link>
                <Link href="/account" passHref>
-                <Button variant="ghost" size="sm" className="px-2">
+                <Button variant="ghost" size="sm" className="px-2 h-8">
                     <Settings className="mr-2" />
                     Settings
                 </Button>
