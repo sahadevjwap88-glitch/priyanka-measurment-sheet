@@ -163,7 +163,7 @@ export default function GraniteGridPage() {
         handleClearAll(false); // Reset to default if not logged in and no local data
       }
     }
-  }, [user, firestore]);
+  }, [user, firestore, form]);
 
   useEffect(() => {
     if (isClient) {
@@ -367,6 +367,8 @@ export default function GraniteGridPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            </div>
+            <div className="flex items-center justify-start gap-2 flex-wrap">
                <Link href="/sales" passHref>
                 <Button variant="default" size="sm" className="px-2">
                   <BookCopy className="mr-2" />
