@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -92,6 +93,8 @@ function BillPage() {
 
   useEffect(() => {
     setIsClient(true);
+    // Data is now primarily loaded from Firestore in the main grid page.
+    // This page will rely on localStorage which is kept in sync by the grid page.
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
       try {
@@ -130,8 +133,13 @@ function BillPage() {
   
   useEffect(() => {
     if (isClient) {
-      const subscription = form.watch((value) => {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+      // This is for saving the bill page specific fields (like party name) to local storage
+      const subscription = form.watch((value, { name }) => {
+         if (name !== 'sheets') { // The 'sheets' data is handled by the main grid page
+            const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+            const newData = { ...currentData, ...value };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
+        }
       });
       return () => subscription.unsubscribe();
     }

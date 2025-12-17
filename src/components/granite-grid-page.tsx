@@ -108,6 +108,24 @@ export default function GraniteGridPage() {
   
   useEffect(() => {
     setIsClient(true);
+    let isDataLoaded = false;
+  
+    const loadFromLocalStorage = () => {
+      if (isDataLoaded) return;
+      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          if (parsedData && parsedData.sheets && parsedData.sheets.length > 0) {
+            form.reset(parsedData);
+            isDataLoaded = true;
+          }
+        } catch (e) {
+          console.error("Failed to parse local storage data", e);
+        }
+      }
+    };
+  
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -117,7 +135,7 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
-
+  
           if (data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
               ...sheet,
@@ -125,28 +143,42 @@ export default function GraniteGridPage() {
             }));
             const initialActiveId = data.activeSheetId || cleanedSheets[0]?.id;
             form.reset({ sheets: cleanedSheets, activeSheetId: initialActiveId });
-          } else {
-            handleClearAll(false);
+            isDataLoaded = true;
           }
-        } else {
-          handleClearAll(false);
+        }
+      }).catch(err => {
+        console.error("Error fetching user document:", err);
+        loadFromLocalStorage();
+      }).finally(() => {
+        if (!isDataLoaded) {
+          loadFromLocalStorage();
+          if (!isDataLoaded) {
+            handleClearAll(false); // Reset to default if nothing is loaded
+          }
         }
       });
-    } else if (!user) {
-        handleClearAll(false);
+    } else {
+      loadFromLocalStorage();
+      if (!isDataLoaded) {
+        handleClearAll(false); // Reset to default if not logged in and no local data
+      }
     }
   }, [user, firestore]);
 
   useEffect(() => {
-    if (isClient && user && firestore) {
+    if (isClient) {
       const subscription = form.watch((value) => {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        setDoc(userDocRef, { 
-            sheets: value.sheets,
-            activeSheetId: value.activeSheetId 
-        }, { merge: true });
-        // Also update local storage for bill page
+        // Save to local storage for the bill page
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
+        
+        // Save to Firestore if the user is logged in
+        if (user && firestore) {
+          const userDocRef = doc(firestore, 'users', user.uid);
+          setDoc(userDocRef, { 
+              sheets: value.sheets,
+              activeSheetId: value.activeSheetId 
+          }, { merge: true });
+        }
       });
       return () => subscription.unsubscribe();
     }
@@ -256,6 +288,8 @@ export default function GraniteGridPage() {
       activeSheetId: newSheet.id,
     };
     form.reset(newFormState);
+     // Also update local storage for bill page
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newFormState));
 
     if (user && firestore && saveToDb) {
         const userDocRef = doc(firestore, 'users', user.uid);
@@ -264,8 +298,6 @@ export default function GraniteGridPage() {
             activeSheetId: newFormState.activeSheetId
         }, { merge: true });
     }
-     // Also update local storage for bill page
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newFormState));
   };
   
   const addSheet = () => {
@@ -326,7 +358,7 @@ export default function GraniteGridPage() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete all your data.
+                      This action cannot be undone. This will permanently delete all your data from the database and local storage.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
