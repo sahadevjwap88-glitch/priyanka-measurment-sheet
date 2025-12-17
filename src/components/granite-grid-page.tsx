@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, Zap } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -393,6 +393,16 @@ export default function GraniteGridPage() {
                   Add Color
                 </Button>
             </div>
+             {plan === 'free' && (
+                <div className="pt-2">
+                    <Link href="/account" passHref>
+                        <Button size="lg" className="w-full">
+                            <Zap className="mr-2 h-5 w-5" />
+                            Upgrade to Pro
+                        </Button>
+                    </Link>
+                </div>
+             )}
           </div>
 
           {fields.length > 0 && (
