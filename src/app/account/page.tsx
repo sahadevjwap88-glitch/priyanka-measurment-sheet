@@ -136,7 +136,9 @@ function AccountPage() {
                 </CardHeader>
                 <CardContent className='flex justify-between items-center'>
                     <p className="font-bold capitalize">{plan} Plan</p>
-                    <Button disabled>Upgrade</Button>
+                    <Link href="/pricing" passHref>
+                        <Button>Upgrade</Button>
+                    </Link>
                 </CardContent>
             </Card>
 

@@ -395,7 +395,7 @@ export default function GraniteGridPage() {
             </div>
              {plan === 'free' && (
                 <div className="pt-2">
-                    <Link href="/account" passHref>
+                    <Link href="/pricing" passHref>
                         <Button size="lg" className="w-full">
                             <Zap className="mr-2 h-5 w-5" />
                             Upgrade to Pro
