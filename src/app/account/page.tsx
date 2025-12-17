@@ -178,6 +178,7 @@ function AccountPage() {
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
                                 placeholder="e.g., Priyanka Granite"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -188,6 +189,7 @@ function AccountPage() {
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 placeholder="Enter phone number"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
@@ -197,6 +199,7 @@ function AccountPage() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Enter business address"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
@@ -217,6 +220,7 @@ function AccountPage() {
                                 id="show-labour"
                                 checked={showLabourCharges}
                                 onCheckedChange={setShowLabourCharges}
+                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="flex items-center justify-between">
@@ -230,6 +234,7 @@ function AccountPage() {
                                 id="show-transport"
                                 checked={showTransportCharges}
                                 onCheckedChange={setShowTransportCharges}
+                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,6 +246,7 @@ function AccountPage() {
                                 value={labourRate}
                                 onChange={(e) => setLabourRate(Number(e.target.value))}
                                 placeholder="e.g., 3"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -251,13 +257,14 @@ function AccountPage() {
                                 value={minLabourCharges}
                                 onChange={(e) => setMinLabourCharges(Number(e.target.value))}
                                 placeholder="e.g., 200"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleProfileUpdate}>
+                    <Button onClick={handleProfileUpdate} disabled={plan === 'free'}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Changes
                     </Button>
