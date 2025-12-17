@@ -376,13 +376,13 @@ export default function GraniteGridPage() {
                 </Button>
               </Link>
                <Link href="/account" passHref>
-                <Button variant="ghost" size="sm" className="px-1 h-8">
+                <Button variant="default" size="sm" className="px-1 h-8">
                     <Settings className="mr-2" />
                     Settings
                 </Button>
                </Link>
 
-                <Button variant="ghost" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-1">
+                <Button variant="default" size="sm" onClick={addSheet} disabled={fields.length >= MAX_SHEETS} className="h-8 px-1">
                   <Plus className="mr-2" />
                   Add Color
                 </Button>
