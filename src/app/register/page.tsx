@@ -48,6 +48,7 @@ function createUserDocument(firestore: Firestore, user: User) {
       address: '',
       isAdmin: false,
       plan: 'free',
+      planExpiryDate: null,
     };
     
     setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {

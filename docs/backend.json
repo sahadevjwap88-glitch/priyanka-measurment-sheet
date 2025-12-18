@@ -75,6 +75,11 @@
         "plan": {
             "type": "string",
             "description": "The user's current subscription plan."
+        },
+        "planExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date when the user's premium plan expires."
         }
       },
       "required": ["id", "email", "displayName", "createdAt"]

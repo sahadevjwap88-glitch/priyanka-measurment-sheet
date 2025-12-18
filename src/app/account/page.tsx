@@ -34,6 +34,7 @@ function AccountPage() {
     const [sheets, setSheets] = useState([]);
     const [activeSheetId, setActiveSheetId] = useState('');
     const [plan, setPlan] = useState('');
+    const [planExpiryDate, setPlanExpiryDate] = useState<Date | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
@@ -54,6 +55,7 @@ function AccountPage() {
                         setSheets(data.sheets || []);
                         setActiveSheetId(data.activeSheetId || '');
                         setPlan(data.plan || 'free');
+                        setPlanExpiryDate(data.planExpiryDate?.toDate() || null);
                     }
                 })
                 .catch((error) => {
@@ -135,10 +137,19 @@ function AccountPage() {
                     <CardTitle>Current Plan</CardTitle>
                 </CardHeader>
                 <CardContent className='flex justify-between items-center'>
-                    <p className="font-bold capitalize">{plan} Plan</p>
-                    <Link href="/pricing" passHref>
-                        <Button>Upgrade</Button>
-                    </Link>
+                    <div>
+                        <p className="font-bold capitalize">{plan} Plan</p>
+                        {plan === 'premium' && planExpiryDate && (
+                             <p className="text-sm text-muted-foreground">
+                                Expires on: {planExpiryDate.toLocaleDateString()}
+                            </p>
+                        )}
+                    </div>
+                    {plan === 'free' && (
+                        <Link href="/pricing" passHref>
+                            <Button>Upgrade</Button>
+                        </Link>
+                    )}
                 </CardContent>
             </Card>
 

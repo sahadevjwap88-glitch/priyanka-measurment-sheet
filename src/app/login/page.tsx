@@ -60,6 +60,7 @@ function updateUserDocument(firestore: Firestore, user: User) {
                 address: '',
                 isAdmin: false,
                 plan: "free",
+                planExpiryDate: null,
             };
             setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
                 const permissionError = new FirestorePermissionError({
@@ -71,12 +72,20 @@ function updateUserDocument(firestore: Firestore, user: User) {
             });
         } else {
             const data = userDoc.data();
+            const updates: any = {};
             if (!data.plan) {
-                setDoc(userRef, { plan: "free" }, { merge: true }).catch(async (serverError) => {
+                updates.plan = "free";
+            }
+            if (data.planExpiryDate === undefined) {
+                updates.planExpiryDate = null;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                 setDoc(userRef, updates, { merge: true }).catch(async (serverError) => {
                     const permissionError = new FirestorePermissionError({
                         path: userRef.path,
                         operation: 'update',
-                        requestResourceData: { plan: 'free' },
+                        requestResourceData: updates,
                     });
                     errorEmitter.emit('permission-error', permissionError);
                 });
