@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, ArrowLeft, Save } from 'lucide-react';
+import { LogOut, ArrowLeft, Save, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
@@ -87,11 +87,23 @@ function AccountPage() {
                     setIsLoading(false);
                 });
         } else {
+            // If not logged in, ensure plan is set to 'free' from local storage or default
+             const localData = savedData ? JSON.parse(savedData) : {};
+             setPlan(localData.plan || 'free');
             setIsLoading(false);
         }
     }, [user, firestore]);
 
     const handleProfileUpdate = async () => {
+        if (plan === 'free') {
+            toast({
+                variant: 'destructive',
+                title: 'Upgrade Required',
+                description: 'You need to upgrade to a premium plan to change settings.'
+            })
+            return;
+        }
+
         const settingsToSave = {
             displayName,
             showLabourCharges,
@@ -137,6 +149,8 @@ function AccountPage() {
         }
         const auth = getAuth();
         await signOut(auth);
+        // Clear local storage on sign out to prevent data leaks between users on shared devices
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
         router.push('/login');
     };
     
@@ -159,28 +173,29 @@ function AccountPage() {
                 </Link>
             </header>
             
-            {user && (
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Current Plan</CardTitle>
-                    </CardHeader>
-                    <CardContent className='flex justify-between items-center'>
-                        <div>
-                            <p className="font-bold capitalize">{plan} Plan</p>
-                            {plan === 'premium' && planExpiryDate && (
-                                <p className="text-sm text-muted-foreground">
-                                    Expires on: {planExpiryDate.toLocaleDateString()}
-                                </p>
-                            )}
-                        </div>
-                        {plan === 'free' && (
-                            <Link href="/pricing" passHref>
-                                <Button>Upgrade</Button>
-                            </Link>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Current Plan</CardTitle>
+                </CardHeader>
+                <CardContent className='flex justify-between items-center'>
+                    <div>
+                        <p className="font-bold capitalize">{plan} Plan</p>
+                        {plan === 'premium' && planExpiryDate && (
+                            <p className="text-sm text-muted-foreground">
+                                Expires on: {planExpiryDate.toLocaleDateString()}
+                            </p>
                         )}
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
+                    {plan === 'free' && (
+                        <Link href="/pricing" passHref>
+                            <Button>
+                                <Zap className="mr-2 h-4 w-4" />
+                                Upgrade
+                            </Button>
+                        </Link>
+                    )}
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>
@@ -199,6 +214,7 @@ function AccountPage() {
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder="Enter your display name"
+                        disabled={!user}
                         />
                     </div>
                 </CardContent>
@@ -207,7 +223,7 @@ function AccountPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Application Settings</CardTitle>
-                    <CardDescription>These settings customize the bill generation and are saved to your profile.</CardDescription>
+                    <CardDescription>Customize bill generation. Upgrade to Premium to unlock.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-4">
@@ -220,6 +236,7 @@ function AccountPage() {
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
                                 placeholder="e.g., Priyanka Granite"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -230,6 +247,7 @@ function AccountPage() {
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 placeholder="Enter phone number"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
@@ -239,6 +257,7 @@ function AccountPage() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Enter business address"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
@@ -259,6 +278,7 @@ function AccountPage() {
                                 id="show-labour"
                                 checked={showLabourCharges}
                                 onCheckedChange={setShowLabourCharges}
+                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="flex items-center justify-between">
@@ -272,6 +292,7 @@ function AccountPage() {
                                 id="show-transport"
                                 checked={showTransportCharges}
                                 onCheckedChange={setShowTransportCharges}
+                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -283,6 +304,7 @@ function AccountPage() {
                                 value={labourRate}
                                 onChange={(e) => setLabourRate(Number(e.target.value))}
                                 placeholder="e.g., 3"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -293,13 +315,14 @@ function AccountPage() {
                                 value={minLabourCharges}
                                 onChange={(e) => setMinLabourCharges(Number(e.target.value))}
                                 placeholder="e.g., 200"
+                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleProfileUpdate}>
+                    <Button onClick={handleProfileUpdate} disabled={plan === 'free'}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Changes
                     </Button>
@@ -331,3 +354,5 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
