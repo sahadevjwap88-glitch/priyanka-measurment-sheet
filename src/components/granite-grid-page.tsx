@@ -111,8 +111,8 @@ export default function GraniteGridPage() {
     setIsClient(true);
     let isDataLoaded = false;
   
+    // Always prioritize loading from local storage for offline-first approach.
     const loadFromLocalStorage = () => {
-      if (isDataLoaded) return;
       const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedData) {
         try {
@@ -120,23 +120,47 @@ export default function GraniteGridPage() {
           if (parsedData && parsedData.sheets && parsedData.sheets.length > 0) {
             form.reset(parsedData);
             isDataLoaded = true;
+            return true; // Indicate success
           }
         } catch (e) {
           console.error("Failed to parse local storage data", e);
         }
       }
+      return false; // Indicate failure
     };
   
+    // Load from local storage first.
+    if (loadFromLocalStorage()) {
+      // If local data is loaded, we can still check for Firestore data if the user is logged in.
+      // This could be used to merge or sync in the future, but for now local data takes precedence
+      // to ensure the offline experience is consistent.
+      if (user && firestore) {
+         const userDocRef = doc(firestore, 'users', user.uid);
+         getDoc(userDocRef).then((docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setBusinessName(data.businessName || 'Priyanka Granite');
+                setContactName(data.displayName || '');
+                setPhoneNumber(data.phoneNumber || '');
+                setAddress(data.address || '');
+                setPlan(data.plan || 'free');
+            }
+         });
+      }
+      return; // Exit after loading local data
+    }
+  
+    // If no local storage data, then try Firestore if user is logged in.
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setBusinessName(data.businessName || 'Priyanka Granite');
-          setContactName(data.displayName || '');
-          setPhoneNumber(data.phoneNumber || '');
-          setAddress(data.address || '');
-          setPlan(data.plan || 'free');
+           setBusinessName(data.businessName || 'Priyanka Granite');
+           setContactName(data.displayName || '');
+           setPhoneNumber(data.phoneNumber || '');
+           setAddress(data.address || '');
+           setPlan(data.plan || 'free');
   
           if (data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
@@ -150,30 +174,27 @@ export default function GraniteGridPage() {
         }
       }).catch(err => {
         console.error("Error fetching user document:", err);
-        loadFromLocalStorage();
       }).finally(() => {
+        // If still no data loaded (e.g., new user, error), reset to default.
         if (!isDataLoaded) {
-          loadFromLocalStorage();
-          if (!isDataLoaded) {
-            handleClearAll(false); // Reset to default if nothing is loaded
-          }
+          handleClearAll(false);
         }
       });
     } else {
-      loadFromLocalStorage();
-      if (!isDataLoaded) {
-        handleClearAll(false); // Reset to default if not logged in and no local data
+      // Not logged in and no local data, so reset to a clean default state.
+       if (!isDataLoaded) {
+          handleClearAll(false);
       }
     }
-  }, [user, firestore, form]);
+  }, [user, firestore]);
 
   useEffect(() => {
     if (isClient) {
       const subscription = form.watch((value) => {
-        // Save to local storage for the bill page
+        // Always save to local storage. This is the primary data store for the free/offline experience.
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
         
-        // Save to Firestore if the user is logged in
+        // If the user is logged in, also sync the data to Firestore.
         if (user && firestore) {
           const userDocRef = doc(firestore, 'users', user.uid);
           setDoc(userDocRef, { 
@@ -343,19 +364,19 @@ export default function GraniteGridPage() {
         <div className="p-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-start gap-2 flex-wrap">
-              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm" className="px-2">
+              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
                 <FileDown className="mr-2" />
                 Download
               </Button>
               <Link href="/bill" passHref>
-                <Button variant="default" size="sm" className="px-2" disabled={plan === 'free'}>
+                <Button variant="default" size="sm" disabled={plan === 'free'}>
                   <Eye className="mr-2" />
                   Bill
                 </Button>
               </Link>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="px-2">
+                  <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Clear All
                   </Button>
@@ -376,19 +397,19 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2 flex-wrap">
                <Link href="/sales" passHref>
-                <Button variant="default" size="sm" className="px-1 h-8" disabled={plan === 'free'}>
+                <Button variant="default" size="sm" disabled={plan === 'free'}>
                   <BookCopy className="mr-2" />
                   All Sales
                 </Button>
               </Link>
                <Link href="/account" passHref>
-                <Button variant="default" size="sm" className="px-1 h-8">
+                <Button variant="ghost" size="sm">
                     <Settings className="mr-2" />
                     Settings
                 </Button>
                </Link>
 
-                <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="h-8 px-1">
+                <Button variant="ghost" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS}>
                   <Plus className="mr-2" />
                   Add Color
                 </Button>
