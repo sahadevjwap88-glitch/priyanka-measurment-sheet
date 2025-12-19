@@ -395,7 +395,7 @@ export default function GraniteGridPage() {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            <div className="w-4/5">
+            <div className="w-1/2">
               <div className="flex items-center justify-start gap-2 flex-wrap">
                 <Link href="/sales" passHref>
                   <Button variant="default" size="sm" disabled={plan === 'free'}>
