@@ -309,6 +309,11 @@ export default function LoginPage() {
                 Register
               </Link>
             </p>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              <Link href="/" className="font-semibold text-primary hover:underline">
+                Skip for now
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>
