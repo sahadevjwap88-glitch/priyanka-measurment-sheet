@@ -93,8 +93,7 @@ function BillPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Data is now primarily loaded from Firestore in the main grid page.
-    // This page will rely on localStorage which is kept in sync by the grid page.
+    // Data is now primarily loaded from localStorage which is kept in sync by the grid page.
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
       try {
@@ -105,6 +104,16 @@ function BillPage() {
                 createdAt: parsedData.createdAt ? new Date(parsedData.createdAt) : new Date()
             };
           form.reset(dataWithDate);
+
+          // Load settings from local storage as well
+          setShowLabourCharges(parsedData.showLabourCharges ?? true);
+          setShowTransportCharges(parsedData.showTransportCharges ?? true);
+          setLabourRate(parsedData.labourRate ?? 3);
+          setMinLabourCharges(parsedData.minLabourCharges ?? 200);
+          setBusinessName(parsedData.businessName || 'Priyanka Granite');
+          setContactName(parsedData.displayName || '');
+          setPhoneNumber(parsedData.phoneNumber || '');
+          setAddress(parsedData.address || '');
         }
       } catch (error) {
         console.error("Failed to parse data from localStorage", error);
@@ -113,6 +122,7 @@ function BillPage() {
   }, [form]);
 
    useEffect(() => {
+    // If user is logged in, fetch from Firestore to overwrite local settings
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -338,7 +348,7 @@ function BillPage() {
                   Back
               </Button>
             </Link>
-            <Button onClick={handleSaveBill} size="sm" variant="outline">
+            <Button onClick={handleSaveBill} size="sm" variant="outline" disabled={!user}>
                 <Save className="mr-2" />
                 Save Bill
             </Button>

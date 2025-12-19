@@ -16,6 +16,8 @@ import { LogOut, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
+import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
+
 
 function AccountPage() {
     const { user } = useUser();
@@ -31,19 +33,36 @@ function AccountPage() {
     const [businessName, setBusinessName] = useState('Priyanka Granite');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
-    const [sheets, setSheets] = useState([]);
-    const [activeSheetId, setActiveSheetId] = useState('');
-    const [plan, setPlan] = useState('');
+    const [plan, setPlan] = useState('free');
     const [planExpiryDate, setPlanExpiryDate] = useState<Date | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
+        setIsLoading(true);
+        // Load from local storage first for offline support
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            setDisplayName(parsedData.displayName || (user?.displayName || ''));
+            setShowLabourCharges(parsedData.showLabourCharges ?? true);
+            setShowTransportCharges(parsedData.showTransportCharges ?? true);
+            setLabourRate(parsedData.labourRate ?? 3);
+            setMinLabourCharges(parsedData.minLabourCharges ?? 200);
+            setBusinessName(parsedData.businessName || 'Priyanka Granite');
+            setPhoneNumber(parsedData.phoneNumber || '');
+            setAddress(parsedData.address || '');
+            setPlan(parsedData.plan || 'free');
+            setPlanExpiryDate(parsedData.planExpiryDate ? new Date(parsedData.planExpiryDate) : null);
+        }
+
+        // If user is logged in, fetch from Firestore to get the most up-to-date info
         if (user && firestore) {
             const userDocRef = doc(firestore, 'users', user.uid);
             getDoc(userDocRef)
                 .then((docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
+                        // Overwrite local state with Firestore data
                         setDisplayName(data.displayName || '');
                         setShowLabourCharges(data.showLabourCharges ?? true);
                         setShowTransportCharges(data.showTransportCharges ?? true);
@@ -52,8 +71,6 @@ function AccountPage() {
                         setBusinessName(data.businessName || 'Priyanka Granite');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
-                        setSheets(data.sheets || []);
-                        setActiveSheetId(data.activeSheetId || '');
                         setPlan(data.plan || 'free');
                         setPlanExpiryDate(data.planExpiryDate?.toDate() || null);
                     }
@@ -63,35 +80,40 @@ function AccountPage() {
                     toast({
                         variant: "destructive",
                         title: "Error",
-                        description: "Could not load your settings.",
+                        description: "Could not load your settings from the cloud.",
                     });
                 })
                 .finally(() => {
                     setIsLoading(false);
                 });
+        } else {
+            setIsLoading(false);
         }
     }, [user, firestore]);
 
     const handleProfileUpdate = async () => {
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to save changes.' });
-            return;
-        }
-        const userDocRef = doc(firestore, 'users', user.uid);
+        const settingsToSave = {
+            displayName,
+            showLabourCharges,
+            showTransportCharges,
+            labourRate,
+            minLabourCharges,
+            businessName,
+            phoneNumber,
+            address,
+        };
+
+        // Save to local storage for everyone
         try {
-            await setDoc(userDocRef, {
-                displayName,
-                showLabourCharges,
-                showTransportCharges,
-                labourRate,
-                minLabourCharges,
-                businessName,
-                phoneNumber,
-                address,
-                sheets,
-                activeSheetId,
-                plan,
-            }, { merge: true });
+            const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+            const newData = { ...currentData, ...settingsToSave };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
+
+            // If user is logged in, also save to Firestore
+            if (user && firestore) {
+                const userDocRef = doc(firestore, 'users', user.uid);
+                await setDoc(userDocRef, settingsToSave, { merge: true });
+            }
 
             toast({
                 title: "Settings Saved",
@@ -107,7 +129,12 @@ function AccountPage() {
         }
     };
 
+
     const handleSignOut = async () => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
         const auth = getAuth();
         await signOut(auth);
         router.push('/login');
@@ -132,26 +159,28 @@ function AccountPage() {
                 </Link>
             </header>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle>Current Plan</CardTitle>
-                </CardHeader>
-                <CardContent className='flex justify-between items-center'>
-                    <div>
-                        <p className="font-bold capitalize">{plan} Plan</p>
-                        {plan === 'premium' && planExpiryDate && (
-                             <p className="text-sm text-muted-foreground">
-                                Expires on: {planExpiryDate.toLocaleDateString()}
-                            </p>
+            {user && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Current Plan</CardTitle>
+                    </CardHeader>
+                    <CardContent className='flex justify-between items-center'>
+                        <div>
+                            <p className="font-bold capitalize">{plan} Plan</p>
+                            {plan === 'premium' && planExpiryDate && (
+                                <p className="text-sm text-muted-foreground">
+                                    Expires on: {planExpiryDate.toLocaleDateString()}
+                                </p>
+                            )}
+                        </div>
+                        {plan === 'free' && (
+                            <Link href="/pricing" passHref>
+                                <Button>Upgrade</Button>
+                            </Link>
                         )}
-                    </div>
-                    {plan === 'free' && (
-                        <Link href="/pricing" passHref>
-                            <Button>Upgrade</Button>
-                        </Link>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader>
@@ -161,7 +190,7 @@ function AccountPage() {
                 <CardContent className="space-y-4">
                      <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input value={user?.email || ''} readOnly disabled />
+                        <Input value={user?.email || 'Not logged in'} readOnly disabled />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="display-name">Display Name</Label>
@@ -191,7 +220,6 @@ function AccountPage() {
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
                                 placeholder="e.g., Priyanka Granite"
-                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -202,7 +230,6 @@ function AccountPage() {
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 placeholder="Enter phone number"
-                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
@@ -212,7 +239,6 @@ function AccountPage() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Enter business address"
-                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
@@ -233,7 +259,6 @@ function AccountPage() {
                                 id="show-labour"
                                 checked={showLabourCharges}
                                 onCheckedChange={setShowLabourCharges}
-                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="flex items-center justify-between">
@@ -247,7 +272,6 @@ function AccountPage() {
                                 id="show-transport"
                                 checked={showTransportCharges}
                                 onCheckedChange={setShowTransportCharges}
-                                disabled={plan === 'free'}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -259,7 +283,6 @@ function AccountPage() {
                                 value={labourRate}
                                 onChange={(e) => setLabourRate(Number(e.target.value))}
                                 placeholder="e.g., 3"
-                                disabled={plan === 'free'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -270,14 +293,13 @@ function AccountPage() {
                                 value={minLabourCharges}
                                 onChange={(e) => setMinLabourCharges(Number(e.target.value))}
                                 placeholder="e.g., 200"
-                                disabled={plan === 'free'}
                                 />
                             </div>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleProfileUpdate} disabled={plan === 'free'}>
+                    <Button onClick={handleProfileUpdate}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Changes
                     </Button>
@@ -287,12 +309,12 @@ function AccountPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Account Actions</CardTitle>
-                    <CardDescription>Log out of your account.</CardDescription>
+                    <CardDescription>{user ? 'Log out of your account.' : 'Log in to sync your data.'}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button variant="destructive" onClick={handleSignOut}>
+                    <Button variant={user ? 'destructive' : 'default'} onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        Log Out
+                        {user ? 'Log Out' : 'Log In'}
                     </Button>
                 </CardContent>
             </Card>
