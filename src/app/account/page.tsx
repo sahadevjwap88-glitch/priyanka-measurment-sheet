@@ -30,7 +30,7 @@ function AccountPage() {
     const [showTransportCharges, setShowTransportCharges] = useState(true);
     const [labourRate, setLabourRate] = useState(3);
     const [minLabourCharges, setMinLabourCharges] = useState(200);
-    const [businessName, setBusinessName] = useState('Priyanka Granite');
+    const [businessName, setBusinessName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [plan, setPlan] = useState('free');
@@ -48,7 +48,7 @@ function AccountPage() {
             setShowTransportCharges(parsedData.showTransportCharges ?? true);
             setLabourRate(parsedData.labourRate ?? 3);
             setMinLabourCharges(parsedData.minLabourCharges ?? 200);
-            setBusinessName(parsedData.businessName || 'Priyanka Granite');
+            setBusinessName(parsedData.businessName || '');
             setPhoneNumber(parsedData.phoneNumber || '');
             setAddress(parsedData.address || '');
             setPlan(parsedData.plan || 'free');
@@ -68,7 +68,7 @@ function AccountPage() {
                         setShowTransportCharges(data.showTransportCharges ?? true);
                         setLabourRate(data.labourRate ?? 3);
                         setMinLabourCharges(data.minLabourCharges ?? 200);
-                        setBusinessName(data.businessName || 'Priyanka Granite');
+                        setBusinessName(data.businessName || '');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
                         setPlan(data.plan || 'free');
@@ -354,5 +354,3 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    

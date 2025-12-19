@@ -65,7 +65,7 @@ function BillPage() {
   const [showTransportCharges, setShowTransportCharges] = useState(true);
   const [labourRate, setLabourRate] = useState(3);
   const [minLabourCharges, setMinLabourCharges] = useState(200);
-  const [businessName, setBusinessName] = useState('Priyanka Granite');
+  const [businessName, setBusinessName] = useState('');
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -110,7 +110,7 @@ function BillPage() {
           setShowTransportCharges(parsedData.showTransportCharges ?? true);
           setLabourRate(parsedData.labourRate ?? 3);
           setMinLabourCharges(parsedData.minLabourCharges ?? 200);
-          setBusinessName(parsedData.businessName || 'Priyanka Granite');
+          setBusinessName(parsedData.businessName || '');
           setContactName(parsedData.displayName || '');
           setPhoneNumber(parsedData.phoneNumber || '');
           setAddress(parsedData.address || '');
@@ -132,7 +132,7 @@ function BillPage() {
           setShowTransportCharges(data.showTransportCharges ?? true);
           setLabourRate(data.labourRate ?? 3);
           setMinLabourCharges(data.minLabourCharges ?? 200);
-          setBusinessName(data.businessName || 'Priyanka Granite');
+          setBusinessName(data.businessName || '');
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');

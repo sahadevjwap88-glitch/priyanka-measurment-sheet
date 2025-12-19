@@ -84,7 +84,7 @@ export default function GraniteGridPage() {
   const [plan, setPlan] = useState('free');
   
   // Settings state
-  const [businessName, setBusinessName] = useState('Priyanka Granite');
+  const [businessName, setBusinessName] = useState('');
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -139,7 +139,7 @@ export default function GraniteGridPage() {
          getDoc(userDocRef).then((docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                setBusinessName(data.businessName || 'Priyanka Granite');
+                setBusinessName(data.businessName || '');
                 setContactName(data.displayName || '');
                 setPhoneNumber(data.phoneNumber || '');
                 setAddress(data.address || '');
@@ -156,7 +156,7 @@ export default function GraniteGridPage() {
       getDoc(userDocRef).then((docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-           setBusinessName(data.businessName || 'Priyanka Granite');
+           setBusinessName(data.businessName || '');
            setContactName(data.displayName || '');
            setPhoneNumber(data.phoneNumber || '');
            setAddress(data.address || '');

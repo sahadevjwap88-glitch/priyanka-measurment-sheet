@@ -36,7 +36,7 @@ function SaleDetailPage() {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const [businessName, setBusinessName] = useState('Priyanka Granite');
+    const [businessName, setBusinessName] = useState('');
     const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
@@ -54,7 +54,7 @@ function SaleDetailPage() {
           getDoc(userDocRef).then((docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
-              setBusinessName(data.businessName || 'Priyanka Granite');
+              setBusinessName(data.businessName || '');
               setContactName(data.displayName || '');
               setPhoneNumber(data.phoneNumber || '');
               setAddress(data.address || '');
