@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { GraniteTable } from '@/components/granite-table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -51,8 +51,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 type Sheet = z.infer<typeof sheetSchema>;
 
-function EditSalePage() {
-  const { saleId } = useParams();
+function EditSalePage({ saleId }: { saleId: string }) {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(true); // Default to true on edit
   
@@ -68,7 +67,7 @@ function EditSalePage() {
 
   const saleDocRef = useMemoFirebase(() => {
     if (!user || !saleId) return null;
-    return doc(firestore, 'users', user.uid, 'sales', Array.isArray(saleId) ? saleId[0] : saleId);
+    return doc(firestore, 'users', user.uid, 'sales', saleId);
   }, [user, firestore, saleId]);
 
   const { data: saleData, isLoading: isSaleLoading } = useDoc(saleDocRef);
@@ -387,10 +386,10 @@ function EditSalePage() {
 }
 
 
-export default function EditSalePageWithAuth() {
+export default function EditSalePageWithAuth({ params }: { params: { saleId: string } }) {
     return (
         <AuthGuard>
-            <EditSalePage />
+            <EditSalePage saleId={params.saleId} />
         </AuthGuard>
     );
 }

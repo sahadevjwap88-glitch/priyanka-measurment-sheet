@@ -1,6 +1,6 @@
 
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,8 +30,7 @@ interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
 
-function SaleDetailPage() {
-    const { saleId } = useParams();
+function SaleDetailPage({ saleId }: { saleId: string }) {
     const router = useRouter();
     const { user } = useUser();
     const firestore = useFirestore();
@@ -43,7 +42,7 @@ function SaleDetailPage() {
 
     const saleDocRef = useMemoFirebase(() => {
         if (!user || !saleId) return null;
-        return doc(firestore, 'users', user.uid, 'sales', Array.isArray(saleId) ? saleId[0] : saleId);
+        return doc(firestore, 'users', user.uid, 'sales', saleId);
     }, [user, firestore, saleId]);
 
     const { data: sale, isLoading } = useDoc(saleDocRef);
@@ -314,10 +313,10 @@ function SaleDetailPage() {
     );
 }
 
-export default function SaleDetailPageWithAuth() {
+export default function SaleDetailPageWithAuth({ params }: { params: { saleId: string } }) {
     return (
         <AuthGuard>
-            <SaleDetailPage />
+            <SaleDetailPage saleId={params.saleId}/>
         </AuthGuard>
     );
 }
