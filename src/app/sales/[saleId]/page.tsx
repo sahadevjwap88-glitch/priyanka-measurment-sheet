@@ -320,6 +320,3 @@ export default function SaleDetailPageWithAuth({ params }: { params: { saleId: s
         </AuthGuard>
     );
 }
-
-    
-    
