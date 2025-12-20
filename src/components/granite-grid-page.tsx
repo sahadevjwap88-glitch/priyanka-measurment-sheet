@@ -362,21 +362,21 @@ export default function GraniteGridPage() {
     <div className="space-y-4 pt-4">
       <Card>
         <div className="p-4">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center justify-start gap-2">
-                <Button variant="default" onClick={handleDownloadSheetPdf} size="sm" className="flex-1">
+                <Button variant="default" onClick={handleDownloadSheetPdf} className="flex-1 h-8 px-2">
                     <FileDown className="mr-2" />
                     Download
                 </Button>
                 <Link href="/bill" passHref className="flex-1">
-                    <Button variant="default" size="sm" disabled={plan === 'free'} className="w-full">
+                    <Button variant="default" disabled={plan === 'free'} className="w-full h-8 px-2">
                         <Eye className="mr-2" />
                         Bill
                     </Button>
                 </Link>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" className="flex-1">
+                        <Button variant="destructive" className="flex-1 h-8 px-2">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear All
                         </Button>
@@ -397,18 +397,18 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2">
                 <Link href="/sales" passHref className="flex-1">
-                    <Button variant="default" size="sm" disabled={plan === 'free'} className="w-full">
+                    <Button variant="default" disabled={plan === 'free'} className="w-full h-8 px-2">
                         <BookCopy className="mr-2" />
                         All Sales
                     </Button>
                 </Link>
                 <Link href="/account" passHref className="flex-1">
-                    <Button variant="default" size="sm" className="w-full">
+                    <Button variant="default" className="w-full h-8 px-2">
                         <Settings className="mr-2" />
                         Settings
                     </Button>
                 </Link>
-                <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="flex-1">
+                <Button variant="default" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="flex-1 h-8 px-2">
                     <Plus className="mr-2" />
                     Add Color
                 </Button>
