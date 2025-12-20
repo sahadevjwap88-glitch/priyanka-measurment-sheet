@@ -316,7 +316,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
 export default function SaleDetailPageWithAuth({ params }: { params: { saleId: string } }) {
     return (
         <AuthGuard>
-            <SaleDetailPage saleId={params.saleId}/>
+            <SaleDetailPage saleId={params.saleId} />
         </AuthGuard>
     );
 }
