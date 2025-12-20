@@ -395,26 +395,23 @@ export default function GraniteGridPage() {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            <div className="w-1/2">
-              <div className="flex items-center justify-start gap-2 flex-wrap">
-                <Link href="/sales" passHref>
-                  <Button variant="default" size="sm" disabled={plan === 'free'}>
-                    <BookCopy className="mr-2" />
-                    All Sales
-                  </Button>
-                </Link>
-                <Link href="/account" passHref>
-                  <Button variant="default" size="sm">
-                      <Settings className="mr-2" />
-                      Settings
-                  </Button>
-                </Link>
-
-                  <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS}>
-                    <Plus className="mr-2" />
-                    Add Color
-                  </Button>
-              </div>
+            <div className="flex items-center justify-start gap-2 flex-wrap">
+              <Link href="/sales" passHref>
+                <Button variant="default" size="sm" disabled={plan === 'free'}>
+                  <BookCopy className="mr-2" />
+                  All Sales
+                </Button>
+              </Link>
+              <Link href="/account" passHref>
+                <Button variant="default" size="sm">
+                    <Settings className="mr-2" />
+                    Settings
+                </Button>
+              </Link>
+              <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS}>
+                <Plus className="mr-2" />
+                Add Color
+              </Button>
             </div>
              {plan === 'free' && (
                 <div className="pt-2">
