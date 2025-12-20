@@ -363,7 +363,7 @@ export default function GraniteGridPage() {
       <Card>
         <div className="p-4">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-start gap-2 flex-wrap">
+            <div className="flex items-center justify-start gap-2">
                 <Button variant="default" onClick={handleDownloadSheetPdf} size="sm" className="flex-1">
                     <FileDown className="mr-2" />
                     Download
@@ -395,7 +395,7 @@ export default function GraniteGridPage() {
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-            <div className="flex items-center justify-start gap-2 flex-wrap">
+            <div className="flex items-center justify-start gap-2">
                 <Link href="/sales" passHref className="flex-1">
                     <Button variant="default" size="sm" disabled={plan === 'free'} className="w-full">
                         <BookCopy className="mr-2" />
