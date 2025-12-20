@@ -73,7 +73,21 @@ function updateUserDocument(firestore: Firestore, user: User) {
         } else {
             const data = userDoc.data();
             const updates: any = {};
-            if (!data.plan) {
+            
+            // Auto-downgrade expired premium plans
+            if (data.plan === 'premium' && data.planExpiryDate) {
+                const expiryDate = data.planExpiryDate.toDate();
+                if (expiryDate < new Date()) {
+                    updates.plan = 'free';
+                    toast({
+                        title: "Plan Expired",
+                        description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
+                        variant: "destructive"
+                    });
+                }
+            }
+            
+            if (!data.plan && !updates.plan) {
                 updates.plan = "free";
             }
             if (data.planExpiryDate === undefined) {
