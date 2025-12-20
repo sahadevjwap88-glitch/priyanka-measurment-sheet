@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 
 const measurementSchema = z.object({
@@ -143,7 +144,22 @@ export default function GraniteGridPage() {
                 setContactName(data.displayName || '');
                 setPhoneNumber(data.phoneNumber || '');
                 setAddress(data.address || '');
-                setPlan(data.plan || 'free');
+
+                let currentPlan = data.plan || 'free';
+                // Auto-downgrade expired premium plans
+                if (currentPlan === 'premium' && data.planExpiryDate) {
+                    const expiryDate = data.planExpiryDate.toDate();
+                    if (expiryDate < new Date()) {
+                        currentPlan = 'free';
+                        setDoc(userDocRef, { plan: 'free' }, { merge: true });
+                        toast({
+                            title: "Plan Expired",
+                            description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
+                            variant: "destructive"
+                        });
+                    }
+                }
+                setPlan(currentPlan);
             }
          });
       }
@@ -160,7 +176,21 @@ export default function GraniteGridPage() {
            setContactName(data.displayName || '');
            setPhoneNumber(data.phoneNumber || '');
            setAddress(data.address || '');
-           setPlan(data.plan || 'free');
+            let currentPlan = data.plan || 'free';
+            // Auto-downgrade expired premium plans
+            if (currentPlan === 'premium' && data.planExpiryDate) {
+                const expiryDate = data.planExpiryDate.toDate();
+                if (expiryDate < new Date()) {
+                    currentPlan = 'free';
+                    setDoc(userDocRef, { plan: 'free' }, { merge: true });
+                    toast({
+                        title: "Plan Expired",
+                        description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
+                        variant: "destructive"
+                    });
+                }
+            }
+            setPlan(currentPlan);
   
           if (data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
@@ -510,3 +540,5 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
