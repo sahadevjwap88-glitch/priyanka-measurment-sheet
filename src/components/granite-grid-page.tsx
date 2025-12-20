@@ -364,54 +364,54 @@ export default function GraniteGridPage() {
         <div className="p-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-start gap-2 flex-wrap">
-              <Button variant="default" onClick={handleDownloadSheetPdf} size="sm">
-                <FileDown className="mr-2" />
-                Download
-              </Button>
-              <Link href="/bill" passHref>
-                <Button variant="default" size="sm" disabled={plan === 'free'}>
-                  <Eye className="mr-2" />
-                  Bill
+                <Button variant="default" onClick={handleDownloadSheetPdf} size="sm" className="flex-1">
+                    <FileDown className="mr-2" />
+                    Download
                 </Button>
-              </Link>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Clear All
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete all your data from the database and local storage.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                <Link href="/bill" passHref className="flex-1">
+                    <Button variant="default" size="sm" disabled={plan === 'free'} className="w-full">
+                        <Eye className="mr-2" />
+                        Bill
+                    </Button>
+                </Link>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="flex-1">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Clear All
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete all your data from the database and local storage.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleClearAll()}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
             <div className="flex items-center justify-start gap-2 flex-wrap">
-              <Link href="/sales" passHref>
-                <Button variant="default" size="sm" disabled={plan === 'free'}>
-                  <BookCopy className="mr-2" />
-                  All Sales
+                <Link href="/sales" passHref className="flex-1">
+                    <Button variant="default" size="sm" disabled={plan === 'free'} className="w-full">
+                        <BookCopy className="mr-2" />
+                        All Sales
+                    </Button>
+                </Link>
+                <Link href="/account" passHref className="flex-1">
+                    <Button variant="default" size="sm" className="w-full">
+                        <Settings className="mr-2" />
+                        Settings
+                    </Button>
+                </Link>
+                <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="flex-1">
+                    <Plus className="mr-2" />
+                    Add Color
                 </Button>
-              </Link>
-              <Link href="/account" passHref>
-                <Button variant="default" size="sm">
-                    <Settings className="mr-2" />
-                    Settings
-                </Button>
-              </Link>
-              <Button variant="default" size="sm" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS}>
-                <Plus className="mr-2" />
-                Add Color
-              </Button>
             </div>
              {plan === 'free' && (
                 <div className="pt-2">
