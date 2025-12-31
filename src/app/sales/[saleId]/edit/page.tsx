@@ -9,7 +9,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Save, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,10 +51,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 type Sheet = z.infer<typeof sheetSchema>;
+const MAX_ROWS = 500;
+
 
 function EditSalePage({ saleId }: { saleId: string }) {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(true); // Default to true on edit
+  const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   
   // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -93,6 +96,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
   });
   
   const watchedData = useWatch({ control: form.control });
+  const watchedSheets = watchedData.sheets || [];
 
   useEffect(() => {
     setIsClient(true);
@@ -198,6 +202,28 @@ function EditSalePage({ saleId }: { saleId: string }) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update bill.' });
     }
   }
+
+  const handleAddRows = (sheetIndex: number) => {
+    const sheet = watchedSheets?.[sheetIndex];
+    if (!sheet) return;
+
+    const numRowsToAdd = Number(rowsToAdd) || 1;
+    const currentMeasurements = sheet.measurements || [];
+    
+    if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
+      toast({
+          variant: 'destructive',
+          title: 'Row Limit Exceeded',
+          description: `You can only have up to ${MAX_ROWS} rows in total.`
+      });
+      return;
+    }
+    
+    const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
+    const updatedMeasurements = [...currentMeasurements, ...newRows];
+    
+    update(sheetIndex, { ...sheet, measurements: updatedMeasurements });
+  };
   
   if (isSaleLoading) {
     return <div className="text-center p-8">Loading...</div>
@@ -339,6 +365,29 @@ function EditSalePage({ saleId }: { saleId: string }) {
                         setValue={form.setValue}
                         sheetIndex={sheetIndex}
                     />
+                    <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                type="number"
+                                value={rowsToAdd}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                        setRowsToAdd('');
+                                    } else {
+                                        const num = parseInt(value, 10);
+                                        setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
+                                    }
+                                }}
+                                className="w-24 h-9"
+                                min="1"
+                            />
+                            <Button variant="secondary" onClick={() => handleAddRows(sheetIndex)} disabled={(sheet?.measurements?.length ?? 0) >= MAX_ROWS}>
+                                <Plus className="mr-2" />
+                                Add Row(s)
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
              </Card>
           ))}
