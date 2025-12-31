@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const measurementSchema = z.object({
@@ -61,6 +62,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
   const [plan, setPlan] = useState('free');
   const [isPlanLoading, setIsPlanLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('');
   
   // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -102,6 +104,9 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const watchedData = useWatch({ control: form.control });
   const watchedSheets = watchedData.sheets || [];
 
+  const activeSheetIndex = fields.findIndex(s => s.id === activeTab);
+  const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -128,23 +133,28 @@ function EditSalePage({ saleId }: { saleId: string }) {
 
   useEffect(() => {
     if (saleData) {
+      const sheets = saleData.sheets.map((s: any) => ({
+          ...s, 
+          rate: s.rate?.toString(),
+          measurements: s.measurements.map((m: any) => ({
+              length: m.length?.toString() || '',
+              width: m.width?.toString() || ''
+          }))
+      }));
+
       form.reset({
         partyName: saleData.partyName,
         partyPhoneNumber: saleData.partyPhoneNumber,
         labourCharges: saleData.labourCharges?.toString(),
         transportCharges: saleData.transportCharges?.toString(),
         discount: saleData.discount?.toString(),
-        sheets: saleData.sheets.map((s: any) => ({
-            ...s, 
-            rate: s.rate?.toString(),
-            measurements: s.measurements.map((m: any) => ({
-                length: m.length?.toString() || '',
-                width: m.width?.toString() || ''
-            }))
-        })),
+        sheets: sheets,
         createdAt: saleData.createdAt?.toDate(),
         creditAmount: saleData.creditAmount?.toString(),
       });
+      if (sheets.length > 0) {
+        setActiveTab(sheets[0].id);
+      }
     }
   }, [saleData, form]);
   
@@ -217,12 +227,11 @@ function EditSalePage({ saleId }: { saleId: string }) {
     }
   }
 
-  const handleAddRows = (sheetIndex: number) => {
-    const sheet = watchedSheets?.[sheetIndex];
-    if (!sheet) return;
+  const handleAddRows = () => {
+    if (!activeSheet) return;
 
     const numRowsToAdd = Number(rowsToAdd) || 1;
-    const currentMeasurements = sheet.measurements || [];
+    const currentMeasurements = activeSheet.measurements || [];
     
     if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
       toast({
@@ -236,7 +245,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
     const newRows = Array(numRowsToAdd).fill({ length: '', width: '' });
     const updatedMeasurements = [...currentMeasurements, ...newRows];
     
-    update(sheetIndex, { ...sheet, measurements: updatedMeasurements });
+    update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
   
   if (isSaleLoading || isPlanLoading) {
@@ -304,9 +313,9 @@ function EditSalePage({ saleId }: { saleId: string }) {
           </div>
         </header>
 
-        <div className="py-8 border rounded-lg" id="bill-content">
+        <div className="space-y-6">
           
-          <Card className="mb-6">
+          <Card>
             <CardContent className="grid gap-4 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
@@ -375,68 +384,81 @@ function EditSalePage({ saleId }: { saleId: string }) {
             </CardContent>
           </Card>
           
-          {allSheets.map((sheet, sheetIndex) => (
-             <Card key={sheet.id} className="mt-8">
-                <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
-                        <span>{sheet.name} - {sheet.color || 'N/A'}</span>
-                        <div className="text-right">
-                          <span className="text-sm font-bold text-foreground">SFT: </span>
-                          <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(sheet).toFixed(2)}</span>
-                        </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap items-end gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
-                          <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[150px]" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
-                          <Input
-                              id={`rate-${sheet.id}`}
-                              type="number"
-                              placeholder="Enter rate"
-                              {...form.register(`sheets.${sheetIndex}.rate`)}
-                              className="w-[100px]"
-                            />
-                        </div>
-                    </div>
-                     <GraniteTable
-                        fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
-                        register={form.register}
-                        errors={form.formState.errors}
-                        control={form.control}
-                        setValue={form.setValue}
-                        sheetIndex={sheetIndex}
-                    />
-                    <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
-                        <div className="flex items-center gap-2">
-                            <Input 
+          <Card>
+            <CardContent className="pt-6">
+                {fields.length > 0 && (
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                    <TabsList>
+                    {fields.map((sheet) => (
+                        <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeTab === sheet.id && "bg-primary text-primary-foreground")}>
+                        {sheet.name}
+                        </TabsTrigger>
+                    ))}
+                    </TabsList>
+                    {fields.map((sheet, sheetIndex) => (
+                        <TabsContent key={sheet.id} value={sheet.id}>
+                        <div className="flex flex-wrap items-end gap-4 mt-4">
+                            <div className="flex items-center gap-2">
+                            <Label htmlFor={`color-${sheet.id}`} className="whitespace-nowrap">Color Name</Label>
+                            <Input id={`color-${sheet.id}`} placeholder="Enter color name" {...form.register(`sheets.${sheetIndex}.color`)} className="w-[135px]" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <Label htmlFor={`rate-${sheet.id}`} className="whitespace-rap">Rate</Label>
+                            <Input
+                                id={`rate-${sheet.id}`}
                                 type="number"
-                                value={rowsToAdd}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                        setRowsToAdd('');
-                                    } else {
-                                        const num = parseInt(value, 10);
-                                        setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
-                                    }
-                                }}
-                                className="w-24 h-9"
-                                min="1"
-                            />
-                            <Button variant="secondary" onClick={() => handleAddRows(sheetIndex)} disabled={(sheet?.measurements?.length ?? 0) >= MAX_ROWS}>
-                                <Plus className="mr-2" />
-                                Add Row(s)
-                            </Button>
+                                placeholder="Enter rate"
+                                {...form.register(`sheets.${sheetIndex}.rate`)}
+                                className="w-[70px]"
+                                />
+                            </div>
+                            <div className="ml-auto">
+                            <span className="text-sm font-bold text-foreground">SFT: </span>
+                            <span className="text-2xl font-bold">{calculateTotalSquareFeetForSheet(watchedSheets[sheetIndex]).toFixed(2)}</span>
+                            </div>
                         </div>
+                        <div className="mt-4">
+                            <GraniteTable
+                                fields={(sheet.measurements || []).map((m, i) => ({ ...m, id: `${sheet.id}-${i}` }))}
+                                register={form.register}
+                                errors={form.formState.errors}
+                                control={form.control}
+                                setValue={form.setValue}
+                                sheetIndex={sheetIndex}
+                            />
+                        </div>
+                        </TabsContent>
+                    ))}
+                </Tabs>
+                )}
+                
+                {activeSheet && (
+                <div className="mt-4 flex flex-wrap items-center justify-start gap-4">
+                    <div className="flex items-center gap-2">
+                        <Input 
+                            type="number"
+                            value={rowsToAdd}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                    setRowsToAdd('');
+                                } else {
+                                    const num = parseInt(value, 10);
+                                    setRowsToAdd(Math.max(1, isNaN(num) ? 1 : num));
+                                }
+                            }}
+                            className="w-24 h-9"
+                            min="1"
+                        />
+                        <Button variant="secondary" onClick={handleAddRows} disabled={(activeSheet?.measurements?.length ?? 0) >= MAX_ROWS}>
+                            <Plus className="mr-2" />
+                            Add Row(s)
+                        </Button>
                     </div>
-                </CardContent>
-             </Card>
-          ))}
+                </div>
+                )}
+            </CardContent>
+          </Card>
 
 
           <div className="mt-8 flex justify-end">
