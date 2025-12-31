@@ -224,39 +224,41 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
             <div className="max-w-4xl mx-auto">
                 <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
                     <h1 className="text-3xl font-bold">Sale Details</h1>
-                    <div className="flex gap-2">
-                        <Link href="/sales" passHref>
-                            <Button variant="outline" size="sm">
-                                <ArrowLeft className="mr-2" />
-                                Back
-                            </Button>
-                        </Link>
-                         <Link href={`/sales/${sale.id}/edit`} passHref>
-                            <Button variant="default" size="sm">
-                                <Edit className="mr-2" />
-                                Edit
-                            </Button>
-                        </Link>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                 <Button variant="destructive" size="sm">
-                                    <Trash2 className="mr-2" />
-                                    Delete
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="flex gap-2">
+                            <Link href="/sales" passHref>
+                                <Button variant="outline" size="sm">
+                                    <ArrowLeft className="mr-2" />
+                                    Back
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this sales record.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteSale}>Continue</AlertDialogAction>
-                            </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                            </Link>
+                            <Link href={`/sales/${sale.id}/edit`} passHref>
+                                <Button variant="default" size="sm">
+                                    <Edit className="mr-2" />
+                                    Edit
+                                </Button>
+                            </Link>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">
+                                        <Trash2 className="mr-2" />
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this sales record.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteSale}>Continue</AlertDialogAction>
+                                </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                         <Button onClick={handleExportPdf} size="sm">
                             <Download className="mr-2" />
                             Download PDF
