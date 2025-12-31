@@ -149,8 +149,8 @@ function AccountPage() {
         }
         const auth = getAuth();
         await signOut(auth);
-        // Clear local storage on sign out to prevent data leaks between users on shared devices
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        // We are no longer clearing local storage on sign-out to allow for account sharing on a single device.
+        // localStorage.removeItem(LOCAL_STORAGE_KEY);
         router.push('/login');
     };
     
