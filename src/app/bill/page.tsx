@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, Save, Calendar as CalendarIcon } from 'lucide-react';
+import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,6 +59,8 @@ type Sheet = z.infer<typeof sheetSchema>;
 function BillPage() {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
+  const [plan, setPlan] = useState('free');
+  const [isPlanLoading, setIsPlanLoading] = useState(true);
   
   // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -122,7 +124,8 @@ function BillPage() {
   }, [form]);
 
    useEffect(() => {
-    // If user is logged in, fetch from Firestore to overwrite local settings
+    setIsPlanLoading(true);
+    // If user is logged in, fetch from Firestore to overwrite local settings and get plan
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -136,8 +139,13 @@ function BillPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
+          setPlan(data.plan || 'free');
         }
-      });
+      }).finally(() => setIsPlanLoading(false));
+    } else {
+        // Not logged in, default to free
+        setPlan('free');
+        setIsPlanLoading(false);
     }
   }, [user, firestore]);
   
@@ -322,10 +330,38 @@ function BillPage() {
   };
   
 
-  if (!isClient) {
-    return null;
+  if (!isClient || isPlanLoading) {
+    return <div className="p-8 text-center">Loading...</div>;
   }
   
+  if (plan === 'free') {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+            <Card className="max-w-lg p-8">
+                <CardHeader>
+                    <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
+                    <CardDescription>
+                        This feature is only available for premium users. Please upgrade your plan to generate and save bills.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Link href="/pricing" passHref>
+                        <Button size="lg">
+                            <Zap className="mr-2 h-5 w-5" />
+                            Upgrade Now
+                        </Button>
+                    </Link>
+                     <Link href="/" passHref>
+                        <Button variant="link" className="mt-4">
+                            Go Back Home
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   if (!watchedData) {
     return (
         <div className="flex items-center justify-center min-h-screen">

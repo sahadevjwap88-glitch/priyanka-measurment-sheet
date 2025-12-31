@@ -7,9 +7,9 @@ import { useForm, useWatch, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Calendar as CalendarIcon, Plus, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,6 +59,8 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(true); // Default to true on edit
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
+  const [plan, setPlan] = useState('free');
+  const [isPlanLoading, setIsPlanLoading] = useState(true);
   
   // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -105,6 +107,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
   }, []);
 
   useEffect(() => {
+    setIsPlanLoading(true);
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -114,8 +117,12 @@ function EditSalePage({ saleId }: { saleId: string }) {
           setShowTransportCharges(data.showTransportCharges ?? true);
           setLabourRate(data.labourRate ?? 3);
           setMinLabourCharges(data.minLabourCharges ?? 200);
+          setPlan(data.plan || 'free');
         }
-      });
+      }).finally(() => setIsPlanLoading(false));
+    } else {
+        setPlan('free');
+        setIsPlanLoading(false);
     }
   }, [user, firestore]);
 
@@ -232,8 +239,36 @@ function EditSalePage({ saleId }: { saleId: string }) {
     update(sheetIndex, { ...sheet, measurements: updatedMeasurements });
   };
   
-  if (isSaleLoading) {
+  if (isSaleLoading || isPlanLoading) {
     return <div className="text-center p-8">Loading...</div>
+  }
+
+  if (plan === 'free') {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+            <Card className="max-w-lg p-8">
+                <CardHeader>
+                    <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
+                    <CardDescription>
+                        This feature is only available for premium users. Please upgrade your plan to edit sales records.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Link href="/pricing" passHref>
+                        <Button size="lg">
+                            <Zap className="mr-2 h-5 w-5" />
+                            Upgrade Now
+                        </Button>
+                    </Link>
+                     <Link href="/" passHref>
+                        <Button variant="link" className="mt-4">
+                            Go Back Home
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+        </div>
+    );
   }
   
   if (!isClient) {

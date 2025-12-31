@@ -1,14 +1,14 @@
 
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, getDoc, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar as CalendarIcon, Download, Settings } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -38,6 +38,8 @@ function SalesPage() {
     const router = useRouter();
     const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
+    const [plan, setPlan] = useState('free');
+    const [isPlanLoading, setIsPlanLoading] = useState(true);
     const [columns, setColumns] = useState({
         date: true,
         partyName: true,
@@ -61,6 +63,21 @@ function SalesPage() {
     
 
     const { data: sales, isLoading } = useCollection(salesQuery);
+
+    useEffect(() => {
+        setIsPlanLoading(true);
+        if (user && firestore) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            getDoc(userDocRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    setPlan(docSnap.data().plan || 'free');
+                }
+            }).finally(() => setIsPlanLoading(false));
+        } else {
+            setPlan('free');
+            setIsPlanLoading(false);
+        }
+    }, [user, firestore]);
 
     const filteredSales = useMemo(() => {
         if (!sales) return [];
@@ -226,6 +243,38 @@ function SalesPage() {
         const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
         doc.save(`sales_report_${timestamp}.pdf`);
     };
+
+    if (isLoading || isPlanLoading) {
+        return <div className="p-8 text-center">Loading...</div>;
+    }
+
+    if (plan === 'free') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
+                <Card className="max-w-lg p-8">
+                    <CardHeader>
+                        <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
+                        <CardDescription>
+                            This feature is only available for premium users. Please upgrade your plan to view your sales history.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Link href="/pricing" passHref>
+                            <Button size="lg">
+                                <Zap className="mr-2 h-5 w-5" />
+                                Upgrade Now
+                            </Button>
+                        </Link>
+                         <Link href="/" passHref>
+                            <Button variant="link" className="mt-4">
+                                Go Back Home
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
