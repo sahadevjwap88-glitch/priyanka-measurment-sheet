@@ -131,68 +131,36 @@ export default function GraniteGridPage() {
     };
   
     // Load from local storage first.
-    if (loadFromLocalStorage()) {
-      // If local data is loaded, we can still check for Firestore data if the user is logged in.
-      // This could be used to merge or sync in the future, but for now local data takes precedence
-      // to ensure the offline experience is consistent.
-      if (user && firestore) {
-         const userDocRef = doc(firestore, 'users', user.uid);
-         getDoc(userDocRef).then((docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                setBusinessName(data.businessName || '');
-                setContactName(data.displayName || '');
-                setPhoneNumber(data.phoneNumber || '');
-                setAddress(data.address || '');
+    loadFromLocalStorage();
 
-                let currentPlan = data.plan || 'free';
-                // Auto-downgrade expired premium plans
-                if (currentPlan === 'premium' && data.planExpiryDate) {
-                    const expiryDate = data.planExpiryDate.toDate();
-                    if (expiryDate < new Date()) {
-                        currentPlan = 'free';
-                        setDoc(userDocRef, { plan: 'free' }, { merge: true });
-                        toast({
-                            title: "Plan Expired",
-                            description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
-                            variant: "destructive"
-                        });
-                    }
-                }
-                setPlan(currentPlan);
-            }
-         });
-      }
-      return; // Exit after loading local data
-    }
-  
-    // If no local storage data, then try Firestore if user is logged in.
+    // Check plan status regardless of where data was loaded from
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-           setBusinessName(data.businessName || '');
-           setContactName(data.displayName || '');
-           setPhoneNumber(data.phoneNumber || '');
-           setAddress(data.address || '');
-            let currentPlan = data.plan || 'free';
-            // Auto-downgrade expired premium plans
-            if (currentPlan === 'premium' && data.planExpiryDate) {
-                const expiryDate = data.planExpiryDate.toDate();
-                if (expiryDate < new Date()) {
-                    currentPlan = 'free';
-                    setDoc(userDocRef, { plan: 'free' }, { merge: true });
-                    toast({
-                        title: "Plan Expired",
-                        description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
-                        variant: "destructive"
-                    });
-                }
+          setBusinessName(data.businessName || '');
+          setContactName(data.displayName || '');
+          setPhoneNumber(data.phoneNumber || '');
+          setAddress(data.address || '');
+
+          let currentPlan = data.plan || 'free';
+          if (currentPlan === 'premium' && data.planExpiryDate) {
+            const expiryDate = data.planExpiryDate.toDate();
+            if (expiryDate < new Date()) {
+              currentPlan = 'free';
+              setDoc(userDocRef, { plan: 'free' }, { merge: true });
+              toast({
+                title: "Plan Expired",
+                description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
+                variant: "destructive"
+              });
             }
-            setPlan(currentPlan);
-  
-          if (data.sheets && data.sheets.length > 0) {
+          }
+          setPlan(currentPlan);
+
+          // If no local data was loaded, try loading from Firestore
+          if (!isDataLoaded && data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
               ...sheet,
               measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
@@ -205,18 +173,20 @@ export default function GraniteGridPage() {
       }).catch(err => {
         console.error("Error fetching user document:", err);
       }).finally(() => {
-        // If still no data loaded (e.g., new user, error), reset to default.
+        // If still no data loaded (e.g., new user), reset to default.
         if (!isDataLoaded) {
           handleClearAll(false);
         }
       });
     } else {
-      // Not logged in and no local data, so reset to a clean default state.
-       if (!isDataLoaded) {
-          handleClearAll(false);
+      // Not logged in, set plan to free
+      setPlan('free');
+      if (!isDataLoaded) {
+        handleClearAll(false);
       }
     }
   }, [user, firestore]);
+
 
   useEffect(() => {
     if (isClient) {
@@ -355,11 +325,19 @@ export default function GraniteGridPage() {
   
   const addSheet = () => {
     if (plan === 'free') {
-      alert("Upgrade to a paid plan to add more sheets.");
+      toast({
+          title: "Upgrade Required",
+          description: "Please upgrade to a premium plan to add more sheets.",
+          variant: "destructive"
+      });
       return;
     }
     if (fields.length >= MAX_SHEETS) {
-      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
+      toast({
+          title: "Sheet Limit Reached",
+          description: `You can only add up to ${MAX_SHEETS} sheets on the premium plan.`,
+          variant: "destructive"
+      });
       return;
     }
     const newSheetId = Date.now().toString();
@@ -374,7 +352,11 @@ export default function GraniteGridPage() {
     const currentMeasurements = activeSheet.measurements || [];
     
     if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
-      alert(`You can only add up to ${MAX_ROWS} rows in total.`);
+      toast({
+          variant: 'destructive',
+          title: 'Row Limit Exceeded',
+          description: `You can only have up to ${MAX_ROWS} rows in total.`
+      });
       return;
     }
     
@@ -540,5 +522,7 @@ export default function GraniteGridPage() {
     </div>
   );
 }
+
+    
 
     

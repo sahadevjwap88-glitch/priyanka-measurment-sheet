@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -42,17 +43,21 @@ function AccountPage() {
         // Load from local storage first for offline support
         const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            setDisplayName(parsedData.displayName || (user?.displayName || ''));
-            setShowLabourCharges(parsedData.showLabourCharges ?? true);
-            setShowTransportCharges(parsedData.showTransportCharges ?? true);
-            setLabourRate(parsedData.labourRate ?? 3);
-            setMinLabourCharges(parsedData.minLabourCharges ?? 200);
-            setBusinessName(parsedData.businessName || '');
-            setPhoneNumber(parsedData.phoneNumber || '');
-            setAddress(parsedData.address || '');
-            setPlan(parsedData.plan || 'free');
-            setPlanExpiryDate(parsedData.planExpiryDate ? new Date(parsedData.planExpiryDate) : null);
+            try {
+                const parsedData = JSON.parse(savedData);
+                setDisplayName(parsedData.displayName || (user?.displayName || ''));
+                setShowLabourCharges(parsedData.showLabourCharges ?? true);
+                setShowTransportCharges(parsedData.showTransportCharges ?? true);
+                setLabourRate(parsedData.labourRate ?? 3);
+                setMinLabourCharges(parsedData.minLabourCharges ?? 200);
+                setBusinessName(parsedData.businessName || '');
+                setPhoneNumber(parsedData.phoneNumber || '');
+                setAddress(parsedData.address || '');
+                setPlan(parsedData.plan || 'free');
+                setPlanExpiryDate(parsedData.planExpiryDate ? new Date(parsedData.planExpiryDate) : null);
+            } catch (e) {
+                console.error("Failed to parse local storage data on account page", e);
+            }
         }
 
         // If user is logged in, fetch from Firestore to get the most up-to-date info
@@ -71,7 +76,16 @@ function AccountPage() {
                         setBusinessName(data.businessName || '');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
-                        setPlan(data.plan || 'free');
+
+                        let currentPlan = data.plan || 'free';
+                         if (currentPlan === 'premium' && data.planExpiryDate) {
+                            const expiryDate = data.planExpiryDate.toDate();
+                            if (expiryDate < new Date()) {
+                                currentPlan = 'free';
+                                setDoc(userDocRef, { plan: 'free' }, { merge: true });
+                            }
+                        }
+                        setPlan(currentPlan);
                         setPlanExpiryDate(data.planExpiryDate?.toDate() || null);
                     }
                 })
@@ -95,12 +109,21 @@ function AccountPage() {
     }, [user, firestore]);
 
     const handleProfileUpdate = async () => {
+        if (!user) {
+            toast({
+                variant: 'destructive',
+                title: 'Not Logged In',
+                description: 'You must be logged in to save settings to the cloud.'
+            });
+            return;
+        }
+
         if (plan === 'free') {
             toast({
                 variant: 'destructive',
                 title: 'Upgrade Required',
                 description: 'You need to upgrade to a premium plan to change settings.'
-            })
+            });
             return;
         }
 
@@ -149,8 +172,6 @@ function AccountPage() {
         }
         const auth = getAuth();
         await signOut(auth);
-        // We are no longer clearing local storage on sign-out to allow for account sharing on a single device.
-        // localStorage.removeItem(LOCAL_STORAGE_KEY);
         router.push('/login');
     };
     
@@ -183,6 +204,11 @@ function AccountPage() {
                         {plan === 'premium' && planExpiryDate && (
                             <p className="text-sm text-muted-foreground">
                                 Expires on: {planExpiryDate.toLocaleDateString()}
+                            </p>
+                        )}
+                         {plan === 'premium' && !planExpiryDate && (
+                            <p className="text-sm text-muted-foreground">
+                                No expiry date set.
                             </p>
                         )}
                     </div>
@@ -322,7 +348,7 @@ function AccountPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleProfileUpdate} disabled={plan === 'free'}>
+                    <Button onClick={handleProfileUpdate} disabled={!user || plan === 'free'}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Changes
                     </Button>
@@ -354,3 +380,5 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
