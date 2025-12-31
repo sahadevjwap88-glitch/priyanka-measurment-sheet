@@ -348,7 +348,7 @@ function BillPage() {
                   Back
               </Button>
             </Link>
-            <Button onClick={handleSaveBill} size="sm" variant="outline" disabled={!user}>
+            <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user}>
                 <Save className="mr-2" />
                 Save Bill
             </Button>
