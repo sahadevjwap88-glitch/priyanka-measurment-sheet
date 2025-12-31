@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Zap } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Zap, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -36,8 +36,15 @@ function SalesPage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
-    const [startDate, setStartDate] = useState<Date | undefined>();
-    const [endDate, setEndDate] = useState<Date | undefined>();
+    
+    // State for date picker inputs
+    const [tempStartDate, setTempStartDate] = useState<Date | undefined>();
+    const [tempEndDate, setTempEndDate] = useState<Date | undefined>();
+
+    // State for active filter
+    const [activeStartDate, setActiveStartDate] = useState<Date | undefined>();
+    const [activeEndDate, setActiveEndDate] = useState<Date | undefined>();
+
     const [plan, setPlan] = useState('free');
     const [isPlanLoading, setIsPlanLoading] = useState(true);
     const [columns, setColumns] = useState({
@@ -79,6 +86,18 @@ function SalesPage() {
         }
     }, [user, firestore]);
 
+    const handleSearch = () => {
+        setActiveStartDate(tempStartDate);
+        setActiveEndDate(tempEndDate);
+    };
+
+    const handleClearFilter = () => {
+        setTempStartDate(undefined);
+        setTempEndDate(undefined);
+        setActiveStartDate(undefined);
+        setActiveEndDate(undefined);
+    };
+
     const filteredSales = useMemo(() => {
         if (!sales) return [];
         return sales.filter(sale => {
@@ -86,14 +105,14 @@ function SalesPage() {
             if (!saleDate) return false;
 
             let start = null;
-            if (startDate) {
-                start = new Date(startDate);
+            if (activeStartDate) {
+                start = new Date(activeStartDate);
                 start.setHours(0, 0, 0, 0);
             }
 
             let end = null;
-            if (endDate) {
-                end = new Date(endDate);
+            if (activeEndDate) {
+                end = new Date(activeEndDate);
                 end.setHours(23, 59, 59, 999);
             }
 
@@ -102,7 +121,7 @@ function SalesPage() {
             
             return true;
         });
-    }, [sales, startDate, endDate]);
+    }, [sales, activeStartDate, activeEndDate]);
 
     const handleRowClick = (saleId: string) => {
         router.push(`/sales/${saleId}`);
@@ -128,7 +147,7 @@ function SalesPage() {
         doc.setFontSize(18);
         doc.text("Sales Report", 14, 22);
         doc.setFontSize(11);
-        doc.text(`Date Range: ${startDate ? format(startDate, 'PPP') : 'N/A'} - ${endDate ? format(endDate, 'PPP') : 'N/A'}`, 14, 30);
+        doc.text(`Date Range: ${activeStartDate ? format(activeStartDate, 'PPP') : 'N/A'} - ${activeEndDate ? format(activeEndDate, 'PPP') : 'N/A'}`, 14, 30);
         
         const tableColumn: string[] = [];
         if (columns.date) tableColumn.push("Date");
@@ -299,18 +318,18 @@ function SalesPage() {
                                     variant={"outline"}
                                     className={cn(
                                     "w-[240px] justify-start text-left font-normal",
-                                    !startDate && "text-muted-foreground"
+                                    !tempStartDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                                    {tempStartDate ? format(tempStartDate, "PPP") : <span>Pick a start date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={startDate}
-                                    onSelect={setStartDate}
+                                    selected={tempStartDate}
+                                    onSelect={setTempStartDate}
                                     initialFocus
                                 />
                                 </PopoverContent>
@@ -324,22 +343,32 @@ function SalesPage() {
                                     variant={"outline"}
                                     className={cn(
                                     "w-[240px] justify-start text-left font-normal",
-                                    !endDate && "text-muted-foreground"
+                                    !tempEndDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                                    {tempEndDate ? format(tempEndDate, "PPP") : <span>Pick an end date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={endDate}
-                                    onSelect={setEndDate}
+                                    selected={tempEndDate}
+                                    onSelect={setTempEndDate}
                                     initialFocus
                                 />
                                 </PopoverContent>
                             </Popover>
+                        </div>
+                         <div className="flex gap-2">
+                             <Button onClick={handleSearch} size="sm">
+                                <Search className="mr-2 h-4 w-4" />
+                                Search
+                            </Button>
+                            <Button onClick={handleClearFilter} size="sm" variant="ghost">
+                                <X className="mr-2 h-4 w-4" />
+                                Clear
+                            </Button>
                         </div>
                         <div className="flex gap-2 ml-auto">
                              <DropdownMenu>
@@ -458,3 +487,5 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
