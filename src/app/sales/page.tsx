@@ -68,8 +68,17 @@ function SalesPage() {
             const saleDate = sale.createdAt?.toDate();
             if (!saleDate) return false;
 
-            const start = startDate ? new Date(startDate.setHours(0, 0, 0, 0)) : null;
-            const end = endDate ? new Date(endDate.setHours(23, 59, 59, 999)) : null;
+            let start = null;
+            if (startDate) {
+                start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+            }
+
+            let end = null;
+            if (endDate) {
+                end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+            }
 
             if (start && saleDate < start) return false;
             if (end && saleDate > end) return false;
