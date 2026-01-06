@@ -16,8 +16,8 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useUser, useFirestore } from '@/firebase';
-import { addDoc, collection, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { addDoc, collection, Timestamp, doc, getDoc, query } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
@@ -26,6 +26,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CardDescription } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -62,6 +63,7 @@ function BillPage() {
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
   const [plan, setPlan] = useState('free');
   const [isPlanLoading, setIsPlanLoading] = useState(true);
+  const [pastCustomers, setPastCustomers] = useState<{ label: string, value: string, phone: string }[]>([]);
   
   // Settings state
   const [showLabourCharges, setShowLabourCharges] = useState(true);
@@ -76,6 +78,32 @@ function BillPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+
+  const salesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, 'users', user.uid, 'sales'));
+  }, [user, firestore]);
+
+  const { data: salesData } = useCollection(salesQuery);
+
+  useEffect(() => {
+    if (salesData) {
+        const customerMap = new Map<string, { label: string, value: string, phone: string }>();
+        salesData.forEach(sale => {
+            if (sale.partyName) {
+                const normalizedName = sale.partyName.toLowerCase();
+                if (!customerMap.has(normalizedName)) {
+                    customerMap.set(normalizedName, {
+                        label: sale.partyName,
+                        value: sale.partyName,
+                        phone: sale.partyPhoneNumber || '',
+                    });
+                }
+            }
+        });
+        setPastCustomers(Array.from(customerMap.values()));
+    }
+  }, [salesData]);
 
 
   const form = useForm<FormValues>({
@@ -408,18 +436,20 @@ function BillPage() {
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Bill Details</h1>
-            <div className="flex gap-2 w-full sm:w-auto">
-                <Link href="/" passHref>
-                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
-                    <ArrowLeft className="mr-2" />
-                    Back
-                </Button>
-                </Link>
-                <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user} className="flex-1 sm:flex-none">
-                    <Save className="mr-2" />
-                    Save Bill
-                </Button>
-                 <Button onClick={handleExportPdf} size="sm" className="flex-1 sm:flex-none">
+            <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2">
+                    <Link href="/" passHref>
+                    <Button variant="outline" size="sm">
+                        <ArrowLeft className="mr-2" />
+                        Back
+                    </Button>
+                    </Link>
+                    <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user}>
+                        <Save className="mr-2" />
+                        Save Bill
+                    </Button>
+                </div>
+                 <Button onClick={handleExportPdf} size="sm">
                     <Download className="mr-2" />
                     PDF
                 </Button>
@@ -459,7 +489,19 @@ function BillPage() {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyName">Party Name</Label>
                     <div className="flex items-center gap-2">
-                        <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+                        <Combobox
+                            items={pastCustomers}
+                            value={watchedData.partyName || ''}
+                            onChange={(value) => {
+                                const customer = pastCustomers.find(c => c.value.toLowerCase() === value.toLowerCase());
+                                form.setValue('partyName', customer?.label || value);
+                                if (customer) {
+                                    form.setValue('partyPhoneNumber', customer.phone);
+                                }
+                            }}
+                            placeholder="Select or enter party name"
+                            emptyMessage="No past customers found."
+                        />
                          <Button type="button" size="icon" variant="outline" onClick={handleSelectContact}>
                             <Contact className="h-4 w-4" />
                         </Button>
