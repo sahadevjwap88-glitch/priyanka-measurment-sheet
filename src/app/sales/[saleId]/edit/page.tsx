@@ -493,10 +493,10 @@ function EditSalePage({ saleId }: { saleId: string }) {
 }
 
 
-export default function EditSalePageWithAuth({ params }: { params: { saleId: string } }) {
+export default function EditSalePageWithAuth({ params: { saleId } }: { params: { saleId: string } }) {
     return (
         <AuthGuard>
-            <EditSalePage saleId={params.saleId} />
+            <EditSalePage saleId={saleId} />
         </AuthGuard>
     );
 }
