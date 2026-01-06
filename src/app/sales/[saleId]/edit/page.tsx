@@ -48,7 +48,6 @@ const formSchema = z.object({
   discount: z.string().optional(),
   sheets: z.array(sheetSchema),
   createdAt: z.date().optional(),
-  creditAmount: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -91,7 +90,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
       discount: '',
       sheets: [],
       createdAt: new Date(),
-      creditAmount: '',
     },
     mode: 'onBlur',
   });
@@ -150,7 +148,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
         discount: saleData.discount?.toString(),
         sheets: sheets,
         createdAt: saleData.createdAt?.toDate(),
-        creditAmount: saleData.creditAmount?.toString(),
       });
       if (sheets.length > 0) {
         setActiveTab(sheets[0].id);
@@ -186,8 +183,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const transportCharges = showTransportCharges && watchedData?.transportCharges ? parseFloat(watchedData.transportCharges) : 0;
   const discount = watchedData?.discount ? parseFloat(watchedData.discount) : 0;
   const grandTotal = subtotalAllSheets + labourCharges + transportCharges - discount;
-  const creditAmount = watchedData?.creditAmount ? parseFloat(watchedData.creditAmount) : 0;
-  const balanceDue = grandTotal - creditAmount;
 
   const handleUpdateBill = async () => {
     if (!user || !saleDocRef) {
@@ -213,8 +208,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
       subtotal: subtotalAllSheets,
       grandTotal: grandTotal,
       createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : saleData.createdAt,
-      creditAmount: creditAmount,
-      balanceDue: balanceDue,
     };
     
     try {
@@ -295,7 +288,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const allSheets = watchedData.sheets || [];
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Edit Sale</h1>
@@ -375,10 +368,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="discount">Discount</Label>
                     <Input id="discount" type="number" placeholder="Enter discount" {...form.register('discount')} />
-                </div>
-                <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
-                    <Label htmlFor="creditAmount">Credit Amount</Label>
-                    <Input id="creditAmount" type="number" placeholder="Enter credit amount" {...form.register('creditAmount')} />
                 </div>
               </div>
             </CardContent>
@@ -490,20 +479,9 @@ function EditSalePage({ saleId }: { saleId: string }) {
                         )}
                     </div>
                     <Separator />
-                     <div className="flex justify-between items-center text-lg font-bold">
+                     <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
                         <span>₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
-                    </div>
-                    {creditAmount > 0 && (
-                        <div className="flex justify-between items-center text-sm text-blue-600">
-                            <span className="text-muted-foreground">Credit Amount</span>
-                            <span className="font-medium">- ₹{creditAmount.toFixed(2)}</span>
-                        </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
-                        <span>Balance Due</span>
-                        <span>₹{Math.round(balanceDue).toLocaleString('en-IN')}</span>
                     </div>
                 </CardContent>
             </Card>
