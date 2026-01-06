@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap, Share2, Contact } from 'lucide-react';
+import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap, Contact } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -329,26 +329,6 @@ function BillPage() {
     doc.save(filename);
   };
   
-    const handleShareToWhatsApp = () => {
-    const partyPhoneNumber = watchedData.partyPhoneNumber;
-    if (!partyPhoneNumber) {
-      toast({
-        variant: 'destructive',
-        title: 'Phone Number Missing',
-        description: "Please enter the party's phone number to share.",
-      });
-      return;
-    }
-
-    const doc = generatePdfDoc();
-    doc.save('bill.pdf');
-
-    toast({
-        title: 'PDF Ready to Share',
-        description: 'Your bill PDF has been downloaded. Please share the file from your downloads folder via WhatsApp.',
-    });
-  };
-
   const handleSelectContact = async () => {
     if (!('contacts' in navigator && 'select' in (navigator as any).contacts)) {
         toast({
@@ -438,10 +418,6 @@ function BillPage() {
                     <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user} className="flex-1">
                         <Save className="mr-2" />
                         Save Bill
-                    </Button>
-                    <Button onClick={handleShareToWhatsApp} size="sm" variant="secondary" className="flex-1">
-                        <Share2 className="mr-2" />
-                        Share
                     </Button>
                 </div>
                  <Button onClick={handleExportPdf} size="sm" className="w-full">
