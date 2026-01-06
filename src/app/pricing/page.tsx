@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ export default function PricingPage() {
         'Basic Support',
     ];
     const premiumFeatures = [
-        'Up to 4 Sheets',
+        'Up to 5 Sheets',
         'Generate and Save Bills',
         'View Sales History',
         'Customizable Bills',

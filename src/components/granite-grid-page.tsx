@@ -59,7 +59,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 const INITIAL_ROWS = 20;
 const MAX_ROWS = 500;
-const MAX_SHEETS = 4;
+const MAX_SHEETS = 5;
 export const LOCAL_STORAGE_KEY = 'priyanka-granite-sheet-data';
 
 const createNewSheet = (id: string, name: string): Sheet => ({
