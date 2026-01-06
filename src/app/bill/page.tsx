@@ -6,12 +6,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap } from 'lucide-react';
+import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap, Share2, Contact } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -329,6 +329,56 @@ function BillPage() {
     doc.save(filename);
   };
   
+    const handleShareToWhatsApp = () => {
+    const partyPhoneNumber = watchedData.partyPhoneNumber;
+    if (!partyPhoneNumber) {
+      toast({
+        variant: 'destructive',
+        title: 'Phone Number Missing',
+        description: "Please enter the party's phone number to share.",
+      });
+      return;
+    }
+
+    const doc = generatePdfDoc();
+    doc.save('bill.pdf');
+
+    toast({
+        title: 'PDF Ready to Share',
+        description: 'Your bill PDF has been downloaded. Please share the file from your downloads folder via WhatsApp.',
+    });
+  };
+
+  const handleSelectContact = async () => {
+    if (!('contacts' in navigator && 'select' in (navigator as any).contacts)) {
+        toast({
+            variant: "destructive",
+            title: "Unsupported Browser",
+            description: "Your browser does not support the Contact Picker API.",
+        });
+        return;
+    }
+
+    try {
+        const contacts = await (navigator as any).contacts.select(['name', 'tel'], { multiple: false });
+        if (contacts.length > 0) {
+            const contact = contacts[0];
+            if (contact.name && contact.name.length > 0) {
+                form.setValue('partyName', contact.name[0]);
+            }
+            if (contact.tel && contact.tel.length > 0) {
+                form.setValue('partyPhoneNumber', contact.tel[0]);
+            }
+        }
+    } catch (ex) {
+        toast({
+            variant: "destructive",
+            title: "Could not pick contact",
+            description: "An error occurred while trying to pick a contact.",
+        });
+        console.error(ex);
+    }
+  };
 
   if (!isClient || isPlanLoading) {
     return <div className="p-8 text-center">Loading...</div>;
@@ -377,22 +427,28 @@ function BillPage() {
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Bill Details</h1>
-          <div className="flex gap-2">
-            <Link href="/" passHref>
-              <Button variant="outline" size="sm">
-                  <ArrowLeft className="mr-2" />
-                  Back
-              </Button>
-            </Link>
-            <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user}>
-                <Save className="mr-2" />
-                Save Bill
-            </Button>
-            <Button onClick={handleExportPdf} size="sm">
-                <Download className="mr-2" />
-                Export PDF
-            </Button>
-          </div>
+            <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <div className="flex gap-2">
+                    <Link href="/" passHref>
+                    <Button variant="outline" size="sm" className="flex-1">
+                        <ArrowLeft className="mr-2" />
+                        Back
+                    </Button>
+                    </Link>
+                    <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user} className="flex-1">
+                        <Save className="mr-2" />
+                        Save Bill
+                    </Button>
+                    <Button onClick={handleShareToWhatsApp} size="sm" variant="secondary" className="flex-1">
+                        <Share2 className="mr-2" />
+                        Share
+                    </Button>
+                </div>
+                 <Button onClick={handleExportPdf} size="sm" className="w-full">
+                    <Download className="mr-2" />
+                    PDF
+                </Button>
+            </div>
         </header>
 
         <div className="py-8 border rounded-lg" id="bill-content">
@@ -427,7 +483,12 @@ function BillPage() {
                 </div>
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyName">Party Name</Label>
-                    <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+                    <div className="flex items-center gap-2">
+                        <Input id="partyName" placeholder="Enter party name" {...form.register('partyName')} />
+                         <Button type="button" size="icon" variant="outline" onClick={handleSelectContact}>
+                            <Contact className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
