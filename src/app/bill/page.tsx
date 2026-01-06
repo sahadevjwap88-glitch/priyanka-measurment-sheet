@@ -6,7 +6,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CardDescription } from '@/components/ui/card';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -407,20 +408,18 @@ function BillPage() {
       <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <h1 className="text-3xl font-bold">Bill Details</h1>
-            <div className="flex flex-col gap-2 w-full sm:w-auto">
-                <div className="flex gap-2">
-                    <Link href="/" passHref>
-                    <Button variant="outline" size="sm" className="flex-1">
-                        <ArrowLeft className="mr-2" />
-                        Back
-                    </Button>
-                    </Link>
-                    <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user} className="flex-1">
-                        <Save className="mr-2" />
-                        Save Bill
-                    </Button>
-                </div>
-                 <Button onClick={handleExportPdf} size="sm" className="w-full">
+            <div className="flex gap-2 w-full sm:w-auto">
+                <Link href="/" passHref>
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                    <ArrowLeft className="mr-2" />
+                    Back
+                </Button>
+                </Link>
+                <Button onClick={handleSaveBill} size="sm" variant="default" disabled={!user} className="flex-1 sm:flex-none">
+                    <Save className="mr-2" />
+                    Save Bill
+                </Button>
+                 <Button onClick={handleExportPdf} size="sm" className="flex-1 sm:flex-none">
                     <Download className="mr-2" />
                     PDF
                 </Button>
