@@ -201,7 +201,7 @@ function BillPage() {
   useEffect(() => {
     if (!labourManuallyEdited && isClient && showLabourCharges) {
       const calculatedLabour = Math.max(minLabourCharges, totalAreaAllSheets * labourRate);
-      form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
+      form.setValue('labourCharges', Math.round(calculatedLabour).toString(), { shouldDirty: true });
     }
   }, [totalAreaAllSheets, isClient, labourManuallyEdited, form, showLabourCharges, labourRate, minLabourCharges]);
 
@@ -226,19 +226,19 @@ function BillPage() {
     const billData = {
       partyName: watchedData.partyName || '',
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
-      labourCharges: labourCharges,
-      transportCharges: transportCharges,
-      discount: discount,
+      labourCharges: Math.round(labourCharges),
+      transportCharges: Math.round(transportCharges),
+      discount: Math.round(discount),
       sheets: watchedData.sheets?.map(s => ({
           ...s,
           measurements: s.measurements.filter(m => m.length && m.width)
       })) || [],
-      subtotal: subtotalAllSheets,
-      grandTotal: grandTotal,
+      subtotal: Math.round(subtotalAllSheets),
+      grandTotal: Math.round(grandTotal),
       createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : Timestamp.now(),
       paymentType: watchedData.paymentType,
-      amountPaid: watchedData.paymentType === 'cash' ? grandTotal : 0,
-      balance: watchedData.paymentType === 'credit' ? grandTotal : 0,
+      amountPaid: watchedData.paymentType === 'cash' ? Math.round(grandTotal) : 0,
+      balance: watchedData.paymentType === 'credit' ? Math.round(grandTotal) : 0,
       payments: [],
     };
     
@@ -296,8 +296,8 @@ function BillPage() {
       return [
         sheet.color || 'N/A',
         area.toFixed(2),
-        `Rs. ${rate.toFixed(2)}`,
-        `Rs. ${total.toFixed(2)}`
+        `Rs. ${Math.round(rate)}`,
+        `Rs. ${Math.round(total)}`
       ];
     });
 
@@ -314,20 +314,20 @@ function BillPage() {
 
     // Grand Totals
     const summaryRows = [
-      [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${subtotalAllSheets.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
+      [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${Math.round(subtotalAllSheets)}`, styles: { fontStyle: 'bold' } }],
     ];
 
     if (showLabourCharges) {
-      summaryRows.push(['Labour Charges', `Rs. ${labourCharges.toFixed(2)}`]);
+      summaryRows.push(['Labour Charges', `Rs. ${Math.round(labourCharges)}`]);
     }
     if (showTransportCharges) {
-      summaryRows.push(['Transport Charges', `Rs. ${transportCharges.toFixed(2)}`]);
+      summaryRows.push(['Transport Charges', `Rs. ${Math.round(transportCharges)}`]);
     }
     if (discount > 0) {
-      summaryRows.push(['Discount', `- Rs. ${discount.toFixed(2)}`]);
+      summaryRows.push(['Discount', `- Rs. ${Math.round(discount)}`]);
     }
 
-    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(grandTotal)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
     
     doc.autoTable({
         body: summaryRows,
@@ -554,8 +554,8 @@ function BillPage() {
                       <TableRow key={sheet.id}>
                         <TableCell>{sheet.color || 'N/A'}</TableCell>
                         <TableCell className="text-right">{area.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">₹{rate.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-medium">₹{total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">₹{Math.round(rate)}</TableCell>
+                        <TableCell className="text-right font-medium">₹{Math.round(total)}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -569,33 +569,33 @@ function BillPage() {
                 <CardContent className="p-6 space-y-4">
                     <div className="flex justify-between items-center font-semibold">
                         <span>Subtotal</span>
-                        <span>₹{subtotalAllSheets.toFixed(2)}</span>
+                        <span>₹{Math.round(subtotalAllSheets)}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">
                         {showLabourCharges && (
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Labour Charges</span>
-                              <span className="font-medium">₹{labourCharges.toFixed(2)}</span>
+                              <span className="font-medium">₹{Math.round(labourCharges)}</span>
                           </div>
                         )}
                         {showTransportCharges && (
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Transport Charges</span>
-                              <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
+                              <span className="font-medium">₹{Math.round(transportCharges)}</span>
                           </div>
                         )}
                         {discount > 0 && (
                           <div className="flex justify-between items-center text-sm text-green-600">
                               <span className="text-muted-foreground">Discount</span>
-                              <span className="font-medium">- ₹{discount.toFixed(2)}</span>
+                              <span className="font-medium">- ₹{Math.round(discount)}</span>
                           </div>
                         )}
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
-                        <span>₹{grandTotal.toFixed(2)}</span>
+                        <span>₹{Math.round(grandTotal)}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -620,4 +620,5 @@ export default function BillPageWithAuth() {
     );
 }
 
+    
     

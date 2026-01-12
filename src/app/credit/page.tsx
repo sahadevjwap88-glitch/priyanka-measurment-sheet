@@ -60,7 +60,7 @@ function CreditPage() {
 
     useEffect(() => {
         if (selectedSaleForPayment) {
-            setPaymentAmount(selectedSaleForPayment.balance?.toFixed(2) || '');
+            setPaymentAmount(Math.round(selectedSaleForPayment.balance).toString() || '');
         }
     }, [selectedSaleForPayment]);
 
@@ -133,7 +133,7 @@ function CreditPage() {
         }
 
         if (amount > selectedSaleForPayment.balance) {
-            toast({ variant: 'destructive', title: 'Invalid Amount', description: `Payment cannot exceed the outstanding balance of ₹${selectedSaleForPayment.balance.toFixed(2)}.` });
+            toast({ variant: 'destructive', title: 'Invalid Amount', description: `Payment cannot exceed the outstanding balance of ₹${Math.round(selectedSaleForPayment.balance)}.` });
             return;
         }
         
@@ -146,7 +146,7 @@ function CreditPage() {
 
             const newPayment = {
                 id: `payment_${Date.now()}`,
-                amount: amount,
+                amount: Math.round(amount),
                 date: Timestamp.now()
             };
 
@@ -170,7 +170,7 @@ function CreditPage() {
     
     const handleStartEditPayment = (payment: any) => {
         setEditingPayment(payment);
-        setEditingPaymentAmount(payment.amount.toFixed(2));
+        setEditingPaymentAmount(Math.round(payment.amount).toString());
     };
 
     const handleCancelEdit = () => {
@@ -212,7 +212,7 @@ function CreditPage() {
             }
 
             const updatedPayments = saleData.payments.map((p: any) => 
-                p.id === editingPayment.id ? { ...p, amount: updatedAmount } : p
+                p.id === editingPayment.id ? { ...p, amount: Math.round(updatedAmount) } : p
             );
 
             await updateDoc(saleDocRef, {
@@ -272,7 +272,7 @@ function CreditPage() {
         doc.setFontSize(14);
         doc.text("Customer Dues Summary", 14, 32);
         
-        let tableRows = customerSummaries.map(summary => [summary.partyName, `₹${summary.totalDue.toFixed(2)}`]);
+        let tableRows = customerSummaries.map(summary => [summary.partyName, `₹${Math.round(summary.totalDue)}`]);
         
         doc.autoTable({
             head: [['Customer', 'Total Due']],
@@ -296,7 +296,7 @@ function CreditPage() {
         
         const tableRows = paymentHistory.map(p => [
             p.partyName, 
-            `₹${p.amount.toFixed(2)}`, 
+            `₹${Math.round(p.amount)}`, 
             format(p.date.toDate(), 'dd/MM/yyyy'),
             format(p.saleDate, 'dd/MM/yyyy'),
         ]);
@@ -353,7 +353,7 @@ function CreditPage() {
                                         <AccordionTrigger>
                                             <div className="flex justify-between w-full pr-4">
                                                 <span className="font-semibold">{summary.partyName}</span>
-                                                <span className="text-red-600 font-bold">₹{summary.totalDue.toFixed(2)}</span>
+                                                <span className="text-red-600 font-bold">₹{Math.round(summary.totalDue)}</span>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
@@ -375,9 +375,9 @@ function CreditPage() {
                                                                     {format(sale.createdAt.toDate(), 'dd/MM/yyyy')}
                                                                 </Link>
                                                             </TableCell>
-                                                            <TableCell>₹{sale.grandTotal.toFixed(2)}</TableCell>
-                                                            <TableCell>₹{sale.amountPaid.toFixed(2)}</TableCell>
-                                                            <TableCell className="text-right text-red-600 font-medium">₹{sale.balance.toFixed(2)}</TableCell>
+                                                            <TableCell>₹{Math.round(sale.grandTotal)}</TableCell>
+                                                            <TableCell>₹{Math.round(sale.amountPaid)}</TableCell>
+                                                            <TableCell className="text-right text-red-600 font-medium">₹{Math.round(sale.balance)}</TableCell>
                                                             <TableCell className="text-center">
                                                                 <Button size="sm" variant="outline" onClick={() => setSelectedSaleForPayment(sale)}>
                                                                     Record Payment
@@ -440,7 +440,7 @@ function CreditPage() {
                                             <TableRow key={`${payment.saleId}-${payment.id || index}`}>
                                                 <TableCell>{format(payment.date.toDate(), 'dd/MM/yyyy')}</TableCell>
                                                 <TableCell>{payment.partyName}</TableCell>
-                                                <TableCell>₹{payment.amount.toFixed(2)}</TableCell>
+                                                <TableCell>₹{Math.round(payment.amount)}</TableCell>
                                                 <TableCell>{format(payment.saleDate, 'dd/MM/yyyy')}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => handleStartEditPayment(payment)}>
@@ -456,7 +456,7 @@ function CreditPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Delete Payment?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This will permanently delete the payment of ₹{payment.amount.toFixed(2)} from {payment.partyName}. This will also increase their balance due. This action cannot be undone.
+                                                                    This will permanently delete the payment of ₹{Math.round(payment.amount)} from {payment.partyName}. This will also increase their balance due. This action cannot be undone.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
@@ -484,7 +484,7 @@ function CreditPage() {
                                 <AlertDialogTitle>Record Payment for {selectedSaleForPayment.partyName}</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     Bill Date: {format(selectedSaleForPayment.createdAt.toDate(), 'PPP')} <br/>
-                                    Outstanding Balance: ₹{selectedSaleForPayment.balance.toFixed(2)}
+                                    Outstanding Balance: ₹{Math.round(selectedSaleForPayment.balance)}
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <div className="py-4 space-y-2">
@@ -518,3 +518,5 @@ export default function CreditPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    

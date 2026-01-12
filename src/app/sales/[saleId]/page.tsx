@@ -107,8 +107,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
           return [
             sheet.color || 'N/A',
             area.toFixed(2),
-            `Rs. ${rate.toFixed(2)}`,
-            `Rs. ${total.toFixed(2)}`
+            `Rs. ${Math.round(rate)}`,
+            `Rs. ${Math.round(total)}`
           ];
         });
 
@@ -124,12 +124,12 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
         finalY = (doc as any).lastAutoTable.finalY;
 
         const summaryRows = [
-          [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${sale.subtotal.toFixed(2)}`, styles: { fontStyle: 'bold' } }],
+          [{ content: 'Subtotal', styles: { fontStyle: 'bold' } }, { content: `Rs. ${Math.round(sale.subtotal)}`, styles: { fontStyle: 'bold' } }],
         ];
-        if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${sale.labourCharges.toFixed(2)}`]);
-        if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${sale.transportCharges.toFixed(2)}`]);
-        if (sale.discount > 0) summaryRows.push(['Discount', `- Rs. ${sale.discount.toFixed(2)}`]);
-        summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${sale.grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+        if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${Math.round(sale.labourCharges)}`]);
+        if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${Math.round(sale.transportCharges)}`]);
+        if (sale.discount > 0) summaryRows.push(['Discount', `- Rs. ${Math.round(sale.discount)}`]);
+        summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(sale.grandTotal)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
         
         doc.autoTable({
             body: summaryRows,
@@ -264,8 +264,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                                             <TableRow key={sheet.id || index}>
                                                 <TableCell>{sheet.color || 'N/A'}</TableCell>
                                                 <TableCell className="text-right">{area.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right">₹{rate.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right font-medium">₹{total.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right">₹{Math.round(rate)}</TableCell>
+                                                <TableCell className="text-right font-medium">₹{Math.round(total)}</TableCell>
                                             </TableRow>
                                         );
                                     })}
@@ -279,33 +279,33 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex justify-between items-center font-semibold">
                                     <span>Subtotal</span>
-                                    <span>₹{sale.subtotal.toFixed(2)}</span>
+                                    <span>₹{Math.round(sale.subtotal)}</span>
                                 </div>
                                 <Separator />
                                 <div className="space-y-2">
                                     {sale.labourCharges > 0 && (
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-muted-foreground">Labour Charges</span>
-                                            <span className="font-medium">₹{sale.labourCharges.toFixed(2)}</span>
+                                            <span className="font-medium">₹{Math.round(sale.labourCharges)}</span>
                                         </div>
                                     )}
                                     {sale.transportCharges > 0 && (
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-muted-foreground">Transport Charges</span>
-                                            <span className="font-medium">₹{sale.transportCharges.toFixed(2)}</span>
+                                            <span className="font-medium">₹{Math.round(sale.transportCharges)}</span>
                                         </div>
                                     )}
                                     {sale.discount > 0 && (
                                         <div className="flex justify-between items-center text-sm text-green-600">
                                             <span className="text-muted-foreground">Discount</span>
-                                            <span className="font-medium">- ₹{sale.discount.toFixed(2)}</span>
+                                            <span className="font-medium">- ₹{Math.round(sale.discount)}</span>
                                         </div>
                                     )}
                                 </div>
                                 <Separator />
                                 <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                                     <span>Grand Total</span>
-                                    <span>₹{sale.grandTotal.toFixed(2)}</span>
+                                    <span>₹{Math.round(sale.grandTotal)}</span>
                                 </div>
                             </CardContent>
                         </Card>

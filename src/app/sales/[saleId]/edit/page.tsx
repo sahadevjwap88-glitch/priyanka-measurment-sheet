@@ -165,7 +165,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
   useEffect(() => {
     if (!labourManuallyEdited && isClient && showLabourCharges) {
       const calculatedLabour = Math.max(minLabourCharges, totalAreaAllSheets * labourRate);
-      form.setValue('labourCharges', calculatedLabour.toFixed(2), { shouldDirty: true });
+      form.setValue('labourCharges', Math.round(calculatedLabour).toString(), { shouldDirty: true });
     }
   }, [totalAreaAllSheets, isClient, labourManuallyEdited, form, showLabourCharges, labourRate, minLabourCharges]);
 
@@ -186,16 +186,16 @@ function EditSalePage({ saleId }: { saleId: string }) {
       return;
     }
     
-    const amountPaid = watchedData.paymentType === 'cash' ? grandTotal : (saleData.amountPaid || 0);
-    const balance = grandTotal - amountPaid;
+    const amountPaid = watchedData.paymentType === 'cash' ? Math.round(grandTotal) : (saleData.amountPaid || 0);
+    const balance = Math.round(grandTotal) - amountPaid;
 
     const updatedBillData = {
       ...saleData,
       partyName: watchedData.partyName || '',
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
-      labourCharges: labourCharges,
-      transportCharges: transportCharges,
-      discount: discount,
+      labourCharges: Math.round(labourCharges),
+      transportCharges: Math.round(transportCharges),
+      discount: Math.round(discount),
       sheets: watchedData.sheets?.map(s => ({
           ...s,
           rate: s.rate ? parseFloat(s.rate) : 0,
@@ -204,8 +204,8 @@ function EditSalePage({ saleId }: { saleId: string }) {
               width: parseFloat(m.width)
           }))
       })) || [],
-      subtotal: subtotalAllSheets,
-      grandTotal: grandTotal,
+      subtotal: Math.round(subtotalAllSheets),
+      grandTotal: Math.round(grandTotal),
       createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : saleData.createdAt,
       paymentType: watchedData.paymentType,
       amountPaid: amountPaid,
@@ -446,33 +446,33 @@ function EditSalePage({ saleId }: { saleId: string }) {
                 <CardContent className="p-6 space-y-4">
                     <div className="flex justify-between items-center font-semibold">
                         <span>Subtotal</span>
-                        <span>₹{subtotalAllSheets.toFixed(2)}</span>
+                        <span>₹{Math.round(subtotalAllSheets)}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">
                         {showLabourCharges && (
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Labour Charges</span>
-                              <span className="font-medium">₹{labourCharges.toFixed(2)}</span>
+                              <span className="font-medium">₹{Math.round(labourCharges)}</span>
                           </div>
                         )}
                         {showTransportCharges && (
                           <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">Transport Charges</span>
-                              <span className="font-medium">₹{transportCharges.toFixed(2)}</span>
+                              <span className="font-medium">₹{Math.round(transportCharges)}</span>
                           </div>
                         )}
                         {discount > 0 && (
                           <div className="flex justify-between items-center text-sm text-green-600">
                             <span className="text-muted-foreground">Discount</span>
-                            <span className="font-medium">- ₹{discount.toFixed(2)}</span>
+                            <span className="font-medium">- ₹{Math.round(discount)}</span>
                           </div>
                         )}
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
-                        <span>₹{grandTotal.toFixed(2)}</span>
+                        <span>₹{Math.round(grandTotal)}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -493,4 +493,5 @@ export default function EditSalePageWithAuth({ params }: { params: { saleId: str
     );
 }
 
+    
     

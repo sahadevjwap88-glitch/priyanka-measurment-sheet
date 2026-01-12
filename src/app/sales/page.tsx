@@ -169,14 +169,14 @@ function SalesPage() {
                     if (columns.partyName) rowData.push(isFirstSheet ? sale.partyName || 'N/A' : '');
                     if (columns.colorName) rowData.push(sheet.color || 'N/A');
                     if (columns.sft) rowData.push(sft.toFixed(2));
-                    if (columns.rate) rowData.push(rate.toFixed(2));
-                    if (columns.subtotal) rowData.push(itemSubtotal.toFixed(2));
+                    if (columns.rate) rowData.push(Math.round(rate));
+                    if (columns.subtotal) rowData.push(Math.round(itemSubtotal));
                     
                     if (isFirstSheet) {
-                        if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
-                        if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
-                        if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
-                        if (columns.grandTotal) rowData.push(sale.grandTotal.toFixed(2));
+                        if (columns.labour) rowData.push(Math.round(sale.labourCharges));
+                        if (columns.transport) rowData.push(Math.round(sale.transportCharges));
+                        if (columns.discount) rowData.push(Math.round(sale.discount || 0));
+                        if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal));
                     } else {
                         // For subsequent rows of the same sale, leave these columns blank
                         const emptyColsNeeded = [columns.labour, columns.transport, columns.discount, columns.grandTotal].filter(Boolean).length;
@@ -193,12 +193,12 @@ function SalesPage() {
                  if (columns.partyName) rowData.push(sale.partyName || 'N/A');
                  if (columns.colorName) rowData.push('N/A');
                  if (columns.sft) rowData.push('0.00');
-                 if (columns.rate) rowData.push('0.00');
-                 if (columns.subtotal) rowData.push(sale.subtotal.toFixed(2));
-                 if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
-                 if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
-                 if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
-                 if (columns.grandTotal) rowData.push(sale.grandTotal.toFixed(2));
+                 if (columns.rate) rowData.push('0');
+                 if (columns.subtotal) rowData.push(Math.round(sale.subtotal));
+                 if (columns.labour) rowData.push(Math.round(sale.labourCharges));
+                 if (columns.transport) rowData.push(Math.round(sale.transportCharges));
+                 if (columns.discount) rowData.push(Math.round(sale.discount || 0));
+                 if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal));
                  tableRows.push(rowData);
             }
 
@@ -219,11 +219,11 @@ function SalesPage() {
         
         if (columns.sft) totalRow.push({ content: totalSft.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.rate) totalRow.push(''); // No total for rate
-        if (columns.subtotal) totalRow.push({ content: totalSubtotal.toFixed(2), styles: { fontStyle: 'bold' } });
-        if (columns.labour) totalRow.push({ content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } });
-        if (columns.transport) totalRow.push({ content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } });
-        if (columns.discount) totalRow.push({ content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } });
-        if (columns.grandTotal) totalRow.push({ content: totalGrandTotal.toFixed(2), styles: { fontStyle: 'bold' } });
+        if (columns.subtotal) totalRow.push({ content: Math.round(totalSubtotal), styles: { fontStyle: 'bold' } });
+        if (columns.labour) totalRow.push({ content: Math.round(totalLabour), styles: { fontStyle: 'bold' } });
+        if (columns.transport) totalRow.push({ content: Math.round(totalTransport), styles: { fontStyle: 'bold' } });
+        if (columns.discount) totalRow.push({ content: Math.round(totalDiscount), styles: { fontStyle: 'bold' } });
+        if (columns.grandTotal) totalRow.push({ content: Math.round(totalGrandTotal), styles: { fontStyle: 'bold' } });
 
         if(totalRow.some(c => c.content !== undefined && c.content !== '')){
              tableRows.push(totalRow);
@@ -390,7 +390,7 @@ function SalesPage() {
                                             <div className="flex items-center justify-end gap-2">
                                                 {sale.paymentType === 'credit' && (
                                                     <Badge variant={sale.balance > 0 ? 'destructive' : 'secondary'}>
-                                                        {sale.balance > 0 ? `DUE: ₹${sale.balance.toFixed(2)}` : 'PAID'}
+                                                        {sale.balance > 0 ? `DUE: ₹${Math.round(sale.balance)}` : 'PAID'}
                                                     </Badge>
                                                 )}
                                                  {sale.paymentType === 'cash' && (
@@ -398,7 +398,7 @@ function SalesPage() {
                                                 )}
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Grand Total</p>
-                                                    <p className="text-2xl font-bold">₹{sale.grandTotal.toFixed(2)}</p>
+                                                    <p className="text-2xl font-bold">₹{Math.round(sale.grandTotal)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -416,7 +416,7 @@ function SalesPage() {
                                             {sale.sheets?.map((sheet: any, index: number) => (
                                                 <TableRow key={index}>
                                                     <TableCell>{sheet.color || 'N/A'}</TableCell>
-                                                    <TableCell className="text-right">₹{parseFloat(sheet.rate || '0').toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right">₹{Math.round(parseFloat(sheet.rate || '0'))}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -425,15 +425,15 @@ function SalesPage() {
                                 <CardFooter className="bg-muted/50 p-4 rounded-b-lg">
                                     <div className="flex justify-between w-full text-sm">
                                          <div className="flex gap-4 flex-wrap">
-                                            <span>Subtotal: <span className="font-medium">₹{sale.subtotal.toFixed(2)}</span></span>
+                                            <span>Subtotal: <span className="font-medium">₹{Math.round(sale.subtotal)}</span></span>
                                             <Separator orientation="vertical" className="h-5"/>
-                                            <span>Labour: <span className="font-medium">₹{sale.labourCharges.toFixed(2)}</span></span>
+                                            <span>Labour: <span className="font-medium">₹{Math.round(sale.labourCharges)}</span></span>
                                             <Separator orientation="vertical" className="h-5"/>
-                                            <span>Transport: <span className="font-medium">₹{sale.transportCharges.toFixed(2)}</span></span>
+                                            <span>Transport: <span className="font-medium">₹{Math.round(sale.transportCharges)}</span></span>
                                             {sale.discount > 0 && (
                                                 <>
                                                  <Separator orientation="vertical" className="h-5"/>
-                                                 <span>Discount: <span className="font-medium">₹{sale.discount.toFixed(2)}</span></span>
+                                                 <span>Discount: <span className="font-medium">₹{Math.round(sale.discount)}</span></span>
                                                 </>
                                             )}
                                          </div>
@@ -456,5 +456,4 @@ export default function SalesPageWithAuth() {
     );
 }
 
-    
     
