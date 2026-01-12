@@ -280,25 +280,25 @@ function CreditPage() {
             startY: 35,
         });
 
-        let finalY = (doc as any).lastAutoTable.finalY;
-
         // Payment History
-        doc.addPage();
-        doc.setFontSize(14);
-        doc.text("Full Payment History", 14, 22);
-        
-        tableRows = paymentHistory.map(p => [
-            p.partyName, 
-            `₹${p.amount.toLocaleString('en-IN')}`, 
-            format(p.date.toDate(), 'dd/MM/yyyy'),
-            format(p.saleDate, 'dd/MM/yyyy'),
-        ]);
+        if (paymentHistory.length > 0) {
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text("Full Payment History", 14, 22);
+            
+            tableRows = paymentHistory.map(p => [
+                p.partyName, 
+                `₹${p.amount.toLocaleString('en-IN')}`, 
+                format(p.date.toDate(), 'dd/MM/yyyy'),
+                format(p.saleDate, 'dd/MM/yyyy'),
+            ]);
 
-         doc.autoTable({
-            head: [['Customer', 'Amount Paid', 'Payment Date', 'Original Sale Date']],
-            body: tableRows,
-            startY: 25,
-        });
+            doc.autoTable({
+                head: [['Customer', 'Amount Paid', 'Payment Date', 'Original Sale Date']],
+                body: tableRows,
+                startY: 25,
+            });
+        }
 
 
         const date = new Date();
@@ -508,3 +508,5 @@ export default function CreditPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
