@@ -129,7 +129,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
         if (sale.labourCharges > 0) summaryRows.push(['Labour Charges', `Rs. ${sale.labourCharges.toFixed(2)}`]);
         if (sale.transportCharges > 0) summaryRows.push(['Transport Charges', `Rs. ${sale.transportCharges.toFixed(2)}`]);
         if (sale.discount > 0) summaryRows.push(['Discount', `- Rs. ${sale.discount.toFixed(2)}`]);
-        summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(sale.grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+        summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${sale.grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
         
         doc.autoTable({
             body: summaryRows,
@@ -279,7 +279,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex justify-between items-center font-semibold">
                                     <span>Subtotal</span>
-                                    <span>₹{Math.round(sale.subtotal).toLocaleString('en-IN')}</span>
+                                    <span>₹{sale.subtotal.toFixed(2)}</span>
                                 </div>
                                 <Separator />
                                 <div className="space-y-2">
@@ -305,7 +305,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                                 <Separator />
                                 <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                                     <span>Grand Total</span>
-                                    <span>₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}</span>
+                                    <span>₹{sale.grandTotal.toFixed(2)}</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -323,3 +323,5 @@ export default function SaleDetailPageWithAuth({ params: { saleId } }: { params:
         </AuthGuard>
     );
 }
+
+    

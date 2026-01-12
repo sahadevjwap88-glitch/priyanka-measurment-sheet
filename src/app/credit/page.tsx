@@ -60,7 +60,7 @@ function CreditPage() {
 
     useEffect(() => {
         if (selectedSaleForPayment) {
-            setPaymentAmount(selectedSaleForPayment.balance?.toString() || '');
+            setPaymentAmount(selectedSaleForPayment.balance?.toFixed(2) || '');
         }
     }, [selectedSaleForPayment]);
 
@@ -170,7 +170,7 @@ function CreditPage() {
     
     const handleStartEditPayment = (payment: any) => {
         setEditingPayment(payment);
-        setEditingPaymentAmount(payment.amount.toString());
+        setEditingPaymentAmount(payment.amount.toFixed(2));
     };
 
     const handleCancelEdit = () => {
@@ -272,7 +272,7 @@ function CreditPage() {
         doc.setFontSize(14);
         doc.text("Customer Dues Summary", 14, 32);
         
-        let tableRows = customerSummaries.map(summary => [summary.partyName, `₹${summary.totalDue.toLocaleString('en-IN')}`]);
+        let tableRows = customerSummaries.map(summary => [summary.partyName, `₹${summary.totalDue.toFixed(2)}`]);
         
         doc.autoTable({
             head: [['Customer', 'Total Due']],
@@ -288,7 +288,7 @@ function CreditPage() {
             
             tableRows = paymentHistory.map(p => [
                 p.partyName, 
-                `₹${p.amount.toLocaleString('en-IN')}`, 
+                `₹${p.amount.toFixed(2)}`, 
                 format(p.date.toDate(), 'dd/MM/yyyy'),
                 format(p.saleDate, 'dd/MM/yyyy'),
             ]);
@@ -343,7 +343,7 @@ function CreditPage() {
                                         <AccordionTrigger>
                                             <div className="flex justify-between w-full pr-4">
                                                 <span className="font-semibold">{summary.partyName}</span>
-                                                <span className="text-red-600 font-bold">₹{summary.totalDue.toLocaleString('en-IN')}</span>
+                                                <span className="text-red-600 font-bold">₹{summary.totalDue.toFixed(2)}</span>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
@@ -365,9 +365,9 @@ function CreditPage() {
                                                                     {format(sale.createdAt.toDate(), 'dd/MM/yyyy')}
                                                                 </Link>
                                                             </TableCell>
-                                                            <TableCell>₹{sale.grandTotal.toLocaleString('en-IN')}</TableCell>
-                                                            <TableCell>₹{sale.amountPaid.toLocaleString('en-IN')}</TableCell>
-                                                            <TableCell className="text-right text-red-600 font-medium">₹{sale.balance.toLocaleString('en-IN')}</TableCell>
+                                                            <TableCell>₹{sale.grandTotal.toFixed(2)}</TableCell>
+                                                            <TableCell>₹{sale.amountPaid.toFixed(2)}</TableCell>
+                                                            <TableCell className="text-right text-red-600 font-medium">₹{sale.balance.toFixed(2)}</TableCell>
                                                             <TableCell className="text-center">
                                                                 <Button size="sm" variant="outline" onClick={() => setSelectedSaleForPayment(sale)}>
                                                                     Record Payment
@@ -430,7 +430,7 @@ function CreditPage() {
                                             <TableRow key={`${payment.saleId}-${payment.id || index}`}>
                                                 <TableCell>{format(payment.date.toDate(), 'dd/MM/yyyy')}</TableCell>
                                                 <TableCell>{payment.partyName}</TableCell>
-                                                <TableCell>₹{payment.amount.toLocaleString('en-IN')}</TableCell>
+                                                <TableCell>₹{payment.amount.toFixed(2)}</TableCell>
                                                 <TableCell>{format(payment.saleDate, 'dd/MM/yyyy')}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => handleStartEditPayment(payment)}>
@@ -446,7 +446,7 @@ function CreditPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Delete Payment?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This will permanently delete the payment of ₹{payment.amount.toLocaleString('en-IN')} from {payment.partyName}. This will also increase their balance due. This action cannot be undone.
+                                                                    This will permanently delete the payment of ₹{payment.amount.toFixed(2)} from {payment.partyName}. This will also increase their balance due. This action cannot be undone.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
@@ -474,7 +474,7 @@ function CreditPage() {
                                 <AlertDialogTitle>Record Payment for {selectedSaleForPayment.partyName}</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     Bill Date: {format(selectedSaleForPayment.createdAt.toDate(), 'PPP')} <br/>
-                                    Outstanding Balance: ₹{selectedSaleForPayment.balance.toLocaleString('en-IN')}
+                                    Outstanding Balance: ₹{selectedSaleForPayment.balance.toFixed(2)}
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <div className="py-4 space-y-2">
@@ -509,4 +509,5 @@ export default function CreditPageWithAuth() {
     );
 }
 
+    
     

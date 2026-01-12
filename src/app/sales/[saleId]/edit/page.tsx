@@ -446,7 +446,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
                 <CardContent className="p-6 space-y-4">
                     <div className="flex justify-between items-center font-semibold">
                         <span>Subtotal</span>
-                        <span>₹{Math.round(subtotalAllSheets).toLocaleString('en-IN')}</span>
+                        <span>₹{subtotalAllSheets.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">
@@ -472,7 +472,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
-                        <span>₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
+                        <span>₹{grandTotal.toFixed(2)}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -492,3 +492,5 @@ export default function EditSalePageWithAuth({ params }: { params: { saleId: str
         </AuthGuard>
     );
 }
+
+    

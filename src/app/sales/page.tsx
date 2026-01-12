@@ -176,7 +176,7 @@ function SalesPage() {
                         if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
                         if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
                         if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
-                        if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
+                        if (columns.grandTotal) rowData.push(sale.grandTotal.toFixed(2));
                     } else {
                         // For subsequent rows of the same sale, leave these columns blank
                         const emptyColsNeeded = [columns.labour, columns.transport, columns.discount, columns.grandTotal].filter(Boolean).length;
@@ -198,7 +198,7 @@ function SalesPage() {
                  if (columns.labour) rowData.push(sale.labourCharges.toFixed(2));
                  if (columns.transport) rowData.push(sale.transportCharges.toFixed(2));
                  if (columns.discount) rowData.push((sale.discount || 0).toFixed(2));
-                 if (columns.grandTotal) rowData.push(Math.round(sale.grandTotal).toLocaleString('en-IN'));
+                 if (columns.grandTotal) rowData.push(sale.grandTotal.toFixed(2));
                  tableRows.push(rowData);
             }
 
@@ -223,7 +223,7 @@ function SalesPage() {
         if (columns.labour) totalRow.push({ content: totalLabour.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.transport) totalRow.push({ content: totalTransport.toFixed(2), styles: { fontStyle: 'bold' } });
         if (columns.discount) totalRow.push({ content: totalDiscount.toFixed(2), styles: { fontStyle: 'bold' } });
-        if (columns.grandTotal) totalRow.push({ content: Math.round(totalGrandTotal).toLocaleString('en-IN'), styles: { fontStyle: 'bold' } });
+        if (columns.grandTotal) totalRow.push({ content: totalGrandTotal.toFixed(2), styles: { fontStyle: 'bold' } });
 
         if(totalRow.some(c => c.content !== undefined && c.content !== '')){
              tableRows.push(totalRow);
@@ -390,7 +390,7 @@ function SalesPage() {
                                             <div className="flex items-center justify-end gap-2">
                                                 {sale.paymentType === 'credit' && (
                                                     <Badge variant={sale.balance > 0 ? 'destructive' : 'secondary'}>
-                                                        {sale.balance > 0 ? `DUE: ₹${Math.round(sale.balance).toLocaleString('en-IN')}` : 'PAID'}
+                                                        {sale.balance > 0 ? `DUE: ₹${sale.balance.toFixed(2)}` : 'PAID'}
                                                     </Badge>
                                                 )}
                                                  {sale.paymentType === 'cash' && (
@@ -398,7 +398,7 @@ function SalesPage() {
                                                 )}
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Grand Total</p>
-                                                    <p className="text-2xl font-bold">₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}</p>
+                                                    <p className="text-2xl font-bold">₹{sale.grandTotal.toFixed(2)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -456,4 +456,5 @@ export default function SalesPageWithAuth() {
     );
 }
 
+    
     

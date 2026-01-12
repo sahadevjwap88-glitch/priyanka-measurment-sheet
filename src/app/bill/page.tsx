@@ -327,7 +327,7 @@ function BillPage() {
       summaryRows.push(['Discount', `- Rs. ${discount.toFixed(2)}`]);
     }
 
-    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${Math.round(grandTotal).toLocaleString('en-IN')}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
+    summaryRows.push([{ content: 'Grand Total', styles: { fontStyle: 'bold', fontSize: 14 } }, { content: `Rs. ${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', fontSize: 14 } }]);
     
     doc.autoTable({
         body: summaryRows,
@@ -569,7 +569,7 @@ function BillPage() {
                 <CardContent className="p-6 space-y-4">
                     <div className="flex justify-between items-center font-semibold">
                         <span>Subtotal</span>
-                        <span>₹{Math.round(subtotalAllSheets).toLocaleString('en-IN')}</span>
+                        <span>₹{subtotalAllSheets.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">
@@ -595,7 +595,7 @@ function BillPage() {
                     <Separator />
                      <div className="flex justify-between items-center text-xl font-bold p-4 bg-primary/10 rounded-lg">
                         <span>Grand Total</span>
-                        <span>₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
+                        <span>₹{grandTotal.toFixed(2)}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -619,3 +619,5 @@ export default function BillPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
