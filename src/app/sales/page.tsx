@@ -26,6 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 
 interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -386,8 +387,20 @@ function SalesPage() {
                                             </CardDescription>
                                         </div>
                                          <div className="text-right">
-                                            <p className="text-sm text-muted-foreground">Grand Total</p>
-                                            <p className="text-2xl font-bold">₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}</p>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {sale.paymentType === 'credit' && (
+                                                    <Badge variant={sale.balance > 0 ? 'destructive' : 'secondary'}>
+                                                        {sale.balance > 0 ? `DUE: ₹${Math.round(sale.balance).toLocaleString('en-IN')}` : 'PAID'}
+                                                    </Badge>
+                                                )}
+                                                 {sale.paymentType === 'cash' && (
+                                                    <Badge variant="secondary">CASH</Badge>
+                                                )}
+                                                <div>
+                                                    <p className="text-sm text-muted-foreground">Grand Total</p>
+                                                    <p className="text-2xl font-bold">₹{Math.round(sale.grandTotal).toLocaleString('en-IN')}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -442,3 +455,5 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
+
+    
