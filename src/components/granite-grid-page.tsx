@@ -369,15 +369,7 @@ export default function GraniteGridPage() {
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-             <div className="flex items-center justify-start gap-2 mt-2">
-                <Link href="/bill" passHref className="flex-1">
-                    <Button variant="default" className="w-full h-10 px-1">
-                        <Eye className="mr-2" />
-                        Bill
-                    </Button>
-                </Link>
-            </div>
-            <div className="flex items-center justify-start gap-2">
+            <div className="flex items-center justify-start gap-2 mt-2">
                 <Link href="/sales" passHref className="flex-1">
                     <Button variant="default" className="w-full h-10 px-1">
                         <BookCopy className="mr-2" />
@@ -394,6 +386,14 @@ export default function GraniteGridPage() {
                     <Button variant="default" className="w-full h-10 px-1">
                         <CreditCard className="mr-2" />
                         Credit
+                    </Button>
+                </Link>
+            </div>
+            <div className="flex items-center justify-start gap-2 mt-2">
+                <Link href="/bill" passHref className="flex-1">
+                    <Button variant="default" className="w-full h-10 px-1">
+                        <Eye className="mr-2" />
+                        Bill
                     </Button>
                 </Link>
             </div>
