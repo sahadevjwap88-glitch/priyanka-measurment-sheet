@@ -58,6 +58,12 @@ function CreditPage() {
     const [editingPayment, setEditingPayment] = useState<any | null>(null);
     const [editingPaymentAmount, setEditingPaymentAmount] = useState<string>('');
 
+    useEffect(() => {
+        if (selectedSaleForPayment) {
+            setPaymentAmount(selectedSaleForPayment.balance?.toString() || '');
+        }
+    }, [selectedSaleForPayment]);
+
 
     const salesQuery = useMemoFirebase(() => {
         if (!user) return null;
