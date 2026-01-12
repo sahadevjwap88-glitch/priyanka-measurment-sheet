@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -71,15 +72,6 @@
         "activeSheetId": {
             "type": "string",
             "description": "The ID of the currently active sheet."
-        },
-        "plan": {
-            "type": "string",
-            "description": "The user's current subscription plan."
-        },
-        "planExpiryDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The date when the user's premium plan expires."
         }
       },
       "required": ["id", "email", "displayName", "createdAt"]
@@ -207,6 +199,27 @@
         }
       },
       "required": ["id", "productId", "quantity", "unitPrice"]
+    },
+    "Sale": {
+        "title": "Sale",
+        "type": "object",
+        "description": "Represents a single sale transaction.",
+        "properties": {
+            "id": { "type": "string" },
+            "partyName": { "type": "string" },
+            "partyPhoneNumber": { "type": "string" },
+            "labourCharges": { "type": "number" },
+            "transportCharges": { "type": "number" },
+            "discount": { "type": "number" },
+            "sheets": { "type": "array", "items": { "type": "object" } },
+            "subtotal": { "type": "number" },
+            "grandTotal": { "type": "number" },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "paymentType": { "type": "string", "enum": ["cash", "credit"] },
+            "amountPaid": { "type": "number" },
+            "balance": { "type": "number" },
+            "payments": { "type": "array", "items": { "type": "object" } }
+        }
     }
   },
   "auth": {
@@ -266,6 +279,16 @@
             "$ref": "#/backend/entities/OrderItem"
           },
           "description": "A subcollection under an order document listing the specific products in that order."
+        }
+      },
+      {
+        "path": "/users/{userId}/sales/{saleId}",
+        "definition": {
+          "entityName": "Sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "A subcollection under a user document storing their sales history."
         }
       }
     ]

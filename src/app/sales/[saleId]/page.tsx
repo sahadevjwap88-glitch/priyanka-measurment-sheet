@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Edit, Trash2, Zap } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth-guard';
 import jsPDF from 'jspdf';
@@ -40,9 +39,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
     const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
-    const [plan, setPlan] = useState('free');
-    const [isPlanLoading, setIsPlanLoading] = useState(true);
-
+    
     const saleDocRef = useMemoFirebase(() => {
         if (!user || !saleId) return null;
         return doc(firestore, 'users', user.uid, 'sales', saleId);
@@ -51,7 +48,6 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
     const { data: sale, isLoading } = useDoc(saleDocRef);
 
     useEffect(() => {
-        setIsPlanLoading(true);
         if (user && firestore) {
           const userDocRef = doc(firestore, 'users', user.uid);
           getDoc(userDocRef).then((docSnap) => {
@@ -61,12 +57,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
               setContactName(data.displayName || '');
               setPhoneNumber(data.phoneNumber || '');
               setAddress(data.address || '');
-              setPlan(data.plan || 'free');
             }
-          }).finally(() => setIsPlanLoading(false));
-        } else {
-            setPlan('free');
-            setIsPlanLoading(false);
+          });
         }
     }, [user, firestore]);
     
@@ -181,35 +173,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
     }
 
 
-    if (isLoading || isPlanLoading) return <p className="text-center p-8">Loading sale details...</p>;
-    
-    if (plan === 'free') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-                <Card className="max-w-lg p-8">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
-                        <CardDescription>
-                            This feature is only available for premium users. Please upgrade your plan to view your sales details.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Link href="/pricing" passHref>
-                            <Button size="lg">
-                                <Zap className="mr-2 h-5 w-5" />
-                                Upgrade Now
-                            </Button>
-                        </Link>
-                         <Link href="/" passHref>
-                            <Button variant="link" className="mt-4">
-                                Go Back Home
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    if (isLoading) return <p className="text-center p-8">Loading sale details...</p>;
     
     if (!sale) return <p className="text-center p-8">Sale not found.</p>;
 
@@ -359,6 +323,3 @@ export default function SaleDetailPageWithAuth({ params: { saleId } }: { params:
         </AuthGuard>
     );
 }
-
-    
-

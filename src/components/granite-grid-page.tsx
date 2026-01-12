@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, Zap } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { toast } from '@/hooks/use-toast';
 
 
 const measurementSchema = z.object({
@@ -82,7 +81,6 @@ export default function GraniteGridPage() {
   const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
-  const [plan, setPlan] = useState('free');
   
   // Settings state
   const [businessName, setBusinessName] = useState('');
@@ -133,7 +131,6 @@ export default function GraniteGridPage() {
     // Load from local storage first.
     loadFromLocalStorage();
 
-    // Check plan status regardless of where data was loaded from
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -143,21 +140,6 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
-
-          let currentPlan = data.plan || 'free';
-          if (currentPlan === 'premium' && data.planExpiryDate) {
-            const expiryDate = data.planExpiryDate.toDate();
-            if (expiryDate < new Date()) {
-              currentPlan = 'free';
-              setDoc(userDocRef, { plan: 'free' }, { merge: true });
-              toast({
-                title: "Plan Expired",
-                description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
-                variant: "destructive"
-              });
-            }
-          }
-          setPlan(currentPlan);
 
           // If no local data was loaded, try loading from Firestore
           if (!isDataLoaded && data.sheets && data.sheets.length > 0) {
@@ -179,8 +161,6 @@ export default function GraniteGridPage() {
         }
       });
     } else {
-      // Not logged in, set plan to free
-      setPlan('free');
       if (!isDataLoaded) {
         handleClearAll(false);
       }
@@ -324,20 +304,8 @@ export default function GraniteGridPage() {
   };
   
   const addSheet = () => {
-    if (plan === 'free') {
-      toast({
-          title: "Upgrade Required",
-          description: "Please upgrade to a premium plan to add more sheets.",
-          variant: "destructive"
-      });
-      return;
-    }
     if (fields.length >= MAX_SHEETS) {
-      toast({
-          title: "Sheet Limit Reached",
-          description: `You can only add up to ${MAX_SHEETS} sheets on the premium plan.`,
-          variant: "destructive"
-      });
+      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
       return;
     }
     const newSheetId = Date.now().toString();
@@ -352,11 +320,7 @@ export default function GraniteGridPage() {
     const currentMeasurements = activeSheet.measurements || [];
     
     if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
-      toast({
-          variant: 'destructive',
-          title: 'Row Limit Exceeded',
-          description: `You can only have up to ${MAX_ROWS} rows in total.`
-      });
+      alert(`You can only have up to ${MAX_ROWS} rows in total.`);
       return;
     }
     
@@ -381,7 +345,7 @@ export default function GraniteGridPage() {
                     Download
                 </Button>
                 <Link href="/bill" passHref className="flex-1">
-                    <Button variant="default" disabled={plan === 'free'} className="w-full h-10 px-1">
+                    <Button variant="default" className="w-full h-10 px-1">
                         <Eye className="mr-2" />
                         Bill
                     </Button>
@@ -409,7 +373,7 @@ export default function GraniteGridPage() {
             </div>
             <div className="flex items-center justify-start gap-2">
                 <Link href="/sales" passHref className="flex-1">
-                    <Button variant="default" disabled={plan === 'free'} className="w-full h-10 px-1">
+                    <Button variant="default" className="w-full h-10 px-1">
                         <BookCopy className="mr-2" />
                         All Sales
                     </Button>
@@ -420,28 +384,26 @@ export default function GraniteGridPage() {
                         Settings
                     </Button>
                 </Link>
-                <Button variant="default" onClick={addSheet} disabled={plan === 'free' || fields.length >= MAX_SHEETS} className="flex-1 h-10 px-1">
+                <Link href="/credit" passHref className="flex-1">
+                    <Button variant="default" className="w-full h-10 px-1">
+                        <CreditCard className="mr-2" />
+                        Credit
+                    </Button>
+                </Link>
+            </div>
+            <div className="flex items-center justify-start gap-2 mt-2">
+               <Button variant="default" onClick={addSheet} className="w-full h-10 px-1">
                     <Plus className="mr-2" />
                     Add Color
                 </Button>
             </div>
-             {plan === 'free' && (
-                <div className="pt-2">
-                    <Link href="/pricing" passHref>
-                        <Button size="lg" className="w-full">
-                            <Zap className="mr-2 h-5 w-5" />
-                            Upgrade to Pro
-                        </Button>
-                    </Link>
-                </div>
-             )}
           </div>
 
           {fields.length > 0 && (
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")} disabled={plan === 'free' && sheet.name !== 'Sheet 1'}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
@@ -522,7 +484,3 @@ export default function GraniteGridPage() {
     </div>
   );
 }
-
-    
-
-    

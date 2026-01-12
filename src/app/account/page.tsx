@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogOut, ArrowLeft, Save, Zap } from 'lucide-react';
+import { LogOut, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
@@ -34,8 +34,6 @@ function AccountPage() {
     const [businessName, setBusinessName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
-    const [plan, setPlan] = useState('free');
-    const [planExpiryDate, setPlanExpiryDate] = useState<Date | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
@@ -53,8 +51,6 @@ function AccountPage() {
                 setBusinessName(parsedData.businessName || '');
                 setPhoneNumber(parsedData.phoneNumber || '');
                 setAddress(parsedData.address || '');
-                setPlan(parsedData.plan || 'free');
-                setPlanExpiryDate(parsedData.planExpiryDate ? new Date(parsedData.planExpiryDate) : null);
             } catch (e) {
                 console.error("Failed to parse local storage data on account page", e);
             }
@@ -76,17 +72,6 @@ function AccountPage() {
                         setBusinessName(data.businessName || '');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
-
-                        let currentPlan = data.plan || 'free';
-                         if (currentPlan === 'premium' && data.planExpiryDate) {
-                            const expiryDate = data.planExpiryDate.toDate();
-                            if (expiryDate < new Date()) {
-                                currentPlan = 'free';
-                                setDoc(userDocRef, { plan: 'free' }, { merge: true });
-                            }
-                        }
-                        setPlan(currentPlan);
-                        setPlanExpiryDate(data.planExpiryDate?.toDate() || null);
                     }
                 })
                 .catch((error) => {
@@ -101,9 +86,6 @@ function AccountPage() {
                     setIsLoading(false);
                 });
         } else {
-            // If not logged in, ensure plan is set to 'free' from local storage or default
-             const localData = savedData ? JSON.parse(savedData) : {};
-             setPlan(localData.plan || 'free');
             setIsLoading(false);
         }
     }, [user, firestore]);
@@ -114,15 +96,6 @@ function AccountPage() {
                 variant: 'destructive',
                 title: 'Not Logged In',
                 description: 'You must be logged in to save settings to the cloud.'
-            });
-            return;
-        }
-
-        if (plan === 'free') {
-            toast({
-                variant: 'destructive',
-                title: 'Upgrade Required',
-                description: 'You need to upgrade to a premium plan to change settings.'
             });
             return;
         }
@@ -196,35 +169,6 @@ function AccountPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Current Plan</CardTitle>
-                </CardHeader>
-                <CardContent className='flex justify-between items-center'>
-                    <div>
-                        <p className="font-bold capitalize">{plan} Plan</p>
-                        {plan === 'premium' && planExpiryDate && (
-                            <p className="text-sm text-muted-foreground">
-                                Expires on: {planExpiryDate.toLocaleDateString()}
-                            </p>
-                        )}
-                         {plan === 'premium' && !planExpiryDate && (
-                            <p className="text-sm text-muted-foreground">
-                                No expiry date set.
-                            </p>
-                        )}
-                    </div>
-                    {plan === 'free' && (
-                        <Link href="/pricing" passHref>
-                            <Button>
-                                <Zap className="mr-2 h-4 w-4" />
-                                Upgrade
-                            </Button>
-                        </Link>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
                     <CardTitle>Profile</CardTitle>
                     <CardDescription>This is your account information.</CardDescription>
                 </CardHeader>
@@ -249,7 +193,7 @@ function AccountPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Application Settings</CardTitle>
-                    <CardDescription>Customize bill generation. Upgrade to Premium to unlock.</CardDescription>
+                    <CardDescription>Customize how your bills are generated.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-4">
@@ -262,7 +206,7 @@ function AccountPage() {
                                 value={businessName}
                                 onChange={(e) => setBusinessName(e.target.value)}
                                 placeholder="e.g., Priyanka Granite"
-                                disabled={plan === 'free'}
+                                disabled={!user}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -273,7 +217,7 @@ function AccountPage() {
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 placeholder="Enter phone number"
-                                disabled={plan === 'free'}
+                                disabled={!user}
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
@@ -283,7 +227,7 @@ function AccountPage() {
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Enter business address"
-                                disabled={plan === 'free'}
+                                disabled={!user}
                                 />
                             </div>
                         </div>
@@ -304,7 +248,7 @@ function AccountPage() {
                                 id="show-labour"
                                 checked={showLabourCharges}
                                 onCheckedChange={setShowLabourCharges}
-                                disabled={plan === 'free'}
+                                disabled={!user}
                             />
                         </div>
                         <div className="flex items-center justify-between">
@@ -318,7 +262,7 @@ function AccountPage() {
                                 id="show-transport"
                                 checked={showTransportCharges}
                                 onCheckedChange={setShowTransportCharges}
-                                disabled={plan === 'free'}
+                                disabled={!user}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -330,7 +274,7 @@ function AccountPage() {
                                 value={labourRate}
                                 onChange={(e) => setLabourRate(Number(e.target.value))}
                                 placeholder="e.g., 3"
-                                disabled={plan === 'free'}
+                                disabled={!user}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -341,14 +285,14 @@ function AccountPage() {
                                 value={minLabourCharges}
                                 onChange={(e) => setMinLabourCharges(Number(e.target.value))}
                                 placeholder="e.g., 200"
-                                disabled={plan === 'free'}
+                                disabled={!user}
                                 />
                             </div>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button onClick={handleProfileUpdate} disabled={!user || plan === 'free'}>
+                    <Button onClick={handleProfileUpdate} disabled={!user}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Changes
                     </Button>
@@ -380,5 +324,3 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    

@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Zap, Contact } from 'lucide-react';
+import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Contact, CreditCard, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Combobox } from '@/components/ui/combobox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
@@ -52,6 +53,7 @@ const formSchema = z.object({
   discount: z.string().optional(),
   sheets: z.array(sheetSchema).optional(),
   createdAt: z.date().optional(),
+  paymentType: z.enum(['cash', 'credit']).default('cash'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,8 +62,6 @@ type Sheet = z.infer<typeof sheetSchema>;
 function BillPage() {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(false);
-  const [plan, setPlan] = useState('free');
-  const [isPlanLoading, setIsPlanLoading] = useState(true);
   const [pastCustomers, setPastCustomers] = useState<{ label: string, value: string, phone: string }[]>([]);
   
   // Settings state
@@ -115,6 +115,7 @@ function BillPage() {
       discount: '',
       sheets: [],
       createdAt: new Date(),
+      paymentType: 'cash'
     },
     mode: 'onBlur',
   });
@@ -131,7 +132,8 @@ function BillPage() {
         if (parsedData) {
             const dataWithDate = {
                 ...parsedData,
-                createdAt: parsedData.createdAt ? new Date(parsedData.createdAt) : new Date()
+                createdAt: parsedData.createdAt ? new Date(parsedData.createdAt) : new Date(),
+                paymentType: parsedData.paymentType || 'cash',
             };
           form.reset(dataWithDate);
 
@@ -152,7 +154,6 @@ function BillPage() {
   }, [form]);
 
    useEffect(() => {
-    setIsPlanLoading(true);
     // If user is logged in, fetch from Firestore to overwrite local settings and get plan
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
@@ -167,13 +168,8 @@ function BillPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
-          setPlan(data.plan || 'free');
         }
-      }).finally(() => setIsPlanLoading(false));
-    } else {
-        // Not logged in, default to free
-        setPlan('free');
-        setIsPlanLoading(false);
+      });
     }
   }, [user, firestore]);
   
@@ -239,7 +235,11 @@ function BillPage() {
       })) || [],
       subtotal: subtotalAllSheets,
       grandTotal: grandTotal,
-      createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : Timestamp.now()
+      createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : Timestamp.now(),
+      paymentType: watchedData.paymentType,
+      amountPaid: watchedData.paymentType === 'cash' ? grandTotal : 0,
+      balance: watchedData.paymentType === 'credit' ? grandTotal : 0,
+      payments: [],
     };
     
     try {
@@ -388,38 +388,10 @@ function BillPage() {
     }
   };
 
-  if (!isClient || isPlanLoading) {
+  if (!isClient) {
     return <div className="p-8 text-center">Loading...</div>;
   }
   
-  if (plan === 'free') {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-            <Card className="max-w-lg p-8">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
-                    <CardDescription>
-                        This feature is only available for premium users. Please upgrade your plan to generate and save bills.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Link href="/pricing" passHref>
-                        <Button size="lg">
-                            <Zap className="mr-2 h-5 w-5" />
-                            Upgrade Now
-                        </Button>
-                    </Link>
-                     <Link href="/" passHref>
-                        <Button variant="link" className="mt-4">
-                            Go Back Home
-                        </Button>
-                    </Link>
-                </CardContent>
-            </Card>
-        </div>
-    );
-  }
-
   if (!watchedData) {
     return (
         <div className="flex items-center justify-center min-h-screen">
@@ -511,6 +483,24 @@ function BillPage() {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
                     <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+                </div>
+                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label>Payment Type</Label>
+                     <RadioGroup
+                        defaultValue="cash"
+                        value={watchedData.paymentType}
+                        onValueChange={(value) => form.setValue('paymentType', value as 'cash' | 'credit')}
+                        className="flex items-center space-x-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="cash" id="cash" />
+                            <Label htmlFor="cash" className="flex items-center gap-2"><DollarSign/> Cash</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="credit" id="credit" />
+                            <Label htmlFor="credit" className="flex items-center gap-2"><CreditCard/> Credit</Label>
+                        </div>
+                    </RadioGroup>
                 </div>
                 {showLabourCharges && (
                   <div className="grid grid-cols-[1fr,2fr] items-center gap-4">

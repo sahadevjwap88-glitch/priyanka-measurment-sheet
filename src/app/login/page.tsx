@@ -47,7 +47,7 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-function updateUserDocument(firestore: Firestore, user: User, onPlanUpdate: (plan: string) => void) {
+function updateUserDocument(firestore: Firestore, user: User) {
     const userRef = doc(firestore, 'users', user.uid);
     
     getDoc(userRef).then(userDoc => {
@@ -60,10 +60,7 @@ function updateUserDocument(firestore: Firestore, user: User, onPlanUpdate: (pla
                 photoUrl: user.photoURL || '',
                 address: '',
                 isAdmin: false,
-                plan: "free",
-                planExpiryDate: null,
             };
-            onPlanUpdate('free');
             setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
                 const permissionError = new FirestorePermissionError({
                     path: userRef.path,
@@ -72,45 +69,6 @@ function updateUserDocument(firestore: Firestore, user: User, onPlanUpdate: (pla
                 });
                 errorEmitter.emit('permission-error', permissionError);
             });
-        } else {
-            const data = userDoc.data();
-            const updates: any = {};
-            let currentPlan = data.plan || 'free';
-            
-            // Auto-downgrade expired premium plans
-            if (currentPlan === 'premium' && data.planExpiryDate) {
-                const expiryDate = data.planExpiryDate.toDate();
-                if (expiryDate < new Date()) {
-                    updates.plan = 'free';
-                    currentPlan = 'free';
-                    toast({
-                        title: "Plan Expired",
-                        description: "Your Premium plan has expired. You have been downgraded to the Free plan.",
-                        variant: "destructive"
-                    });
-                }
-            }
-            
-            if (!data.plan && !updates.plan) {
-                updates.plan = "free";
-                currentPlan = 'free';
-            }
-            if (data.planExpiryDate === undefined) {
-                updates.planExpiryDate = null;
-            }
-
-            onPlanUpdate(currentPlan);
-
-            if (Object.keys(updates).length > 0) {
-                 setDoc(userRef, updates, { merge: true }).catch(async (serverError) => {
-                    const permissionError = new FirestorePermissionError({
-                        path: userRef.path,
-                        operation: 'update',
-                        requestResourceData: updates,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
-            }
         }
     }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -130,7 +88,6 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
-  const [plan, setPlan] = useState('free');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -144,7 +101,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user && pathname !== '/') {
-      updateUserDocument(firestore, user, setPlan);
+      updateUserDocument(firestore, user);
       router.push('/');
     }
   }, [user, isUserLoading, router, firestore, pathname]);
@@ -387,6 +344,3 @@ export default function LoginPage() {
     </Dialog>
   );
 }
-
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -47,8 +48,6 @@ function createUserDocument(firestore: Firestore, user: User) {
       photoUrl: user.photoURL || '',
       address: '',
       isAdmin: false,
-      plan: 'free',
-      planExpiryDate: null,
     };
     
     setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {

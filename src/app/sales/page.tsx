@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Zap, Search, X } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -45,8 +45,6 @@ function SalesPage() {
     const [activeStartDate, setActiveStartDate] = useState<Date | undefined>();
     const [activeEndDate, setActiveEndDate] = useState<Date | undefined>();
 
-    const [plan, setPlan] = useState('free');
-    const [isPlanLoading, setIsPlanLoading] = useState(true);
     const [columns, setColumns] = useState({
         date: true,
         partyName: true,
@@ -70,21 +68,6 @@ function SalesPage() {
     
 
     const { data: sales, isLoading } = useCollection(salesQuery);
-
-    useEffect(() => {
-        setIsPlanLoading(true);
-        if (user && firestore) {
-            const userDocRef = doc(firestore, 'users', user.uid);
-            getDoc(userDocRef).then(docSnap => {
-                if (docSnap.exists()) {
-                    setPlan(docSnap.data().plan || 'free');
-                }
-            }).finally(() => setIsPlanLoading(false));
-        } else {
-            setPlan('free');
-            setIsPlanLoading(false);
-        }
-    }, [user, firestore]);
 
     const handleSearch = () => {
         setActiveStartDate(tempStartDate);
@@ -263,36 +246,8 @@ function SalesPage() {
         doc.save(`sales_report_${timestamp}.pdf`);
     };
 
-    if (isLoading || isPlanLoading) {
+    if (isLoading) {
         return <div className="p-8 text-center">Loading...</div>;
-    }
-
-    if (plan === 'free') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-                <Card className="max-w-lg p-8">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
-                        <CardDescription>
-                            This feature is only available for premium users. Please upgrade your plan to view your sales history.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Link href="/pricing" passHref>
-                            <Button size="lg">
-                                <Zap className="mr-2 h-5 w-5" />
-                                Upgrade Now
-                            </Button>
-                        </Link>
-                         <Link href="/" passHref>
-                            <Button variant="link" className="mt-4">
-                                Go Back Home
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-            </div>
-        );
     }
 
     return (
@@ -487,5 +442,3 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    

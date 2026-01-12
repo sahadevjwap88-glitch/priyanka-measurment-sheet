@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, Calendar as CalendarIcon, Plus, Zap } from 'lucide-react';
+import { ArrowLeft, Save, Calendar as CalendarIcon, Plus, CreditCard, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +24,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const measurementSchema = z.object({
@@ -48,6 +48,7 @@ const formSchema = z.object({
   discount: z.string().optional(),
   sheets: z.array(sheetSchema),
   createdAt: z.date().optional(),
+  paymentType: z.enum(['cash', 'credit']).default('cash'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,8 +60,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
   const [isClient, setIsClient] = useState(false);
   const [labourManuallyEdited, setLabourManuallyEdited] = useState(true); // Default to true on edit
   const [rowsToAdd, setRowsToAdd] = useState<number | string>(1);
-  const [plan, setPlan] = useState('free');
-  const [isPlanLoading, setIsPlanLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('');
   
   // Settings state
@@ -90,6 +89,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
       discount: '',
       sheets: [],
       createdAt: new Date(),
+      paymentType: 'cash',
     },
     mode: 'onBlur',
   });
@@ -110,7 +110,6 @@ function EditSalePage({ saleId }: { saleId: string }) {
   }, []);
 
   useEffect(() => {
-    setIsPlanLoading(true);
     if (user && firestore) {
       const userDocRef = doc(firestore, 'users', user.uid);
       getDoc(userDocRef).then((docSnap) => {
@@ -120,12 +119,8 @@ function EditSalePage({ saleId }: { saleId: string }) {
           setShowTransportCharges(data.showTransportCharges ?? true);
           setLabourRate(data.labourRate ?? 3);
           setMinLabourCharges(data.minLabourCharges ?? 200);
-          setPlan(data.plan || 'free');
         }
-      }).finally(() => setIsPlanLoading(false));
-    } else {
-        setPlan('free');
-        setIsPlanLoading(false);
+      });
     }
   }, [user, firestore]);
 
@@ -148,6 +143,7 @@ function EditSalePage({ saleId }: { saleId: string }) {
         discount: saleData.discount?.toString(),
         sheets: sheets,
         createdAt: saleData.createdAt?.toDate(),
+        paymentType: saleData.paymentType || 'cash',
       });
       if (sheets.length > 0) {
         setActiveTab(sheets[0].id);
@@ -189,9 +185,12 @@ function EditSalePage({ saleId }: { saleId: string }) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update the bill.' });
       return;
     }
+    
+    const amountPaid = watchedData.paymentType === 'cash' ? grandTotal : (saleData.amountPaid || 0);
+    const balance = grandTotal - amountPaid;
 
     const updatedBillData = {
-      ...saleData, // Keep original data like id
+      ...saleData,
       partyName: watchedData.partyName || '',
       partyPhoneNumber: watchedData.partyPhoneNumber || '',
       labourCharges: labourCharges,
@@ -208,6 +207,9 @@ function EditSalePage({ saleId }: { saleId: string }) {
       subtotal: subtotalAllSheets,
       grandTotal: grandTotal,
       createdAt: watchedData.createdAt ? Timestamp.fromDate(watchedData.createdAt) : saleData.createdAt,
+      paymentType: watchedData.paymentType,
+      amountPaid: amountPaid,
+      balance: balance,
     };
     
     try {
@@ -241,36 +243,8 @@ function EditSalePage({ saleId }: { saleId: string }) {
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
   
-  if (isSaleLoading || isPlanLoading) {
+  if (isSaleLoading) {
     return <div className="text-center p-8">Loading...</div>
-  }
-
-  if (plan === 'free') {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-            <Card className="max-w-lg p-8">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Upgrade to Premium</CardTitle>
-                    <CardDescription>
-                        This feature is only available for premium users. Please upgrade your plan to edit sales records.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Link href="/pricing" passHref>
-                        <Button size="lg">
-                            <Zap className="mr-2 h-5 w-5" />
-                            Upgrade Now
-                        </Button>
-                    </Link>
-                     <Link href="/" passHref>
-                        <Button variant="link" className="mt-4">
-                            Go Back Home
-                        </Button>
-                    </Link>
-                </CardContent>
-            </Card>
-        </div>
-    );
   }
   
   if (!isClient) {
@@ -343,6 +317,23 @@ function EditSalePage({ saleId }: { saleId: string }) {
                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
                     <Label htmlFor="partyPhoneNumber">Party Phone Number</Label>
                     <Input id="partyPhoneNumber" type="tel" placeholder="Enter phone number" {...form.register('partyPhoneNumber')} />
+                </div>
+                 <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
+                    <Label>Payment Type</Label>
+                     <RadioGroup
+                        value={watchedData.paymentType}
+                        onValueChange={(value) => form.setValue('paymentType', value as 'cash' | 'credit')}
+                        className="flex items-center space-x-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="cash" id="cash" />
+                            <Label htmlFor="cash" className="flex items-center gap-2"><DollarSign/> Cash</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="credit" id="credit" />
+                            <Label htmlFor="credit" className="flex items-center gap-2"><CreditCard/> Credit</Label>
+                        </div>
+                    </RadioGroup>
                 </div>
                 {showLabourCharges && (
                   <div className="grid grid-cols-[1fr,2fr] items-center gap-4">
@@ -493,7 +484,8 @@ function EditSalePage({ saleId }: { saleId: string }) {
 }
 
 
-export default function EditSalePageWithAuth({ params: { saleId } }: { params: { saleId: string } }) {
+export default function EditSalePageWithAuth({ params }: { params: { saleId: string } }) {
+    const { saleId } = params;
     return (
         <AuthGuard>
             <EditSalePage saleId={saleId} />
