@@ -39,12 +39,8 @@ function SalesPage() {
     const router = useRouter();
     
     // State for date picker inputs
-    const [tempStartDate, setTempStartDate] = useState<Date | undefined>();
-    const [tempEndDate, setTempEndDate] = useState<Date | undefined>();
-
-    // State for active filter
-    const [activeStartDate, setActiveStartDate] = useState<Date | undefined>();
-    const [activeEndDate, setActiveEndDate] = useState<Date | undefined>();
+    const [startDate, setStartDate] = useState<Date | undefined>();
+    const [endDate, setEndDate] = useState<Date | undefined>();
 
     const [columns, setColumns] = useState({
         date: true,
@@ -70,16 +66,9 @@ function SalesPage() {
 
     const { data: sales, isLoading } = useCollection(salesQuery);
 
-    const handleSearch = () => {
-        setActiveStartDate(tempStartDate);
-        setActiveEndDate(tempEndDate);
-    };
-
     const handleClearFilter = () => {
-        setTempStartDate(undefined);
-        setTempEndDate(undefined);
-        setActiveStartDate(undefined);
-        setActiveEndDate(undefined);
+        setStartDate(undefined);
+        setEndDate(undefined);
     };
 
     const filteredSales = useMemo(() => {
@@ -89,14 +78,14 @@ function SalesPage() {
             if (!saleDate) return false;
 
             let start = null;
-            if (activeStartDate) {
-                start = new Date(activeStartDate);
+            if (startDate) {
+                start = new Date(startDate);
                 start.setHours(0, 0, 0, 0);
             }
 
             let end = null;
-            if (activeEndDate) {
-                end = new Date(activeEndDate);
+            if (endDate) {
+                end = new Date(endDate);
                 end.setHours(23, 59, 59, 999);
             }
 
@@ -105,7 +94,7 @@ function SalesPage() {
             
             return true;
         });
-    }, [sales, activeStartDate, activeEndDate]);
+    }, [sales, startDate, endDate]);
 
     const handleRowClick = (saleId: string) => {
         router.push(`/sales/${saleId}`);
@@ -131,7 +120,7 @@ function SalesPage() {
         doc.setFontSize(18);
         doc.text("Sales Report", 14, 22);
         doc.setFontSize(11);
-        doc.text(`Date Range: ${activeStartDate ? format(activeStartDate, 'PPP') : 'N/A'} - ${activeEndDate ? format(activeEndDate, 'PPP') : 'N/A'}`, 14, 30);
+        doc.text(`Date Range: ${startDate ? format(startDate, 'PPP') : 'N/A'} - ${endDate ? format(endDate, 'PPP') : 'N/A'}`, 14, 30);
         
         const tableColumn: string[] = [];
         if (columns.date) tableColumn.push("Date");
@@ -274,18 +263,18 @@ function SalesPage() {
                                     variant={"outline"}
                                     className={cn(
                                     "w-[240px] justify-start text-left font-normal",
-                                    !tempStartDate && "text-muted-foreground"
+                                    !startDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {tempStartDate ? format(tempStartDate, "PPP") : <span>Pick a start date</span>}
+                                    {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={tempStartDate}
-                                    onSelect={setTempStartDate}
+                                    selected={startDate}
+                                    onSelect={setStartDate}
                                     initialFocus
                                 />
                                 </PopoverContent>
@@ -299,33 +288,29 @@ function SalesPage() {
                                     variant={"outline"}
                                     className={cn(
                                     "w-[240px] justify-start text-left font-normal",
-                                    !tempEndDate && "text-muted-foreground"
+                                    !endDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {tempEndDate ? format(tempEndDate, "PPP") : <span>Pick an end date</span>}
+                                    {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={tempEndDate}
-                                    onSelect={setTempEndDate}
+                                    selected={endDate}
+                                    onSelect={setEndDate}
                                     initialFocus
                                 />
                                 </PopoverContent>
                             </Popover>
                         </div>
-                         <div className="flex gap-2">
-                             <Button onClick={handleSearch} size="sm">
-                                <Search className="mr-2 h-4 w-4" />
-                                Search
-                            </Button>
+                        {(startDate || endDate) && (
                             <Button onClick={handleClearFilter} size="sm" variant="ghost">
                                 <X className="mr-2 h-4 w-4" />
                                 Clear
                             </Button>
-                        </div>
+                        )}
                         <div className="flex gap-2 ml-auto">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -455,5 +440,3 @@ export default function SalesPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
