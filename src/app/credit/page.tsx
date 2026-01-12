@@ -333,7 +333,7 @@ function CreditPage() {
                             <Download className="mr-2 h-4 w-4" />
                             Export Report
                         </Button>
-                         <Button onClick={handleExportPaymentHistory} size="sm" variant="secondary">
+                         <Button onClick={handleExportPaymentHistory} size="sm" variant="default">
                             <Download className="mr-2 h-4 w-4" />
                             Export Payment History
                         </Button>
