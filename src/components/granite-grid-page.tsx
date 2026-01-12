@@ -344,12 +344,10 @@ export default function GraniteGridPage() {
                     <FileDown className="mr-2" />
                     Download
                 </Button>
-                <Link href="/bill" passHref className="flex-1">
-                    <Button variant="default" className="w-full h-10 px-1">
-                        <Eye className="mr-2" />
-                        Bill
-                    </Button>
-                </Link>
+                <Button variant="default" onClick={addSheet} className="flex-1 h-10 px-1">
+                    <Plus className="mr-2" />
+                    Add Color
+                </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" className="flex-1 h-10 px-1">
@@ -371,6 +369,14 @@ export default function GraniteGridPage() {
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
+             <div className="flex items-center justify-start gap-2 mt-2">
+                <Link href="/bill" passHref className="flex-1">
+                    <Button variant="default" className="w-full h-10 px-1">
+                        <Eye className="mr-2" />
+                        Bill
+                    </Button>
+                </Link>
+            </div>
             <div className="flex items-center justify-start gap-2">
                 <Link href="/sales" passHref className="flex-1">
                     <Button variant="default" className="w-full h-10 px-1">
@@ -390,12 +396,6 @@ export default function GraniteGridPage() {
                         Credit
                     </Button>
                 </Link>
-            </div>
-            <div className="flex items-center justify-start gap-2 mt-2">
-               <Button variant="default" onClick={addSheet} className="w-full h-10 px-1">
-                    <Plus className="mr-2" />
-                    Add Color
-                </Button>
             </div>
           </div>
 
