@@ -263,7 +263,7 @@ function CreditPage() {
         }
     };
 
-    const handleExportReport = () => {
+    const handleExportCreditReport = () => {
         const doc = new jsPDF() as jsPDFWithAutoTable;
         doc.setFontSize(18);
         doc.text("Credit Report", 14, 22);
@@ -280,30 +280,36 @@ function CreditPage() {
             startY: 35,
         });
 
-        // Payment History
-        if (paymentHistory.length > 0) {
-            doc.addPage();
-            doc.setFontSize(14);
-            doc.text("Full Payment History", 14, 22);
-            
-            tableRows = paymentHistory.map(p => [
-                p.partyName, 
-                `₹${p.amount.toFixed(2)}`, 
-                format(p.date.toDate(), 'dd/MM/yyyy'),
-                format(p.saleDate, 'dd/MM/yyyy'),
-            ]);
-
-            doc.autoTable({
-                head: [['Customer', 'Amount Paid', 'Payment Date', 'Original Sale Date']],
-                body: tableRows,
-                startY: 25,
-            });
-        }
-
-
         const date = new Date();
         const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
         doc.save(`credit_report_${timestamp}.pdf`);
+    };
+
+    const handleExportPaymentHistory = () => {
+        if (paymentHistory.length === 0) {
+            toast({variant: 'destructive', title: 'No History', description: 'There is no payment history to export.'});
+            return;
+        }
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        doc.setFontSize(18);
+        doc.text("Full Payment History", 14, 22);
+        
+        const tableRows = paymentHistory.map(p => [
+            p.partyName, 
+            `₹${p.amount.toFixed(2)}`, 
+            format(p.date.toDate(), 'dd/MM/yyyy'),
+            format(p.saleDate, 'dd/MM/yyyy'),
+        ]);
+
+        doc.autoTable({
+            head: [['Customer', 'Amount Paid', 'Payment Date', 'Original Sale Date']],
+            body: tableRows,
+            startY: 25,
+        });
+        
+        const date = new Date();
+        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+        doc.save(`payment_history_${timestamp}.pdf`);
     };
 
 
@@ -316,16 +322,20 @@ function CreditPage() {
             <div className="max-w-4xl mx-auto">
                 <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
                     <h1 className="text-3xl font-bold">Credit Summary</h1>
-                     <div className="flex gap-2">
+                     <div className="flex flex-wrap gap-2">
                         <Link href="/" passHref>
                             <Button variant="outline" size="sm">
                                 <ArrowLeft className="mr-2" />
                                 Back to Home
                             </Button>
                         </Link>
-                        <Button onClick={handleExportReport} size="sm">
+                        <Button onClick={handleExportCreditReport} size="sm">
                             <Download className="mr-2 h-4 w-4" />
                             Export Report
+                        </Button>
+                         <Button onClick={handleExportPaymentHistory} size="sm" variant="secondary">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export Payment History
                         </Button>
                     </div>
                 </header>
@@ -508,6 +518,3 @@ export default function CreditPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
-    
