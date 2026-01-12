@@ -57,6 +57,7 @@ function CreditPage() {
     
     const [editingPayment, setEditingPayment] = useState<any | null>(null);
     const [editingPaymentAmount, setEditingPaymentAmount] = useState<string>('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         if (selectedSaleForPayment) {
@@ -121,6 +122,13 @@ function CreditPage() {
         });
         return payments.sort((a, b) => b.date.toDate() - a.date.toDate());
     }, [allSalesWithPayments]);
+
+    const filteredPaymentHistory = useMemo(() => {
+        if (!paymentHistory) return [];
+        return paymentHistory.filter(p => 
+            p.partyName?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [paymentHistory, searchTerm]);
 
 
     const handleRecordPayment = async () => {
@@ -400,12 +408,20 @@ function CreditPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle>Full Payment History</CardTitle>
-                        <CardDescription>A log of all payments received across all sales.</CardDescription>
+                         <CardDescription>A log of all payments received across all sales.</CardDescription>
+                         <div className="pt-2">
+                             <Input
+                                placeholder="Search by customer name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="max-w-sm"
+                            />
+                         </div>
                     </CardHeader>
                     <CardContent>
                          {isLoadingPayments ? (
                             <p>Loading payment history...</p>
-                         ) : paymentHistory.length > 0 ? (
+                         ) : filteredPaymentHistory.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -417,7 +433,7 @@ function CreditPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {paymentHistory.map((payment, index) => (
+                                    {filteredPaymentHistory.map((payment, index) => (
                                         editingPayment && editingPayment.id === payment.id && editingPayment.saleId === payment.saleId ? (
                                             <TableRow key={`${payment.saleId}-${payment.id || index}`}>
                                                 <TableCell>{format(payment.date.toDate(), 'dd/MM/yyyy')}</TableCell>
@@ -518,5 +534,3 @@ export default function CreditPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
