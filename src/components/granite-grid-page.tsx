@@ -319,20 +319,11 @@ export default function GraniteGridPage() {
 
   const handleAuthRedirect = (path: string, isAddingSheet = false) => {
     if (!user) {
-        if (isAddingSheet && fields.length >= 1) {
-            toast({
-                title: "Login Required",
-                description: "Please log in to add more than one sheet.",
-                variant: "destructive"
-            });
-        } else {
-             toast({
-                title: "Login Required",
-                description: "Please log in to access this feature.",
-                variant: "destructive"
-            });
-        }
-        router.push('/login');
+        toast({
+            title: "Login Required",
+            description: "Please log in to access this feature.",
+            variant: "destructive"
+        });
     } else {
         if (isAddingSheet) {
             addSheet();
