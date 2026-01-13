@@ -278,7 +278,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+            <Button variant="secondary" className="w-full" onClick={handleGoogleSignIn}>
               Sign in with Google
             </Button>
 
