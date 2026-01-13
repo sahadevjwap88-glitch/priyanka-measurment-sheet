@@ -42,6 +42,16 @@ import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { doc, getDoc, setDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
 
+const GoogleIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" className="mr-2">
+      <path fill="#4285F4" d="M24 9.5c3.9 0 6.9 1.6 9 3.6l6.9-6.9C34.7 2.1 29.8 0 24 0 14.9 0 7.3 5.4 3 13.2l8.2 6.3C13.2 13.2 18.2 9.5 24 9.5z"/>
+      <path fill="#34A853" d="M46.9 24.5c0-1.6-.1-3.2-.4-4.7H24v9h12.9c-.6 3-2.3 5.5-4.9 7.2l7.8 6c4.6-4.2 7.2-10.3 7.2-17.5z"/>
+      <path fill="#FBBC05" d="M11.2 19.5c-1.2 3.6-1.2 7.7 0 11.3l-8.2 6.3C.1 32.4 0 28.3 0 24s.1-8.4 3-12.8L11.2 19.5z"/>
+      <path fill="#EA4335" d="M24 48c5.8 0 10.7-1.9 14.2-5.2l-7.8-6c-1.9 1.3-4.4 2.1-7.4 2.1-5.6 0-10.4-3.7-12.1-8.8L3 36.8C7.3 44.6 14.9 48 24 48z"/>
+      <path fill="none" d="M0 0h48v48H0z"/>
+    </svg>
+  );
+
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
@@ -279,6 +289,7 @@ export default function LoginPage() {
             </div>
 
             <Button variant="secondary" className="w-full" onClick={handleGoogleSignIn}>
+              <GoogleIcon />
               Sign in with Google
             </Button>
 
@@ -344,5 +355,7 @@ export default function LoginPage() {
     </Dialog>
   );
 }
+
+    
 
     
