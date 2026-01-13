@@ -332,7 +332,7 @@ function SalesPage() {
                         <div className="flex gap-2">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon">
+                                    <Button size="icon">
                                         <Settings className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -354,7 +354,7 @@ function SalesPage() {
                                     })}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button onClick={handleExportReport} size="icon" variant="outline">
+                            <Button onClick={handleExportReport} size="icon">
                                 <Download className="h-4 w-4" />
                             </Button>
                              {(startDate || endDate || searchTerm) && (
