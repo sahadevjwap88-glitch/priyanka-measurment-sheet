@@ -378,7 +378,7 @@ export default function GraniteGridPage() {
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" className="flex-1 h-10 px-1">
+                         <Button variant="destructive" className="flex-1 h-10 px-1" onClick={() => { if (!user) handleAuthRedirect('/login'); }}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear All
                         </Button>
@@ -425,7 +425,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground", !user && "pointer-events-none")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
