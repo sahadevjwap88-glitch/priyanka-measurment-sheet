@@ -221,6 +221,13 @@ export default function GraniteGridPage() {
     let isFirstPage = true;
     let hasData = false;
 
+    const formatNumber = (num: number) => {
+      if (num % 1 === 0) {
+        return num.toString();
+      }
+      return num.toFixed(2);
+    };
+
     allSheets.forEach(sheet => {
       const validData = getValidDataForSheet(sheet);
       if (validData.length === 0) return;
@@ -252,7 +259,7 @@ export default function GraniteGridPage() {
       
       doc.autoTable({
         head: [['S.No', 'Length (in)', 'Width (in)', 'Area (sq ft)']],
-        body: validData.map(m => [m.sno, m.length.toFixed(2), m.width.toFixed(2), m.area.toFixed(2)]),
+        body: validData.map(m => [m.sno, formatNumber(m.length), formatNumber(m.width), formatNumber(m.area)]),
         startY: 50,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -425,7 +432,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}  onClick={() => { if (!user && sheet.name !== 'Sheet 1') { handleAuthRedirect('/login'); form.setValue('activeSheetId', '1'); } }}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
