@@ -317,16 +317,28 @@ export default function GraniteGridPage() {
     }
   };
 
-  const handleAuthRedirect = (path: string) => {
+  const handleAuthRedirect = (path: string, isAddingSheet = false) => {
     if (!user) {
-        toast({
-            title: "Login Required",
-            description: "Please log in to access this feature.",
-            variant: "destructive"
-        });
+        if (isAddingSheet && fields.length >= 1) {
+            toast({
+                title: "Login Required",
+                description: "Please log in to add more than one sheet.",
+                variant: "destructive"
+            });
+        } else {
+             toast({
+                title: "Login Required",
+                description: "Please log in to access this feature.",
+                variant: "destructive"
+            });
+        }
         router.push('/login');
     } else {
-        router.push(path);
+        if (isAddingSheet) {
+            addSheet();
+        } else {
+            router.push(path);
+        }
     }
   };
   
@@ -379,13 +391,13 @@ export default function GraniteGridPage() {
                     <FileDown className="mr-2" />
                     Download
                 </Button>
-                <Button variant="default" onClick={() => { if (!user) handleAuthRedirect('/login'); else addSheet(); }} className="flex-1 h-10 px-1">
+                <Button variant="default" onClick={() => handleAuthRedirect('/login', true)} className="flex-1 h-10 px-1">
                     <Plus className="mr-2" />
                     Add Color
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" className="flex-1 h-10 px-1" onClick={() => { if (!user) handleAuthRedirect('/login'); }}>
+                         <Button variant="destructive" className="flex-1 h-10 px-1">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear All
                         </Button>
@@ -432,7 +444,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}  onClick={() => { if (!user && sheet.name !== 'Sheet 1') { handleAuthRedirect('/login'); form.setValue('activeSheetId', '1'); } }}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}  onClick={() => { if (!user && sheet.name !== 'Sheet 1') { handleAuthRedirect('/login', true); } }}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
