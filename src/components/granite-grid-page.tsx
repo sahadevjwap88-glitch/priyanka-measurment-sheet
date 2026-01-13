@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/use-toast';
 
 
 const measurementSchema = z.object({
@@ -81,6 +83,7 @@ export default function GraniteGridPage() {
   const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   
   // Settings state
   const [businessName, setBusinessName] = useState('');
@@ -280,7 +283,11 @@ export default function GraniteGridPage() {
       const filename = `sheets_${timestamp}.pdf`;
       doc.save(filename);
     } else {
-      alert("No measurement data to export.");
+        toast({
+            variant: "destructive",
+            title: "No Data",
+            description: "There is no measurement data to export.",
+        });
     }
   }, [generateSheetPdfDoc]);
 
@@ -302,10 +309,31 @@ export default function GraniteGridPage() {
         }, { merge: true });
     }
   };
+
+  const handleAuthRedirect = (path: string) => {
+    if (!user) {
+        toast({
+            title: "Login Required",
+            description: "Please log in to access this feature.",
+            variant: "destructive"
+        });
+        router.push('/login');
+    } else {
+        router.push(path);
+    }
+  };
   
   const addSheet = () => {
+    if (!user) {
+        handleAuthRedirect('/login');
+        return;
+    }
     if (fields.length >= MAX_SHEETS) {
-      alert(`You can only add up to ${MAX_SHEETS} sheets.`);
+      toast({
+          title: "Sheet Limit Reached",
+          description: `You can only add up to ${MAX_SHEETS} sheets.`,
+          variant: "destructive"
+      });
       return;
     }
     const newSheetId = Date.now().toString();
@@ -320,7 +348,11 @@ export default function GraniteGridPage() {
     const currentMeasurements = activeSheet.measurements || [];
     
     if (currentMeasurements.length + numRowsToAdd > MAX_ROWS) {
-      alert(`You can only have up to ${MAX_ROWS} rows in total.`);
+      toast({
+          variant: 'destructive',
+          title: 'Row Limit Exceeded',
+          description: `You can only have up to ${MAX_ROWS} rows in total.`
+      });
       return;
     }
     
@@ -350,7 +382,7 @@ export default function GraniteGridPage() {
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="flex-1 h-10 px-1">
+                         <Button variant="destructive" className="flex-1 h-10 px-1" onClick={(e) => { if (!user) { e.preventDefault(); handleAuthRedirect('/login'); }}}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear All
                         </Button>
@@ -370,32 +402,26 @@ export default function GraniteGridPage() {
                 </AlertDialog>
             </div>
             <div className="flex items-center justify-start gap-2 mt-2">
-                <Link href="/sales" passHref className="flex-1">
-                    <Button variant="default" className="w-full h-10 px-1">
-                        <BookCopy className="mr-2" />
-                        All Sales
-                    </Button>
-                </Link>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/sales')}>
+                    <BookCopy className="mr-2" />
+                    All Sales
+                </Button>
                 <Link href="/account" passHref className="flex-1">
                     <Button variant="default" className="w-full h-10 px-1">
                         <Settings className="mr-2" />
                         Settings
                     </Button>
                 </Link>
-                <Link href="/credit" passHref className="flex-1">
-                    <Button variant="default" className="w-full h-10 px-1">
-                        <CreditCard className="mr-2" />
-                        Credit
-                    </Button>
-                </Link>
+                <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/credit')}>
+                    <CreditCard className="mr-2" />
+                    Credit
+                </Button>
             </div>
             <div className="flex items-center justify-start gap-2 mt-2">
-                <Link href="/bill" passHref className="flex-1">
-                    <Button variant="default" className="w-full h-10 px-1">
-                        <Eye className="mr-2" />
-                        Bill
-                    </Button>
-                </Link>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/bill')}>
+                    <Eye className="mr-2" />
+                    Bill
+                </Button>
             </div>
           </div>
 
@@ -403,7 +429,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground", !user && "pointer-events-none")}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
