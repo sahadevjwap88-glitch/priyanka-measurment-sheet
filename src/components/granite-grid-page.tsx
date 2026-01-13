@@ -324,10 +324,6 @@ export default function GraniteGridPage() {
   };
   
   const addSheet = () => {
-    if (!user) {
-        handleAuthRedirect('/login');
-        return;
-    }
     if (fields.length >= MAX_SHEETS) {
       toast({
           title: "Sheet Limit Reached",
@@ -376,13 +372,13 @@ export default function GraniteGridPage() {
                     <FileDown className="mr-2" />
                     Download
                 </Button>
-                <Button variant="default" onClick={addSheet} className="flex-1 h-10 px-1">
+                <Button variant="default" onClick={() => { if (!user) handleAuthRedirect('/login'); else addSheet(); }} className="flex-1 h-10 px-1">
                     <Plus className="mr-2" />
                     Add Color
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="destructive" className="flex-1 h-10 px-1" onClick={(e) => { if (!user) { e.preventDefault(); handleAuthRedirect('/login'); }}}>
+                         <Button variant="destructive" className="flex-1 h-10 px-1">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Clear All
                         </Button>
