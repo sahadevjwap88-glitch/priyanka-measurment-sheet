@@ -136,6 +136,9 @@ export default function RegisterPage() {
       const userCredential = await signInWithPopup(auth, provider);
       // The useEffect hook will handle document creation and redirection.
     } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      }
       console.error('Google sign in failed', error);
        let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
@@ -145,10 +148,6 @@ export default function RegisterPage() {
           case 'auth/operation-not-allowed':
              title = 'Sign-in method disabled';
             description = 'Google sign-in is not enabled. Please enable it in your Firebase project settings.';
-            break;
-          case 'auth/popup-closed-by-user':
-            title = 'Sign-in cancelled';
-            description = 'You closed the sign-in window before completing the process.';
             break;
         }
       }
