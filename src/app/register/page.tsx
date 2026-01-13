@@ -133,7 +133,7 @@ export default function RegisterPage() {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      const userCredential = await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider);
       // The useEffect hook will handle document creation and redirection.
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
@@ -233,3 +233,4 @@ export default function RegisterPage() {
 }
 
     
+
