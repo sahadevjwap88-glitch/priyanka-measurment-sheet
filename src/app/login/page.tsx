@@ -289,7 +289,7 @@ export default function LoginPage() {
               </Link>
             </p>
              <Link href="/" passHref>
-                <Button variant="link" className="w-full mt-4">
+                <Button variant="secondary" className="w-full mt-4">
                     Skip for now
                 </Button>
             </Link>
@@ -344,3 +344,5 @@ export default function LoginPage() {
     </Dialog>
   );
 }
+
+    
