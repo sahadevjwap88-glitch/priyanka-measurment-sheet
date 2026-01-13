@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -41,6 +42,7 @@ function SalesPage() {
     // State for date picker inputs
     const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [columns, setColumns] = useState({
         date: true,
@@ -69,6 +71,7 @@ function SalesPage() {
     const handleClearFilter = () => {
         setStartDate(undefined);
         setEndDate(undefined);
+        setSearchTerm('');
     };
 
     const filteredSales = useMemo(() => {
@@ -77,6 +80,7 @@ function SalesPage() {
             const saleDate = sale.createdAt?.toDate();
             if (!saleDate) return false;
 
+            // Date filter
             let start = null;
             if (startDate) {
                 start = new Date(startDate);
@@ -91,10 +95,15 @@ function SalesPage() {
 
             if (start && saleDate < start) return false;
             if (end && saleDate > end) return false;
+
+            // Search term filter
+            if (searchTerm && !sale.partyName?.toLowerCase().includes(searchTerm.toLowerCase())) {
+                return false;
+            }
             
             return true;
         });
-    }, [sales, startDate, endDate]);
+    }, [sales, startDate, endDate, searchTerm]);
 
     const handleRowClick = (saleId: string) => {
         router.push(`/sales/${saleId}`);
@@ -254,20 +263,34 @@ function SalesPage() {
                 </header>
 
                 <Card className="mb-8">
-                    <CardContent className="p-4 flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
+                    <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
+                        <div className="flex-1 w-full md:w-auto">
+                             <Label htmlFor='customer-search' className="sr-only">Search Customer</Label>
+                             <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    id="customer-search"
+                                    placeholder="Search by customer name..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                             </div>
+                        </div>
+
+                        <div className="flex flex-1 items-center gap-2 w-full md:w-auto">
                             <Label>From</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
+                                    "w-full justify-start text-left font-normal",
                                     !startDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                                    {startDate ? format(startDate, "PPP") : <span>Start date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -280,19 +303,19 @@ function SalesPage() {
                                 </PopoverContent>
                             </Popover>
                         </div>
-                         <div className="flex items-center gap-2">
+                         <div className="flex flex-1 items-center gap-2 w-full md:w-auto">
                             <Label>To</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
+                                    "w-full justify-start text-left font-normal",
                                     !endDate && "text-muted-foreground"
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                                    {endDate ? format(endDate, "PPP") : <span>End date</span>}
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -305,18 +328,12 @@ function SalesPage() {
                                 </PopoverContent>
                             </Popover>
                         </div>
-                        {(startDate || endDate) && (
-                            <Button onClick={handleClearFilter} size="sm" variant="ghost">
-                                <X className="mr-2 h-4 w-4" />
-                                Clear
-                            </Button>
-                        )}
-                        <div className="flex gap-2 ml-auto">
+                        
+                        <div className="flex gap-2">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        Columns
+                                    <Button variant="outline" size="icon">
+                                        <Settings className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -337,10 +354,14 @@ function SalesPage() {
                                     })}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button onClick={handleExportReport} size="sm">
-                                <Download className="mr-2 h-4 w-4" />
-                                Export Report
+                            <Button onClick={handleExportReport} size="icon" variant="outline">
+                                <Download className="h-4 w-4" />
                             </Button>
+                             {(startDate || endDate || searchTerm) && (
+                                <Button onClick={handleClearFilter} size="icon" variant="ghost">
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -352,7 +373,7 @@ function SalesPage() {
                 {!isLoading && filteredSales.length === 0 && (
                     <Card>
                         <CardContent className="p-8 text-center text-muted-foreground">
-                            No sales records found for the selected date range.
+                            No sales records found for the selected criteria.
                         </CardContent>
                     </Card>
                 )}
