@@ -85,11 +85,12 @@ export default function RegisterPage() {
   });
 
    useEffect(() => {
-    // Redirect if user is already logged in
+    // Redirect if user is already logged in, and create document if needed.
     if (!isUserLoading && user) {
+      createUserDocument(firestore, user);
       router.push('/');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
