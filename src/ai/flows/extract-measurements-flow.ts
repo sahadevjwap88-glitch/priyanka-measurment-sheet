@@ -4,32 +4,18 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-const MeasurementSchema = z.object({
-  length: z.string().describe('The length of the granite slab in inches.'),
-  width: z.string().describe('The width of the granite slab in inches.'),
-});
-
-const ExtractMeasurementsInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo of a list of measurements, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ExtractMeasurementsInput = z.infer<typeof ExtractMeasurementsInputSchema>;
-
-const ExtractMeasurementsOutputSchema = z.object({
-  measurements: z.array(MeasurementSchema).describe('The list of extracted measurements.'),
-});
-export type ExtractMeasurementsOutput = z.infer<typeof ExtractMeasurementsOutputSchema>;
+import {
+  ExtractMeasurementsInputSchema,
+  type ExtractMeasurementsInput,
+  ExtractMeasurementsOutputSchema,
+  type ExtractMeasurementsOutput,
+} from './extract-measurements-types';
 
 const extractMeasurementsPrompt = ai.definePrompt({
     name: 'extractMeasurementsPrompt',
     input: {schema: ExtractMeasurementsInputSchema},
     output: {schema: ExtractMeasurementsOutputSchema},
-    model: 'googleai/gemini-pro-vision', // Specify vision model
+    model: 'googleai/gemini-pro-vision',
     prompt: `You are an expert at reading lists of granite measurements.
     The user has provided an image of a list of measurements.
     Each measurement consists of a length and a width in inches.
