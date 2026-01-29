@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, ScanLine, Camera } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, ScanLine } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,12 +102,10 @@ export default function GraniteGridPage() {
   const [address, setAddress] = useState('');
 
   // Scan Dialog State
-  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
 
   const form = useForm<FormValues>({
@@ -209,49 +207,6 @@ export default function GraniteGridPage() {
     }
   }, [isClient, form, user, firestore]);
   
-  useEffect(() => {
-    if (!isScanDialogOpen) {
-        // Stop camera stream when dialog is closed
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-        }
-        // Reset dialog state
-        setImageDataUri(null);
-        setIsProcessing(false);
-        return;
-    };
-
-    const getCameraPermission = async () => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            console.warn('Camera API not supported');
-            setHasCameraPermission(false);
-            return;
-        }
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            setHasCameraPermission(true);
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-        } catch (error) {
-            console.error('Error accessing camera:', error);
-            setHasCameraPermission(false);
-        }
-    };
-
-    getCameraPermission();
-
-    return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-        }
-    };
-  }, [isScanDialogOpen]);
-
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
     if (!sheet || !sheet.measurements) return [];
@@ -436,21 +391,13 @@ export default function GraniteGridPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImageDataUri(e.target?.result as string);
+        setIsScanDialogOpen(true);
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleCapture = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        setImageDataUri(canvas.toDataURL('image/jpeg'));
-      }
+    // Reset file input to allow selecting the same file again
+    if (event.target) {
+        event.target.value = '';
     }
   };
 
@@ -561,12 +508,20 @@ export default function GraniteGridPage() {
                     <Eye className="mr-2" />
                     Bill
                 </Button>
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => setIsScanDialogOpen(true)}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => fileInputRef.current?.click()}>
                     <ScanLine className="mr-2" />
                     Scan
                 </Button>
             </div>
           </div>
+          
+          <Input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
 
           {fields.length > 0 && (
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
@@ -648,12 +603,18 @@ export default function GraniteGridPage() {
         </div>
       </Card>
 
-      <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
+      <Dialog open={isScanDialogOpen} onOpenChange={(isOpen) => {
+          setIsScanDialogOpen(isOpen);
+          if (!isOpen) {
+              setImageDataUri(null);
+              setIsProcessing(false);
+          }
+      }}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>Scan Measurements</DialogTitle>
                 <DialogDescription>
-                    Use your camera or upload an image of a measurement list. The AI will extract the data and paste it into Sheet 1.
+                    The AI will extract data from the selected image and paste it into Sheet 1.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -664,50 +625,17 @@ export default function GraniteGridPage() {
                     </div>
                 ) : imageDataUri ? (
                     <div className="space-y-4">
-                        <img src={imageDataUri} alt="Captured preview" className="rounded-md" />
+                        <img src={imageDataUri} alt="Uploaded preview" className="rounded-md" />
                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setImageDataUri(null)} className="flex-1">
-                                Clear
+                            <Button variant="outline" onClick={() => setIsScanDialogOpen(false)} className="flex-1">
+                                Cancel
                             </Button>
                             <Button onClick={handleProcessImage} className="flex-1">
                                 Process Image
                             </Button>
                         </div>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        <div className="relative">
-                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
-                            {hasCameraPermission === false && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
-                                    <p className="text-white text-center p-4">Camera not available or permission denied.</p>
-                                </div>
-                            )}
-                        </div>
-                        {hasCameraPermission && (
-                            <Button onClick={handleCapture} className="w-full">
-                                <Camera className="mr-2" />
-                                Capture
-                            </Button>
-                        )}
-                      
-                        <div className="relative flex items-center justify-center">
-                            <Separator className="w-full" />
-                            <span className="absolute bg-background px-2 text-sm text-muted-foreground">OR</span>
-                        </div>
-
-                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
-                            Upload Image
-                        </Button>
-                        <Input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-                    </div>
-                )}
+                ) : null}
             </div>
         </DialogContent>
       </Dialog>
