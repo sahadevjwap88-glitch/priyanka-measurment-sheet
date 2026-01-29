@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, ScanLine, Camera } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,12 +25,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
+import { extractMeasurements } from '@/ai/flows/extract-measurements-flow';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from './ui/separator';
 
 
 const measurementSchema = z.object({
@@ -90,6 +100,15 @@ export default function GraniteGridPage() {
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+
+  // Scan Dialog State
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -189,6 +208,49 @@ export default function GraniteGridPage() {
       return () => subscription.unsubscribe();
     }
   }, [isClient, form, user, firestore]);
+  
+  useEffect(() => {
+    if (!isScanDialogOpen) {
+        // Stop camera stream when dialog is closed
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+        // Reset dialog state
+        setImageDataUri(null);
+        setIsProcessing(false);
+        return;
+    };
+
+    const getCameraPermission = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.warn('Camera API not supported');
+            setHasCameraPermission(false);
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            setHasCameraPermission(true);
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            setHasCameraPermission(false);
+        }
+    };
+
+    getCameraPermission();
+
+    return () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
+    };
+  }, [isScanDialogOpen]);
 
 
   const getValidDataForSheet = useCallback((sheet: Sheet | undefined) => {
@@ -367,6 +429,77 @@ export default function GraniteGridPage() {
     
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImageDataUri(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCapture = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        setImageDataUri(canvas.toDataURL('image/jpeg'));
+      }
+    }
+  };
+
+  const handleProcessImage = async () => {
+    if (!imageDataUri) {
+        toast({ variant: 'destructive', title: 'No Image', description: 'Please capture or upload an image first.' });
+        return;
+    }
+    setIsProcessing(true);
+    try {
+        const result = await extractMeasurements({ photoDataUri: imageDataUri });
+
+        const targetSheetIndex = 0; // Always target Sheet 1
+        const targetSheet = fields[targetSheetIndex];
+        if (!targetSheet) {
+            toast({ variant: "destructive", title: "Sheet 1 Not Found", description: "Could not find 'Sheet 1' to paste data into." });
+            return;
+        }
+
+        let newMeasurements = result.measurements.map(m => ({ length: m.length || '', width: m.width || '' }));
+
+        const originalRowCount = watchedSheets[targetSheetIndex].measurements.length;
+        const requiredRows = Math.max(originalRowCount, newMeasurements.length);
+
+        if (newMeasurements.length < requiredRows) {
+            const diff = requiredRows - newMeasurements.length;
+            newMeasurements.push(...Array(diff).fill({ length: '', width: '' }));
+        }
+
+        if(newMeasurements.length > MAX_ROWS) {
+          newMeasurements = newMeasurements.slice(0, MAX_ROWS);
+        }
+
+        const updatedSheet = { ...watchedSheets[targetSheetIndex], measurements: newMeasurements };
+        update(targetSheetIndex, updatedSheet);
+        form.setValue('activeSheetId', targetSheet.id, { shouldDirty: true });
+
+        toast({
+            title: 'Scan Complete',
+            description: `Pasted ${result.measurements.length} measurements into Sheet 1.`,
+        });
+        setIsScanDialogOpen(false);
+    } catch (error) {
+        console.error('Failed to process image', error);
+        toast({ variant: 'destructive', title: 'Scan Failed', description: 'Could not extract measurements. Please try a clearer image.' });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
   
   if (!isClient) {
     return null; 
@@ -427,6 +560,10 @@ export default function GraniteGridPage() {
                  <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/bill')}>
                     <Eye className="mr-2" />
                     Bill
+                </Button>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => setIsScanDialogOpen(true)}>
+                    <ScanLine className="mr-2" />
+                    Scan
                 </Button>
             </div>
           </div>
@@ -510,6 +647,72 @@ export default function GraniteGridPage() {
           )}
         </div>
       </Card>
+
+      <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Scan Measurements</DialogTitle>
+                <DialogDescription>
+                    Use your camera or upload an image of a measurement list. The AI will extract the data and paste it into Sheet 1.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                {isProcessing ? (
+                    <div className="flex flex-col items-center justify-center gap-4">
+                        <p>Processing image, please wait...</p>
+                        <Progress value={50} className="w-full animate-pulse" />
+                    </div>
+                ) : imageDataUri ? (
+                    <div className="space-y-4">
+                        <img src={imageDataUri} alt="Captured preview" className="rounded-md" />
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setImageDataUri(null)} className="flex-1">
+                                Clear
+                            </Button>
+                            <Button onClick={handleProcessImage} className="flex-1">
+                                Process Image
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="relative">
+                            <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+                            {hasCameraPermission === false && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+                                    <p className="text-white text-center p-4">Camera not available or permission denied.</p>
+                                </div>
+                            )}
+                        </div>
+                        {hasCameraPermission && (
+                            <Button onClick={handleCapture} className="w-full">
+                                <Camera className="mr-2" />
+                                Capture
+                            </Button>
+                        )}
+                      
+                        <div className="relative flex items-center justify-center">
+                            <Separator className="w-full" />
+                            <span className="absolute bg-background px-2 text-sm text-muted-foreground">OR</span>
+                        </div>
+
+                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
+                            Upload Image
+                        </Button>
+                        <Input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                    </div>
+                )}
+            </div>
+        </DialogContent>
+      </Dialog>
+
+
       <footer className="text-center text-sm text-muted-foreground py-4">
         Priyanka Granites
       </footer>
