@@ -334,19 +334,15 @@ export default function GraniteGridPage() {
     }
   };
 
-  const handleAuthRedirect = (path: string, isAddingSheet = false) => {
+  const handleProtectedAction = (action?: () => void) => {
     if (!user) {
         toast({
             title: "Login Required",
             description: "Please log in to access this feature.",
             variant: "destructive"
         });
-    } else {
-        if (isAddingSheet) {
-            addSheet();
-        } else {
-            router.push(path);
-        }
+    } else if (action) {
+        action();
     }
   };
   
@@ -462,7 +458,7 @@ export default function GraniteGridPage() {
                     <FileDown className="mr-2" />
                     Download
                 </Button>
-                <Button variant="default" onClick={() => handleAuthRedirect('/login', true)} className="flex-1 h-10 px-1">
+                <Button variant="default" onClick={() => handleProtectedAction(addSheet)} className="flex-1 h-10 px-1">
                     <Plus className="mr-2" />
                     Add Color
                 </Button>
@@ -488,7 +484,7 @@ export default function GraniteGridPage() {
                 </AlertDialog>
             </div>
             <div className="flex items-center justify-start gap-2 mt-2">
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/sales')}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => router.push('/sales'))}>
                     <BookCopy className="mr-2" />
                     All Sales
                 </Button>
@@ -498,17 +494,17 @@ export default function GraniteGridPage() {
                         Settings
                     </Button>
                 </Link>
-                <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/credit')}>
+                <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => router.push('/credit'))}>
                     <CreditCard className="mr-2" />
                     Credit
                 </Button>
             </div>
             <div className="flex items-center justify-start gap-2 mt-2">
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleAuthRedirect('/bill')}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => router.push('/bill'))}>
                     <Eye className="mr-2" />
                     Bill
                 </Button>
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => fileInputRef.current?.click()}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => fileInputRef.current?.click())}>
                     <ScanLine className="mr-2" />
                     Scan
                 </Button>
@@ -527,7 +523,7 @@ export default function GraniteGridPage() {
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
                   {fields.map((sheet) => (
-                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}  onClick={() => { if (!user && sheet.name !== 'Sheet 1') { handleAuthRedirect('/login', true); } }}>
+                    <TabsTrigger key={sheet.id} value={sheet.id} className={cn("relative", activeSheetId === sheet.id && "bg-primary text-primary-foreground")}  onClick={() => { if (!user && sheet.name !== 'Sheet 1') { handleProtectedAction(); } }}>
                       {sheet.name}
                     </TabsTrigger>
                   ))}
