@@ -15,7 +15,6 @@ const extractMeasurementsPrompt = ai.definePrompt({
     name: 'extractMeasurementsPrompt',
     input: {schema: ExtractMeasurementsInputSchema},
     output: {schema: ExtractMeasurementsOutputSchema},
-    model: 'googleai/gemini-1.0-pro-vision',
     prompt: `You are an expert at reading lists of granite measurements.
     The user has provided an image of a list of measurements.
     Each measurement consists of a length and a width in inches.
