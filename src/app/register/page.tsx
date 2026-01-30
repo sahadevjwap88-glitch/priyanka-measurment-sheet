@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,6 +20,7 @@ import {
   signInWithRedirect,
   sendEmailVerification,
   signOut,
+  getRedirectResult,
   User,
 } from 'firebase/auth';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -29,8 +29,8 @@ import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useEffect } from 'react';
-import { doc, setDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { doc, setDoc, serverTimestamp, type Firestore, getDoc } from 'firebase/firestore';
 
 
 const GoogleIcon = () => (
@@ -50,23 +50,27 @@ const formSchema = z.object({
 
 function createUserDocument(firestore: Firestore, user: User) {
     const userRef = doc(firestore, 'users', user.uid);
-    const userData = {
-      id: user.uid,
-      email: user.email,
-      displayName: user.displayName || 'Anonymous',
-      createdAt: serverTimestamp(),
-      photoUrl: user.photoURL || '',
-      address: '',
-      isAdmin: false,
-    };
     
-    setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    getDoc(userRef).then(docSnap => {
+        if (!docSnap.exists()) {
+            const userData = {
+                id: user.uid,
+                email: user.email,
+                displayName: user.displayName || 'Anonymous',
+                createdAt: serverTimestamp(),
+                photoUrl: user.photoURL || '',
+                address: '',
+                isAdmin: false,
+            };
+            setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: userRef.path,
+                    operation: 'create',
+                    requestResourceData: userData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+        }
     });
 }
 
@@ -75,6 +79,7 @@ export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,13 +89,37 @@ export default function RegisterPage() {
     },
   });
 
+  useEffect(() => {
+    if (user) {
+        router.push('/');
+        return;
+    }
+    const auth = getAuth();
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          createUserDocument(firestore, result.user);
+          // The useUser hook will update and the effect below will redirect.
+        }
+      })
+      .catch((error) => {
+        console.error('Google sign in redirect error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Google Sign-in failed',
+            description: 'Could not complete sign-in. Please try again.',
+        });
+      }).finally(() => {
+        setIsProcessingRedirect(false);
+      });
+  }, [user, router, firestore]);
+
    useEffect(() => {
-    // Redirect if user is already logged in, and create document if needed.
+    // This effect redirects the user once the `useUser` hook confirms they are logged in.
     if (!isUserLoading && user) {
-      createUserDocument(firestore, user);
       router.push('/');
     }
-  }, [user, isUserLoading, router, firestore]);
+  }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
@@ -133,32 +162,10 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithRedirect(auth, provider);
-      // The useEffect hook will handle document creation and redirection.
-    } catch (error: any) {
-      console.error('Google sign in failed', error);
-       let title = 'Google Sign-in failed';
-      let description = 'An unexpected error occurred. Please try again.';
-
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/operation-not-allowed':
-             title = 'Sign-in method disabled';
-            description = 'Google sign-in is not enabled. Please enable it in your Firebase project settings.';
-            break;
-        }
-      }
-
-      toast({
-        variant: "destructive",
-        title: title,
-        description: description,
-      });
-    }
+    await signInWithRedirect(auth, provider);
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading || isProcessingRedirect || user) {
     return <p>Loading...</p>;
   }
 
@@ -229,6 +236,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    
-

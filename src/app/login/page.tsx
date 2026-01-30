@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -30,6 +29,7 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   sendPasswordResetEmail,
+  getRedirectResult,
   User,
 } from 'firebase/auth';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -92,8 +92,8 @@ function updateUserDocument(firestore: Firestore, user: User) {
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
   const firestore = useFirestore();
+  const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -110,11 +110,36 @@ export default function LoginPage() {
   const loginEmail = form.watch('email');
 
   useEffect(() => {
-    if (!isUserLoading && user && pathname !== '/') {
-      updateUserDocument(firestore, user);
+    if (user) {
+        router.push('/');
+        return;
+    }
+
+    const auth = getAuth();
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          updateUserDocument(firestore, result.user);
+          // The useUser hook will update and the effect below will redirect.
+        }
+      })
+      .catch((error) => {
+        console.error('Google sign in redirect error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Google Sign-in failed',
+            description: 'Could not complete sign-in. Please try again.',
+        });
+      }).finally(() => {
+        setIsProcessingRedirect(false);
+      });
+  }, [user, router, firestore]);
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
       router.push('/');
     }
-  }, [user, isUserLoading, router, firestore, pathname]);
+  }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const auth = getAuth();
@@ -161,29 +186,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithRedirect(auth, provider);
-       // User will be redirected by the useEffect hook
-    } catch (error: any) {
-      console.error('Google sign in failed', error);
-      let title = 'Google Sign-in failed';
-      let description = 'An unexpected error occurred. Please try again.';
-
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/operation-not-allowed':
-            title = 'Sign-in method disabled';
-            description = 'Google sign-in is not enabled. Please enable it in your Firebase project settings.';
-            break;
-        }
-      }
-
-      toast({
-        variant: 'destructive',
-        title: title,
-        description: description,
-      });
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   const handlePasswordReset = async () => {
@@ -217,7 +220,7 @@ export default function LoginPage() {
   }, [isForgotPasswordOpen, loginEmail]);
 
 
-  if (isUserLoading || user) {
+  if (isUserLoading || isProcessingRedirect || user) {
     return <p>Loading...</p>;
   }
 
@@ -351,8 +354,3 @@ export default function LoginPage() {
     </Dialog>
   );
 }
-
-    
-
-    
-
