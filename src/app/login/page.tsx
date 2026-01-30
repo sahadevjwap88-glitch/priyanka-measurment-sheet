@@ -28,7 +28,7 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
   sendPasswordResetEmail,
   User,
 } from 'firebase/auth';
@@ -162,12 +162,9 @@ export default function LoginPage() {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
        // User will be redirected by the useEffect hook
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        return;
-      }
       console.error('Google sign in failed', error);
       let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';

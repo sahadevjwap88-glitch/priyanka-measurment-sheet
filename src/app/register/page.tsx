@@ -18,7 +18,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
   sendEmailVerification,
   signOut,
   User,
@@ -134,12 +134,9 @@ export default function RegisterPage() {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
       // The useEffect hook will handle document creation and redirection.
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        return;
-      }
       console.error('Google sign in failed', error);
        let title = 'Google Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
