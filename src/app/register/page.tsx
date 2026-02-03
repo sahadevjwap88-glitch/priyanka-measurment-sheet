@@ -24,14 +24,15 @@ import {
   getRedirectResult,
   User,
 } from 'firebase/auth';
-import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
-import { doc, setDoc, serverTimestamp, type Firestore, getDoc } from 'firebase/firestore';
+import { ensureUserDocument } from '@/firebase/auth/user-document';
+import { type Firestore } from 'firebase/firestore';
 
 
 const GoogleIcon = () => (
@@ -57,38 +58,6 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-function createUserDocument(firestore: Firestore, user: User) {
-    const userRef = doc(firestore, 'users', user.uid);
-    
-    getDoc(userRef).then(docSnap => {
-        if (!docSnap.exists()) {
-            const userData = {
-                id: user.uid,
-                email: user.email,
-                displayName: user.displayName || 'Anonymous',
-                createdAt: serverTimestamp(),
-                photoUrl: user.photoURL || '',
-                address: '',
-                isAdmin: false,
-            };
-            setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userRef.path,
-                    operation: 'create',
-                    requestResourceData: userData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-        }
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-}
-
 
 export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
@@ -113,7 +82,7 @@ export default function RegisterPage() {
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          createUserDocument(firestore, result.user);
+          ensureUserDocument(firestore, result.user);
           // The useUser hook will update and the effect below will redirect.
         }
       })
@@ -148,7 +117,7 @@ export default function RegisterPage() {
     const auth = getAuth();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      createUserDocument(firestore, userCredential.user);
+      ensureUserDocument(firestore, userCredential.user);
       await sendEmailVerification(userCredential.user);
       await signOut(auth);
       router.push(`/verify-email?email=${values.email}`);

@@ -41,7 +41,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { doc, getDoc, setDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
+import { ensureUserDocument } from '@/firebase/auth/user-document';
+import { type Firestore } from 'firebase/firestore';
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" className="mr-2">
@@ -65,37 +66,6 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-function updateUserDocument(firestore: Firestore, user: User) {
-    const userRef = doc(firestore, 'users', user.uid);
-    
-    getDoc(userRef).then(userDoc => {
-        if (!userDoc.exists()) {
-            const userData = {
-                id: user.uid,
-                email: user.email,
-                displayName: user.displayName || 'Anonymous',
-                createdAt: serverTimestamp(),
-                photoUrl: user.photoURL || '',
-                address: '',
-                isAdmin: false,
-            };
-            setDoc(userRef, userData, { merge: true }).catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userRef.path,
-                    operation: 'create',
-                    requestResourceData: userData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-        }
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-}
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
@@ -127,7 +97,7 @@ export default function LoginPage() {
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          updateUserDocument(firestore, result.user);
+          ensureUserDocument(firestore, result.user);
           // The useUser hook will update and the effect below will redirect.
         }
       })
@@ -171,6 +141,7 @@ export default function LoginPage() {
         });
         return;
       }
+      ensureUserDocument(firestore, userCredential.user);
       // User will be redirected by the useEffect hook
     } catch (error: any) {
       console.error('Failed to sign in', error);
