@@ -86,7 +86,7 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Handle the redirect from Google/Facebook
+  // Handle the redirect from Google
   useEffect(() => {
     // This effect should run only once on component mount to process the redirect result.
     if (auth && firestore) {
@@ -95,8 +95,6 @@ export default function LoginPage() {
           if (result) {
             // A user has successfully signed in via redirect.
             ensureUserDocument(firestore, result.user);
-            // The onAuthStateChanged listener in FirebaseProvider will handle the user state update
-            // and the useEffect above will trigger the redirect to '/'.
             toast({
               title: 'Sign-in successful',
               description: `Welcome, ${result.user.displayName || 'user'}!`,
@@ -117,7 +115,7 @@ export default function LoginPage() {
                description = 'The sign-in process was cancelled or blocked by the browser.';
           } else if (error.code === 'auth/unauthorized-domain' || (error.message && (error.message.includes('403') || error.message.includes('auth/unauthorized-domain')))) {
               title = 'Configuration Error (403 Forbidden)';
-              description = 'Project configuration error. In Google Cloud Console, add your email as a "Test User" or "Publish" your app on the OAuth consent screen.';
+              description = 'This is a project configuration error. In the Google Cloud Console for your project, go to the "OAuth consent screen" and add your email as a "Test User" or "Publish" your app to allow logins.';
           }
           
           toast({
