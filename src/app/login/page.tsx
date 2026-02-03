@@ -61,7 +61,7 @@ export default function LoginPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const auth = useAuth();
-  const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -81,21 +81,31 @@ export default function LoginPage() {
     // If a user is already authenticated, redirect them to the homepage.
     if (!isUserLoading && user) {
       router.push('/');
-      return;
+    } else if (!isUserLoading && !user) {
+      setIsLoading(false);
     }
+  }, [user, isUserLoading, router]);
 
-    // Only process the redirect result once, when the auth state is not loading and no user is present.
-    if (!isUserLoading && !user && isProcessingRedirect) {
+  // Handle the redirect from Google/Facebook
+  useEffect(() => {
+    // This effect should run only once on component mount to process the redirect result.
+    if (auth && firestore) {
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
-            // This means a sign-in via redirect was successful.
-            // The onAuthStateChanged listener will handle the user state update and subsequent redirect.
+            // A user has successfully signed in via redirect.
             ensureUserDocument(firestore, result.user);
+            // The onAuthStateChanged listener in FirebaseProvider will handle the user state update
+            // and the useEffect above will trigger the redirect to '/'.
+            toast({
+              title: 'Sign-in successful',
+              description: `Welcome, ${result.user.displayName || 'user'}!`,
+            });
           }
         })
         .catch((error) => {
-          console.error("Detailed sign-in redirect error:", error);
+          // Handle various sign-in errors
+          console.error("Sign-in redirect error:", error);
           let title = 'Sign-in Failed';
           let description = 'An unexpected error occurred. Please try again.';
   
@@ -116,15 +126,10 @@ export default function LoginPage() {
               description: description,
               duration: 9000,
           });
-        })
-        .finally(() => {
-          // We are done processing the redirect.
-          setIsProcessingRedirect(false);
         });
-    } else if (isUserLoading) {
-        setIsProcessingRedirect(true);
     }
-  }, [user, isUserLoading, router, firestore, auth, isProcessingRedirect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth, firestore]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -215,7 +220,7 @@ export default function LoginPage() {
   }, [isForgotPasswordOpen, loginEmail]);
 
 
-  if (isUserLoading || isProcessingRedirect) {
+  if (isLoading) {
     return <p>Loading...</p>;
   }
 
