@@ -154,6 +154,8 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
     await signInWithRedirect(auth, provider);
   };
   
