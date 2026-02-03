@@ -17,6 +17,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
+  FacebookAuthProvider,
   signInWithRedirect,
   sendEmailVerification,
   signOut,
@@ -42,6 +43,14 @@ const GoogleIcon = () => (
       <path fill="none" d="M0 0h48v48H0z"/>
     </svg>
   );
+  
+const FacebookIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" className="mr-2">
+        <path fill="#3b5998" d="M42,37c0,2.762-2.238,5-5,5H11c-2.761,0-5-2.238-5-5V11c0-2.762,2.239-5,5-5h26c2.762,0,5,2.238,5,5V37z"/>
+        <path fill="#fff" d="M34.368,25.708l0.616-4.58h-4.29V18.14c0-1.248,0.574-2.48,2.56-2.48h2.088v-3.94c-0.457-0.046-1.554-0.12-2.91-0.12c-2.92,0-5.114,1.808-5.114,5.43v3.702H22.08v4.58h4.744v10.72c0.92,0.14,1.86,0.22,2.812,0.22s1.892-0.08,2.812-0.22V25.708H34.368z"/>
+    </svg>
+);
+
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -71,6 +80,12 @@ function createUserDocument(firestore: Firestore, user: User) {
                 errorEmitter.emit('permission-error', permissionError);
             });
         }
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 }
 
@@ -103,11 +118,19 @@ export default function RegisterPage() {
         }
       })
       .catch((error) => {
-        console.error('Google sign in redirect error:', error);
+        console.error('Sign in redirect error:', error);
+        let title = 'Sign-in failed';
+        let description = 'Could not complete sign-in. Please try again.';
+
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            title = 'Email already in use';
+            description = 'An account already exists with this email address using a different sign-in method. Please sign in with the original method.';
+        }
+        
         toast({
             variant: 'destructive',
-            title: 'Google Sign-in failed',
-            description: 'Could not complete sign-in. Please try again.',
+            title: title,
+            description: description,
         });
       }).finally(() => {
         setIsProcessingRedirect(false);
@@ -162,6 +185,12 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  };
+  
+  const handleFacebookSignIn = async () => {
+    const auth = getAuth();
+    const provider = new FacebookAuthProvider();
     await signInWithRedirect(auth, provider);
   };
 
@@ -220,10 +249,16 @@ export default function RegisterPage() {
             </div>
           </div>
           
-          <Button variant="secondary" className="w-full" onClick={handleGoogleSignIn}>
-            <GoogleIcon />
-            Sign in with Google
-          </Button>
+          <div className="space-y-2">
+            <Button variant="secondary" className="w-full" onClick={handleGoogleSignIn}>
+              <GoogleIcon />
+              Sign in with Google
+            </Button>
+            <Button variant="secondary" className="w-full" onClick={handleFacebookSignIn}>
+              <FacebookIcon />
+              Sign in with Facebook
+            </Button>
+          </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
