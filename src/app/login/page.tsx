@@ -172,11 +172,13 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = async () => {
+    console.log("Initiating Google sign-in...");
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
     try {
       await signInWithRedirect(auth, provider);
+      console.log("Redirect to Google initiated successfully.");
     } catch (error) {
       console.error("Error initiating Google sign-in redirect:", error);
       toast({
