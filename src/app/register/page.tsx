@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   FacebookAuthProvider,
@@ -22,9 +21,8 @@ import {
   sendEmailVerification,
   signOut,
   getRedirectResult,
-  User,
 } from 'firebase/auth';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
@@ -32,7 +30,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { ensureUserDocument } from '@/firebase/auth/user-document';
-import { type Firestore } from 'firebase/firestore';
 
 
 const GoogleIcon = () => (
@@ -63,6 +60,7 @@ export default function RegisterPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const auth = useAuth();
   const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -78,7 +76,6 @@ export default function RegisterPage() {
         router.push('/');
         return;
     }
-    const auth = getAuth();
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
@@ -104,7 +101,7 @@ export default function RegisterPage() {
       }).finally(() => {
         setIsProcessingRedirect(false);
       });
-  }, [user, router, firestore]);
+  }, [user, router, firestore, auth]);
 
    useEffect(() => {
     // This effect redirects the user once the `useUser` hook confirms they are logged in.
@@ -114,7 +111,6 @@ export default function RegisterPage() {
   }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const auth = getAuth();
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       ensureUserDocument(firestore, userCredential.user);
@@ -152,7 +148,6 @@ export default function RegisterPage() {
   }
 
   const handleGoogleSignIn = async () => {
-    const auth = getAuth();
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
@@ -160,7 +155,6 @@ export default function RegisterPage() {
   };
   
   const handleFacebookSignIn = async () => {
-    const auth = getAuth();
     const provider = new FacebookAuthProvider();
     await signInWithRedirect(auth, provider);
   };

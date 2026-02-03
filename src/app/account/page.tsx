@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import AuthGuard from '@/components/auth-guard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { getAuth, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { LogOut, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -23,6 +23,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 function AccountPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const auth = useAuth();
     const router = useRouter();
 
     // Settings state with initial defaults
@@ -143,7 +144,6 @@ function AccountPage() {
             router.push('/login');
             return;
         }
-        const auth = getAuth();
         await signOut(auth);
         router.push('/login');
     };

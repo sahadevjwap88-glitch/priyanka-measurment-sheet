@@ -24,17 +24,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithRedirect,
   sendPasswordResetEmail,
   getRedirectResult,
-  User,
 } from 'firebase/auth';
-import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { usePathname, useRouter } from 'next/navigation';
+import { useUser, useFirestore, useAuth } from '@/firebase';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +40,6 @@ import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { ensureUserDocument } from '@/firebase/auth/user-document';
-import { type Firestore } from 'firebase/firestore';
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" className="mr-2">
@@ -71,6 +68,7 @@ export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const auth = useAuth();
   const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
@@ -93,7 +91,6 @@ export default function LoginPage() {
         return;
     }
 
-    const auth = getAuth();
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
@@ -119,7 +116,7 @@ export default function LoginPage() {
       }).finally(() => {
         setIsProcessingRedirect(false);
       });
-  }, [user, router, firestore]);
+  }, [user, router, firestore, auth]);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -128,7 +125,6 @@ export default function LoginPage() {
   }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const auth = getAuth();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       if (!userCredential.user.emailVerified) {
@@ -171,7 +167,6 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = async () => {
-    const auth = getAuth();
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
@@ -179,7 +174,6 @@ export default function LoginPage() {
   };
   
   const handleFacebookSignIn = async () => {
-    const auth = getAuth();
     const provider = new FacebookAuthProvider();
     await signInWithRedirect(auth, provider);
   };
@@ -193,7 +187,6 @@ export default function LoginPage() {
       });
       return;
     }
-    const auth = getAuth();
     try {
       await sendPasswordResetEmail(auth, resetEmail);
       setResetEmailSent(true);

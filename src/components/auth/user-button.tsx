@@ -10,14 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/firebase';
-import { getAuth, signOut } from 'firebase/auth';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { LogOut, User as UserIcon } from 'lucide-react';
 
 export function UserButton() {
   const { user, isUserLoading } = useUser();
-  const auth = getAuth();
+  const auth = useAuth();
 
   const handleSignOut = async () => {
     await signOut(auth);
