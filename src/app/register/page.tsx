@@ -84,19 +84,24 @@ export default function RegisterPage() {
         }
       })
       .catch((error) => {
-        console.error('Sign in redirect error:', error);
-        let title = 'Sign-in failed';
-        let description = 'Could not complete sign-in. Please try again.';
+        console.error('Detailed sign-in redirect error:', error);
+        let title = 'Sign-in Failed';
+        let description = 'An unexpected error occurred. Please try again.';
 
         if (error.code === 'auth/account-exists-with-different-credential') {
             title = 'Email already in use';
             description = 'An account already exists with this email address using a different sign-in method. Please sign in with the original method.';
+        } else {
+            // This is a generic catch-all. A 403 error from Google often gets surfaced this way.
+            title = 'Sign-in Error (403 Forbidden)';
+            description = 'Authentication failed due to a project configuration issue. The app must be published in the Google Cloud Console to allow external users.';
         }
         
         toast({
             variant: 'destructive',
             title: title,
             description: description,
+            duration: 9000,
         });
       }).finally(() => {
         setIsProcessingRedirect(false);
@@ -151,12 +156,30 @@ export default function RegisterPage() {
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error("Error initiating Google sign-in redirect:", error);
+      toast({
+          variant: 'destructive',
+          title: 'Could Not Start Sign-In',
+          description: 'There was an error when trying to redirect to Google. Please check your connection and try again.',
+      });
+    }
   };
   
   const handleFacebookSignIn = async () => {
     const provider = new FacebookAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error("Error initiating Facebook sign-in redirect:", error);
+      toast({
+          variant: 'destructive',
+          title: 'Could Not Start Sign-In',
+          description: 'There was an error when trying to redirect to Facebook. Please check your connection and try again.',
+      });
+    }
   };
 
   if (isUserLoading || isProcessingRedirect || user) {
