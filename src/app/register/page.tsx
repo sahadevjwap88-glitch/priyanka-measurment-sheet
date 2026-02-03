@@ -100,9 +100,9 @@ export default function RegisterPage() {
           } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
                title = 'Sign-in Cancelled';
                description = 'The sign-in process was cancelled or blocked by the browser.';
-          } else if (error.code && error.code.includes('403')) {
-              title = 'Sign-in Error (403 Forbidden)';
-              description = 'Authentication failed. Please ensure your project is published in the Google Cloud Console to allow external users.';
+          } else if (error.code === 'auth/unauthorized-domain' || (error.message && (error.message.includes('403') || error.message.includes('auth/unauthorized-domain')))) {
+            title = 'Configuration Error (403 Forbidden)';
+            description = 'Project configuration error. In Google Cloud Console, add your email as a "Test User" or "Publish" your app on the OAuth consent screen.';
           }
           
           toast({
