@@ -78,51 +78,54 @@ export default function LoginPage() {
   const loginEmail = form.watch('email');
 
   useEffect(() => {
-    if (user) {
-        router.push('/');
-        return;
-    }
-
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          ensureUserDocument(firestore, result.user);
-          // The useUser hook will update and the effect below will redirect.
-        }
-      })
-      .catch((error) => {
-        console.error('Detailed sign-in redirect error:', error);
-        let title = 'Sign-in Failed';
-        let description = 'An unexpected error occurred. Please try again.';
-
-        if (error.code === 'auth/account-exists-with-different-credential') {
-            title = 'Email already in use';
-            description = 'An account already exists with this email address using a different sign-in method. Please sign in with the original method.';
-        } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-             title = 'Sign-in Cancelled';
-             description = 'The sign-in process was cancelled or blocked by the browser.';
-        } else if (error.code && error.code.includes('403')) {
-            // This is a generic catch-all for 403 errors which can manifest in different ways
-            title = 'Sign-in Error (403 Forbidden)';
-            description = 'Authentication failed. If this is a new project, please ensure it is published in the Google Cloud Console to allow external users.';
-        }
-        
-        toast({
-            variant: 'destructive',
-            title: title,
-            description: description,
-            duration: 9000,
-        });
-      }).finally(() => {
-        setIsProcessingRedirect(false);
-      });
-  }, [user, router, firestore, auth]);
-
-  useEffect(() => {
+    // If a user is already authenticated, redirect them to the homepage.
     if (!isUserLoading && user) {
       router.push('/');
+      return;
     }
-  }, [user, isUserLoading, router]);
+
+    // Only process the redirect result once, when the auth state is not loading and no user is present.
+    if (!isUserLoading && !user && isProcessingRedirect) {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result) {
+            // This means a sign-in via redirect was successful.
+            // The onAuthStateChanged listener will handle the user state update and subsequent redirect.
+            ensureUserDocument(firestore, result.user);
+          }
+        })
+        .catch((error) => {
+          console.error("Detailed sign-in redirect error:", error);
+          let title = 'Sign-in Failed';
+          let description = 'An unexpected error occurred. Please try again.';
+  
+          if (error.code === 'auth/account-exists-with-different-credential') {
+              title = 'Email already in use';
+              description = 'An account already exists with this email address using a different sign-in method. Please sign in with the original method.';
+          } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+               title = 'Sign-in Cancelled';
+               description = 'The sign-in process was cancelled or blocked by the browser.';
+          } else if (error.code && error.code.includes('403')) {
+              title = 'Sign-in Error (403 Forbidden)';
+              description = 'Authentication failed. Please ensure your project is published in the Google Cloud Console to allow external users.';
+          }
+          
+          toast({
+              variant: 'destructive',
+              title: title,
+              description: description,
+              duration: 9000,
+          });
+        })
+        .finally(() => {
+          // We are done processing the redirect.
+          setIsProcessingRedirect(false);
+        });
+    } else if (isUserLoading) {
+        setIsProcessingRedirect(true);
+    }
+  }, [user, isUserLoading, router, firestore, auth, isProcessingRedirect]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -167,13 +170,11 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = async () => {
-    console.log("Initiating Google sign-in...");
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
     try {
       await signInWithRedirect(auth, provider);
-      console.log("Redirect to Google initiated successfully.");
     } catch (error) {
       console.error("Error initiating Google sign-in redirect:", error);
       toast({
@@ -214,7 +215,7 @@ export default function LoginPage() {
   }, [isForgotPasswordOpen, loginEmail]);
 
 
-  if (isUserLoading || isProcessingRedirect || user) {
+  if (isUserLoading || isProcessingRedirect) {
     return <p>Loading...</p>;
   }
 
