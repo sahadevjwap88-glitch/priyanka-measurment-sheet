@@ -98,9 +98,6 @@ export default function RegisterPage() {
           } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
                title = 'Sign-in Cancelled';
                description = 'The sign-in process was cancelled or blocked by the browser.';
-          } else if (error.code === 'auth/unauthorized-domain' || (error.message && (error.message.includes('403') || error.message.includes('auth/unauthorized-domain')))) {
-            title = 'Configuration Error (403 Forbidden)';
-            description = 'This is a project configuration error. In the Google Cloud Console for your project, go to the "OAuth consent screen" and add your email as a "Test User" or "Publish" your app to allow logins.';
           }
           
           toast({
@@ -154,8 +151,6 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
     try {
       await signInWithRedirect(auth, provider);
     } catch (error) {
