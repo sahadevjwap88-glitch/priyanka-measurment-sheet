@@ -143,14 +143,18 @@ export default function LoginPage() {
       ensureUserDocument(firestore, userCredential.user);
       // User will be redirected by the useEffect hook
     } catch (error: any) {
-      console.error('Failed to sign in', error);
+      // Don't log expected auth errors to the console, to avoid confusion in dev overlay.
+      if (error.code !== 'auth/invalid-credential') {
+        console.error('Failed to sign in', error);
+      }
+
       let title = 'Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
 
       if (error.code) {
         switch (error.code) {
           case 'auth/invalid-credential':
-            title = 'Password or Email Incorrect';
+            title = 'Incorrect Email or Password';
             description = 'The email or password you entered is incorrect. Please try again.';
             break;
           case 'auth/operation-not-allowed':
