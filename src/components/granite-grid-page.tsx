@@ -38,6 +38,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
 
 
 const measurementSchema = z.object({
@@ -56,6 +57,8 @@ const sheetSchema = z.object({
 const formSchema = z.object({
   sheets: z.array(sheetSchema),
   activeSheetId: z.string().optional(),
+  labourCharges: z.string().optional(),
+  transportCharges: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -83,6 +86,8 @@ const defaultInitialSheet = createNewSheet(Date.now().toString(), 'Sheet 1');
 const defaultValues: FormValues = {
   sheets: [defaultInitialSheet],
   activeSheetId: defaultInitialSheet.id,
+  labourCharges: '',
+  transportCharges: '',
 };
 
 export default function GraniteGridPage() {
@@ -97,12 +102,19 @@ export default function GraniteGridPage() {
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+  const [labourRate, setLabourRate] = useState(3);
+  const [minLabourCharges, setMinLabourCharges] = useState(200);
 
   // Estimation Dialog State
   const [isEstimationDialogOpen, setIsEstimationDialogOpen] = useState(false);
   const [manualLength, setManualLength] = useState('');
   const [manualWidth, setManualWidth] = useState('');
   const [manualQty, setManualQty] = useState('1');
+  const [manualColor, setManualColor] = useState('');
+  const [manualRate, setManualRate] = useState('');
+  const [manualLabour, setManualLabour] = useState('');
+  const [manualTransport, setManualTransport] = useState('');
+  const [isLabourManuallyEdited, setIsLabourManuallyEdited] = useState(false);
 
 
   const form = useForm<FormValues>({
@@ -122,6 +134,23 @@ export default function GraniteGridPage() {
   
   const activeSheetIndex = fields.findIndex(s => s.id === activeSheetId);
   const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
+
+  // Auto-calculate labour in estimation dialog
+  useEffect(() => {
+    if (!isLabourManuallyEdited && isEstimationDialogOpen) {
+      const l = parseFloat(manualLength);
+      const w = parseFloat(manualWidth);
+      const q = parseInt(manualQty) || 0;
+      
+      if (!isNaN(l) && !isNaN(w) && q > 0) {
+        const totalSft = (l * w * q) / 144;
+        const calcLabour = Math.max(minLabourCharges, totalSft * labourRate);
+        setManualLabour(Math.round(calcLabour).toString());
+      } else {
+        setManualLabour('');
+      }
+    }
+  }, [manualLength, manualWidth, manualQty, labourRate, minLabourCharges, isLabourManuallyEdited, isEstimationDialogOpen]);
   
   useEffect(() => {
     setIsClient(true);
@@ -155,6 +184,8 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
+          setLabourRate(data.labourRate ?? 3);
+          setMinLabourCharges(data.minLabourCharges ?? 200);
 
           if (!isDataLoaded && data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
@@ -162,7 +193,12 @@ export default function GraniteGridPage() {
               measurements: sheet.measurements || Array(INITIAL_ROWS).fill({ length: '', width: '' }),
             }));
             const initialActiveId = data.activeSheetId || cleanedSheets[0]?.id;
-            form.reset({ sheets: cleanedSheets, activeSheetId: initialActiveId });
+            form.reset({ 
+                sheets: cleanedSheets, 
+                activeSheetId: initialActiveId,
+                labourCharges: data.labourCharges || '',
+                transportCharges: data.transportCharges || '',
+            });
             isDataLoaded = true;
           }
         }
@@ -189,7 +225,9 @@ export default function GraniteGridPage() {
           const userDocRef = doc(firestore, 'users', user.uid);
           setDoc(userDocRef, { 
               sheets: value.sheets,
-              activeSheetId: value.activeSheetId 
+              activeSheetId: value.activeSheetId,
+              labourCharges: value.labourCharges,
+              transportCharges: value.transportCharges,
           }, { merge: true });
         }
       });
@@ -308,6 +346,8 @@ export default function GraniteGridPage() {
     const newFormState = {
       sheets: [newSheet],
       activeSheetId: newSheet.id,
+      labourCharges: '',
+      transportCharges: '',
     };
     form.reset(newFormState);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newFormState));
@@ -316,7 +356,9 @@ export default function GraniteGridPage() {
         const userDocRef = doc(firestore, 'users', user.uid);
         setDoc(userDocRef, { 
             sheets: newFormState.sheets,
-            activeSheetId: newFormState.activeSheetId
+            activeSheetId: newFormState.activeSheetId,
+            labourCharges: '',
+            transportCharges: '',
         }, { merge: true });
     }
   };
@@ -391,14 +433,29 @@ export default function GraniteGridPage() {
       return;
     }
 
+    // Apply estimation to active sheet
     const updatedMeasurements = [...currentMeasurements, ...newPieces];
-    update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
+    update(activeSheetIndex, { 
+        ...activeSheet, 
+        measurements: updatedMeasurements,
+        color: manualColor || activeSheet.color,
+        rate: manualRate || activeSheet.rate,
+    });
+
+    // Save charges to form (which persists to local storage/db)
+    if (manualLabour) form.setValue('labourCharges', manualLabour);
+    if (manualTransport) form.setValue('transportCharges', manualTransport);
 
     setIsEstimationDialogOpen(false);
     setManualLength('');
     setManualWidth('');
     setManualQty('1');
-    toast({ title: 'Added', description: `Added ${q} piece(s) to ${activeSheet.name}.` });
+    setManualColor('');
+    setManualRate('');
+    setManualLabour('');
+    setManualTransport('');
+    setIsLabourManuallyEdited(false);
+    toast({ title: 'Estimation Applied', description: `Applied estimation to ${activeSheet.name}.` });
   };
   
   if (!isClient) {
@@ -547,29 +604,64 @@ export default function GraniteGridPage() {
             <DialogHeader>
                 <DialogTitle>Quick Estimation</DialogTitle>
                 <DialogDescription>
-                    Enter the dimensions for multiple pieces to quickly add them to your active sheet.
+                    Enter dimensions to calculate pieces, labour, and transport.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="length" className="text-right">Length (in)</Label>
-                  <Input id="length" type="number" value={manualLength} onChange={(e) => setManualLength(e.target.value)} className="col-span-3" placeholder="e.g. 102.5" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="length">Length (in)</Label>
+                      <Input id="length" type="number" value={manualLength} onChange={(e) => setManualLength(e.target.value)} placeholder="e.g. 102.5" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="width">Width (in)</Label>
+                      <Input id="width" type="number" value={manualWidth} onChange={(e) => setManualWidth(e.target.value)} placeholder="e.g. 48" />
+                    </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="width" className="text-right">Width (in)</Label>
-                  <Input id="width" type="number" value={manualWidth} onChange={(e) => setManualWidth(e.target.value)} className="col-span-3" placeholder="e.g. 48" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="qty">Quantity</Label>
+                      <Input id="qty" type="number" value={manualQty} onChange={(e) => setManualQty(e.target.value)} placeholder="Number of pieces" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="est-rate">Rate (₹)</Label>
+                      <Input id="est-rate" type="number" value={manualRate} onChange={(e) => setManualRate(e.target.value)} placeholder="Rate per SFT" />
+                    </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="qty" className="text-right">Quantity</Label>
-                  <Input id="qty" type="number" value={manualQty} onChange={(e) => setManualQty(e.target.value)} className="col-span-3" placeholder="Number of pieces" />
+                <div className="space-y-2">
+                  <Label htmlFor="est-color">Color Name</Label>
+                  <Input id="est-color" value={manualColor} onChange={(e) => setManualColor(e.target.value)} placeholder="Enter color name" />
                 </div>
-                <div className="text-sm text-muted-foreground text-center mt-2">
-                   Total SFT: {((parseFloat(manualLength) * parseFloat(manualWidth) * (parseInt(manualQty) || 0)) / 144 || 0).toFixed(2)}
+                
+                <Separator />
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="est-labour">Labour Charges (₹)</Label>
+                      <Input 
+                        id="est-labour" 
+                        type="number" 
+                        value={manualLabour} 
+                        onChange={(e) => {
+                            setManualLabour(e.target.value);
+                            setIsLabourManuallyEdited(true);
+                        }} 
+                        placeholder="Automatic..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="est-transport">Transport (₹)</Label>
+                      <Input id="est-transport" type="number" value={manualTransport} onChange={(e) => setManualTransport(e.target.value)} placeholder="Transport cost" />
+                    </div>
+                </div>
+
+                <div className="text-sm font-semibold text-primary text-center mt-2 p-2 bg-primary/5 rounded">
+                   Total Estimation SFT: {((parseFloat(manualLength) * parseFloat(manualWidth) * (parseInt(manualQty) || 0)) / 144 || 0).toFixed(2)}
                 </div>
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEstimationDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddManualEstimation}>Add to Sheet</Button>
+                <Button onClick={handleAddManualEstimation}>Apply to {activeSheet?.name}</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
