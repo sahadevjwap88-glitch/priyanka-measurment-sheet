@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,21 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
 
 
 const measurementSchema = z.object({
@@ -102,18 +93,6 @@ export default function GraniteGridPage() {
   const [contactName, setContactName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
-  const [labourRate, setLabourRate] = useState(3);
-  const [minLabourCharges, setMinLabourCharges] = useState(200);
-
-  // Estimation Dialog State
-  const [isEstimationDialogOpen, setIsEstimationDialogOpen] = useState(false);
-  const [manualSft, setManualSft] = useState('');
-  const [manualColor, setManualColor] = useState('');
-  const [manualRate, setManualRate] = useState('');
-  const [manualLabour, setManualLabour] = useState('');
-  const [manualTransport, setManualTransport] = useState('');
-  const [isLabourManuallyEdited, setIsLabourManuallyEdited] = useState(false);
-
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -133,20 +112,6 @@ export default function GraniteGridPage() {
   const activeSheetIndex = fields.findIndex(s => s.id === activeSheetId);
   const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
 
-  // Auto-calculate labour in estimation dialog based on SFT
-  useEffect(() => {
-    if (!isLabourManuallyEdited && isEstimationDialogOpen) {
-      const sft = parseFloat(manualSft);
-      
-      if (!isNaN(sft) && sft > 0) {
-        const calcLabour = Math.max(minLabourCharges, sft * labourRate);
-        setManualLabour(Math.round(calcLabour).toString());
-      } else {
-        setManualLabour('');
-      }
-    }
-  }, [manualSft, labourRate, minLabourCharges, isLabourManuallyEdited, isEstimationDialogOpen]);
-  
   useEffect(() => {
     setIsClient(true);
     let isDataLoaded = false;
@@ -179,8 +144,6 @@ export default function GraniteGridPage() {
           setContactName(data.displayName || '');
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
-          setLabourRate(data.labourRate ?? 3);
-          setMinLabourCharges(data.minLabourCharges ?? 200);
 
           if (!isDataLoaded && data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
@@ -424,52 +387,6 @@ export default function GraniteGridPage() {
     
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
-
-  const handleAddManualEstimation = () => {
-    if (!activeSheet) return;
-    const sft = parseFloat(manualSft);
-
-    if (isNaN(sft) || sft <= 0) {
-      toast({ variant: 'destructive', title: 'Invalid SFT', description: 'Please enter a valid total area greater than 0.' });
-      return;
-    }
-
-    // Since we only have SFT now, we add one representative row that equals that SFT.
-    // L * W / 144 = SFT. If we set W = 144, then L = SFT.
-    const newPiece = { length: sft.toString(), width: "144" };
-    const currentMeasurements = activeSheet.measurements || [];
-
-    if (currentMeasurements.length + 1 > MAX_ROWS) {
-      toast({
-        variant: 'destructive',
-        title: 'Limit Reached',
-        description: `Too many rows. Maximum is ${MAX_ROWS}.`
-      });
-      return;
-    }
-
-    // Apply estimation to active sheet
-    const updatedMeasurements = [...currentMeasurements, newPiece];
-    update(activeSheetIndex, { 
-        ...activeSheet, 
-        measurements: updatedMeasurements,
-        color: manualColor || activeSheet.color,
-        rate: manualRate || activeSheet.rate,
-    });
-
-    // Save charges to form
-    if (manualLabour) form.setValue('labourCharges', manualLabour);
-    if (manualTransport) form.setValue('transportCharges', manualTransport);
-
-    setIsEstimationDialogOpen(false);
-    setManualSft('');
-    setManualColor('');
-    setManualRate('');
-    setManualLabour('');
-    setManualTransport('');
-    setIsLabourManuallyEdited(false);
-    toast({ title: 'Estimation Applied', description: `Applied estimation to ${activeSheet.name}.` });
-  };
   
   if (!isClient) {
     return null; 
@@ -531,7 +448,7 @@ export default function GraniteGridPage() {
                     <Eye className="mr-2" />
                     Bill
                 </Button>
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => setIsEstimationDialogOpen(true))}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => router.push('/estimation'))}>
                     <Calculator className="mr-2" />
                     Estimation
                 </Button>
@@ -611,66 +528,6 @@ export default function GraniteGridPage() {
           )}
         </div>
       </Card>
-
-      <Dialog open={isEstimationDialogOpen} onOpenChange={setIsEstimationDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>Quick Estimation</DialogTitle>
-                <DialogDescription>
-                    Enter total area to calculate labour and transport.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="est-sft">Total SFT</Label>
-                      <Input 
-                        id="est-sft" 
-                        type="number" 
-                        value={manualSft} 
-                        onChange={(e) => setManualSft(e.target.value)} 
-                        placeholder="e.g. 150.5" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="est-rate">Rate (₹)</Label>
-                      <Input id="est-rate" type="number" value={manualRate} onChange={(e) => setManualRate(e.target.value)} placeholder="Rate per SFT" />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="est-color">Color Name</Label>
-                  <Input id="est-color" value={manualColor} onChange={(e) => setManualColor(e.target.value)} placeholder="Enter color name" />
-                </div>
-                
-                <Separator />
-                
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="est-labour">Labour Charges (₹)</Label>
-                      <Input 
-                        id="est-labour" 
-                        type="number" 
-                        value={manualLabour} 
-                        onChange={(e) => {
-                            setManualLabour(e.target.value);
-                            setIsLabourManuallyEdited(true);
-                        }} 
-                        placeholder="Automatic..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="est-transport">Transport (₹)</Label>
-                      <Input id="est-transport" type="number" value={manualTransport} onChange={(e) => setManualTransport(e.target.value)} placeholder="Transport cost" />
-                    </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEstimationDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddManualEstimation}>Apply to {activeSheet?.name}</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
 
       <footer className="text-center text-sm text-muted-foreground py-4">
         Priyanka Granites
