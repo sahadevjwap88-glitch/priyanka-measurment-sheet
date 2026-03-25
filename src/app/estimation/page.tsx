@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, Download, Calculator, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Download, Calculator, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import AuthGuard from '@/components/auth-guard';
 import jsPDF from 'jspdf';
@@ -31,7 +30,6 @@ interface EstimationItem {
 function EstimationPage() {
     const { user } = useUser();
     const firestore = useFirestore();
-    const router = useRouter();
 
     // Settings from Profile
     const [labourRate, setLabourRate] = useState(3);
@@ -39,7 +37,6 @@ function EstimationPage() {
     const [businessName, setBusinessName] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [address, setAddress] = useState('');
 
     // Form State
     const [customerName, setCustomerName] = useState('');
@@ -54,7 +51,6 @@ function EstimationPage() {
     const [transportCharges, setTransportCharges] = useState('');
     const [discount, setDiscount] = useState('');
     const [isLabourManuallyEdited, setIsLabourManuallyEdited] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
 
     // Load Settings
     useEffect(() => {
@@ -68,7 +64,6 @@ function EstimationPage() {
                     setBusinessName(data.businessName || 'Priyanka Granites');
                     setDisplayName(data.displayName || '');
                     setPhoneNumber(data.phoneNumber || '');
-                    setAddress(data.address || '');
                 }
             });
         }
@@ -115,53 +110,6 @@ function EstimationPage() {
 
     const addRow = () => {
         setItems([...items, { id: Date.now().toString(), nameColor: '', sft: '', rate: '' }]);
-    };
-
-    const handleSaveAsSale = async () => {
-        if (!user || !firestore) {
-            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save.' });
-            return;
-        }
-
-        const validItems = items.filter(item => (parseFloat(item.sft) || 0) > 0);
-        if (validItems.length === 0) {
-            toast({ variant: 'destructive', title: 'Invalid Data', description: 'At least one item with SFT > 0 is required.' });
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            const saleData = {
-                partyName: customerName || 'Quick Estimate',
-                partyPhoneNumber: '',
-                labourCharges: Math.round(labVal),
-                transportCharges: Math.round(transVal),
-                discount: Math.round(discVal),
-                sheets: validItems.map(item => ({
-                    id: `est_${item.id}`,
-                    name: 'Estimation',
-                    color: item.nameColor || 'N/A',
-                    rate: parseFloat(item.rate) || 0,
-                    measurements: [{ length: item.sft, width: "144" }]
-                })),
-                subtotal: Math.round(subtotal),
-                grandTotal: Math.round(grandTotal),
-                createdAt: Timestamp.now(),
-                paymentType: 'cash',
-                amountPaid: 0,
-                balance: Math.round(grandTotal),
-                payments: [],
-            };
-
-            await addDoc(collection(firestore, 'users', user.uid, 'sales'), saleData);
-            toast({ title: 'Success', description: 'Estimation saved to sales records.' });
-            router.push('/sales');
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save estimation.' });
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const handleExportPdf = () => {
@@ -381,11 +329,7 @@ function EstimationPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex gap-4 border-t pt-6">
-                        <Button className="flex-1 h-12 text-lg" onClick={handleSaveAsSale} disabled={isSaving || subtotal <= 0}>
-                            <Save className="mr-2 h-5 w-5" />
-                            {isSaving ? 'Saving...' : 'Save as Sale'}
-                        </Button>
-                        <Button variant="outline" className="flex-1 h-12 text-lg" onClick={handleExportPdf} disabled={subtotal <= 0}>
+                        <Button className="flex-1 h-12 text-lg" onClick={handleExportPdf} disabled={subtotal <= 0}>
                             <Download className="mr-2 h-5 w-5" />
                             Export PDF
                         </Button>
