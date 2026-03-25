@@ -188,25 +188,24 @@ function EstimationPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background p-4 sm:p-8">
-            <div className="max-w-4xl mx-auto space-y-6">
-                <header className="flex justify-between items-center">
+        <div className="min-h-screen bg-background">
+            <div className="w-full space-y-4">
+                <header className="flex justify-between items-center p-4">
                     <div>
-                        <h1 className="text-3xl font-bold flex items-center gap-2">
-                            <Calculator className="h-8 w-8 text-primary" />
+                        <h1 className="text-2xl font-bold flex items-center gap-2">
+                            <Calculator className="h-6 w-6 text-primary" />
                             Quick Estimation
                         </h1>
-                        <p className="text-muted-foreground">Manual multi-item project quote.</p>
                     </div>
                     <Link href="/" passHref>
-                        <Button variant="outline">
+                        <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
                         </Button>
                     </Link>
                 </header>
 
-                <Card>
+                <Card className="rounded-none border-x-0 sm:border-x sm:rounded-lg sm:mx-4">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                         <div className="flex-1 flex items-center gap-4">
                             <Label htmlFor="customer-name" className="text-lg font-semibold whitespace-nowrap">Customer Name</Label>
@@ -219,8 +218,8 @@ function EstimationPage() {
                             />
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="rounded-md border overflow-x-auto">
+                    <CardContent className="p-0 sm:p-6 space-y-6">
+                        <div className="border-y sm:rounded-md sm:border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
@@ -265,7 +264,7 @@ function EstimationPage() {
                                                         placeholder="0"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right font-semibold">
+                                                <TableCell className="text-right font-semibold pr-4">
                                                     ₹{Math.round(itemTotal)}
                                                 </TableCell>
                                             </TableRow>
@@ -275,14 +274,14 @@ function EstimationPage() {
                             </Table>
                         </div>
                         
-                        <div className="flex justify-start">
+                        <div className="flex justify-start px-4 sm:px-0">
                             <Button variant="ghost" size="sm" onClick={addRow} className="text-primary hover:text-primary/80">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Row
                             </Button>
                         </div>
 
-                        <div className="space-y-4 pt-4">
+                        <div className="space-y-4 pt-4 px-4 sm:px-0">
                             <div className="flex items-center justify-end gap-4">
                                 <Label htmlFor="labour" className="text-lg font-medium">Labour</Label>
                                 <Input 
@@ -328,7 +327,7 @@ function EstimationPage() {
                             </div>
                         </div>
                     </CardContent>
-                    <CardFooter className="flex gap-4 border-t pt-6">
+                    <CardFooter className="flex gap-4 border-t p-4 sm:p-6">
                         <Button className="flex-1 h-12 text-lg" onClick={handleExportPdf} disabled={subtotal <= 0}>
                             <Download className="mr-2 h-5 w-5" />
                             Export PDF
@@ -339,7 +338,7 @@ function EstimationPage() {
                     </CardFooter>
                 </Card>
 
-                <footer className="text-center text-sm text-muted-foreground pt-8">
+                <footer className="text-center text-sm text-muted-foreground py-8">
                     {businessName} - Professional Estimation Tool
                 </footer>
             </div>
