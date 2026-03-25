@@ -107,9 +107,7 @@ export default function GraniteGridPage() {
 
   // Estimation Dialog State
   const [isEstimationDialogOpen, setIsEstimationDialogOpen] = useState(false);
-  const [manualLength, setManualLength] = useState('');
-  const [manualWidth, setManualWidth] = useState('');
-  const [manualQty, setManualQty] = useState('1');
+  const [manualSft, setManualSft] = useState('');
   const [manualColor, setManualColor] = useState('');
   const [manualRate, setManualRate] = useState('');
   const [manualLabour, setManualLabour] = useState('');
@@ -135,22 +133,19 @@ export default function GraniteGridPage() {
   const activeSheetIndex = fields.findIndex(s => s.id === activeSheetId);
   const activeSheet = activeSheetIndex !== -1 ? watchedSheets?.[activeSheetIndex] : undefined;
 
-  // Auto-calculate labour in estimation dialog
+  // Auto-calculate labour in estimation dialog based on SFT
   useEffect(() => {
     if (!isLabourManuallyEdited && isEstimationDialogOpen) {
-      const l = parseFloat(manualLength);
-      const w = parseFloat(manualWidth);
-      const q = parseInt(manualQty) || 0;
+      const sft = parseFloat(manualSft);
       
-      if (!isNaN(l) && !isNaN(w) && q > 0) {
-        const totalSft = (l * w * q) / 144;
-        const calcLabour = Math.max(minLabourCharges, totalSft * labourRate);
+      if (!isNaN(sft) && sft > 0) {
+        const calcLabour = Math.max(minLabourCharges, sft * labourRate);
         setManualLabour(Math.round(calcLabour).toString());
       } else {
         setManualLabour('');
       }
     }
-  }, [manualLength, manualWidth, manualQty, labourRate, minLabourCharges, isLabourManuallyEdited, isEstimationDialogOpen]);
+  }, [manualSft, labourRate, minLabourCharges, isLabourManuallyEdited, isEstimationDialogOpen]);
   
   useEffect(() => {
     setIsClient(true);
@@ -203,7 +198,7 @@ export default function GraniteGridPage() {
           }
         }
       }).catch(err => {
-        // Handled centrally or silently if not critical
+        // Handled centrally
       }).finally(() => {
         if (!isDataLoaded) {
           handleClearAll(false);
@@ -432,19 +427,19 @@ export default function GraniteGridPage() {
 
   const handleAddManualEstimation = () => {
     if (!activeSheet) return;
-    const l = parseFloat(manualLength);
-    const w = parseFloat(manualWidth);
-    const q = parseInt(manualQty) || 1;
+    const sft = parseFloat(manualSft);
 
-    if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0) {
-      toast({ variant: 'destructive', title: 'Invalid Dimensions', description: 'Please enter valid numbers greater than 0.' });
+    if (isNaN(sft) || sft <= 0) {
+      toast({ variant: 'destructive', title: 'Invalid SFT', description: 'Please enter a valid total area greater than 0.' });
       return;
     }
 
-    const newPieces = Array(q).fill({ length: manualLength, width: manualWidth });
+    // Since we only have SFT now, we add one representative row that equals that SFT.
+    // L * W / 144 = SFT. If we set W = 144, then L = SFT.
+    const newPiece = { length: sft.toString(), width: "144" };
     const currentMeasurements = activeSheet.measurements || [];
 
-    if (currentMeasurements.length + newPieces.length > MAX_ROWS) {
+    if (currentMeasurements.length + 1 > MAX_ROWS) {
       toast({
         variant: 'destructive',
         title: 'Limit Reached',
@@ -454,7 +449,7 @@ export default function GraniteGridPage() {
     }
 
     // Apply estimation to active sheet
-    const updatedMeasurements = [...currentMeasurements, ...newPieces];
+    const updatedMeasurements = [...currentMeasurements, newPiece];
     update(activeSheetIndex, { 
         ...activeSheet, 
         measurements: updatedMeasurements,
@@ -462,14 +457,12 @@ export default function GraniteGridPage() {
         rate: manualRate || activeSheet.rate,
     });
 
-    // Save charges to form (which persists to local storage/db)
+    // Save charges to form
     if (manualLabour) form.setValue('labourCharges', manualLabour);
     if (manualTransport) form.setValue('transportCharges', manualTransport);
 
     setIsEstimationDialogOpen(false);
-    setManualLength('');
-    setManualWidth('');
-    setManualQty('1');
+    setManualSft('');
     setManualColor('');
     setManualRate('');
     setManualLabour('');
@@ -624,24 +617,20 @@ export default function GraniteGridPage() {
             <DialogHeader>
                 <DialogTitle>Quick Estimation</DialogTitle>
                 <DialogDescription>
-                    Enter dimensions to calculate pieces, labour, and transport.
+                    Enter total area to calculate labour and transport.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="length">Length (in)</Label>
-                      <Input id="length" type="number" value={manualLength} onChange={(e) => setManualLength(e.target.value)} placeholder="e.g. 102.5" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="width">Width (in)</Label>
-                      <Input id="width" type="number" value={manualWidth} onChange={(e) => setManualWidth(e.target.value)} placeholder="e.g. 48" />
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="qty">Quantity</Label>
-                      <Input id="qty" type="number" value={manualQty} onChange={(e) => setManualQty(e.target.value)} placeholder="Number of pieces" />
+                      <Label htmlFor="est-sft">Total SFT</Label>
+                      <Input 
+                        id="est-sft" 
+                        type="number" 
+                        value={manualSft} 
+                        onChange={(e) => setManualSft(e.target.value)} 
+                        placeholder="e.g. 150.5" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="est-rate">Rate (₹)</Label>
@@ -673,10 +662,6 @@ export default function GraniteGridPage() {
                       <Label htmlFor="est-transport">Transport (₹)</Label>
                       <Input id="est-transport" type="number" value={manualTransport} onChange={(e) => setManualTransport(e.target.value)} placeholder="Transport cost" />
                     </div>
-                </div>
-
-                <div className="text-sm font-semibold text-primary text-center mt-2 p-2 bg-primary/5 rounded">
-                   Total Estimation SFT: {((parseFloat(manualLength) * parseFloat(manualWidth) * (parseInt(manualQty) || 0)) / 144 || 0).toFixed(2)}
                 </div>
             </div>
             <DialogFooter>
