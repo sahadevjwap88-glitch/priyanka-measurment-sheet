@@ -220,12 +220,12 @@ function EstimationPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="rounded-md border">
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50">
                                         <TableHead className="w-16 text-center">S.No</TableHead>
-                                        <TableHead>Name Color</TableHead>
+                                        <TableHead className="min-w-[300px]">Name Color</TableHead>
                                         <TableHead className="w-32 text-right">SFT</TableHead>
                                         <TableHead className="w-32 text-right">Rate</TableHead>
                                         <TableHead className="w-40 text-right">Total</TableHead>
@@ -239,12 +239,12 @@ function EstimationPage() {
                                         return (
                                             <TableRow key={item.id}>
                                                 <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                                                <TableCell>
+                                                <TableCell className="min-w-[300px]">
                                                     <Input 
                                                         value={item.nameColor} 
                                                         onChange={(e) => handleItemChange(index, 'nameColor', e.target.value)}
-                                                        placeholder="e.g. Black Galaxy"
-                                                        className="h-8 border-none focus-visible:ring-0 px-0"
+                                                        placeholder="e.g. Black Galaxy Granite"
+                                                        className="h-8 border-none focus-visible:ring-0 px-0 w-full"
                                                     />
                                                 </TableCell>
                                                 <TableCell>
