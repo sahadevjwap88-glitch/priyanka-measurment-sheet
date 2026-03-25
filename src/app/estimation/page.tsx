@@ -219,8 +219,8 @@ function EstimationPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                                <TableHead className="w-12 text-center h-8 px-1 text-xs text-primary">S.No</TableHead>
-                                                <TableHead className="min-w-[200px] h-8 px-2 text-xs">Name Color</TableHead>
+                                                <TableHead className="w-12 text-center h-8 px-1 text-xs text-primary font-bold">S.No</TableHead>
+                                                <TableHead className="min-w-[200px] h-8 px-2 text-xs text-primary font-bold">Name Color</TableHead>
                                                 <TableHead className="w-24 text-right h-8 px-2 text-xs">SFT</TableHead>
                                                 <TableHead className="w-24 text-right h-8 px-2 text-xs">Rate</TableHead>
                                                 <TableHead className="w-28 text-right h-8 px-2 text-xs">Total</TableHead>
