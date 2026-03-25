@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -7,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, ScanLine } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, Calculator } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,9 +37,8 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { extractMeasurements } from '@/ai/flows/extract-measurements-flow';
+import { estimateProject } from '@/ai/flows/estimation-flow';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from './ui/separator';
 
 
 const measurementSchema = z.object({
@@ -101,9 +99,9 @@ export default function GraniteGridPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
 
-  // Scan Dialog State
+  // Estimation Dialog State
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [isEstimationDialogOpen, setIsEstimationDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
 
@@ -130,7 +128,6 @@ export default function GraniteGridPage() {
     setIsClient(true);
     let isDataLoaded = false;
   
-    // Always prioritize loading from local storage for offline-first approach.
     const loadFromLocalStorage = () => {
       const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedData) {
@@ -139,16 +136,15 @@ export default function GraniteGridPage() {
           if (parsedData && parsedData.sheets && parsedData.sheets.length > 0) {
             form.reset(parsedData);
             isDataLoaded = true;
-            return true; // Indicate success
+            return true;
           }
         } catch (e) {
           console.error("Failed to parse local storage data", e);
         }
       }
-      return false; // Indicate failure
+      return false;
     };
   
-    // Load from local storage first.
     loadFromLocalStorage();
 
     if (user && firestore) {
@@ -161,7 +157,6 @@ export default function GraniteGridPage() {
           setPhoneNumber(data.phoneNumber || '');
           setAddress(data.address || '');
 
-          // If no local data was loaded, try loading from Firestore
           if (!isDataLoaded && data.sheets && data.sheets.length > 0) {
             const cleanedSheets = data.sheets.map((sheet: any) => ({
               ...sheet,
@@ -175,7 +170,6 @@ export default function GraniteGridPage() {
       }).catch(err => {
         console.error("Error fetching user document:", err);
       }).finally(() => {
-        // If still no data loaded (e.g., new user), reset to default.
         if (!isDataLoaded) {
           handleClearAll(false);
         }
@@ -191,10 +185,7 @@ export default function GraniteGridPage() {
   useEffect(() => {
     if (isClient) {
       const subscription = form.watch((value) => {
-        // Always save to local storage. This is the primary data store for the free/offline experience.
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
-        
-        // If the user is logged in, also sync the data to Firestore.
         if (user && firestore) {
           const userDocRef = doc(firestore, 'users', user.uid);
           setDoc(userDocRef, { 
@@ -255,7 +246,6 @@ export default function GraniteGridPage() {
       }
       isFirstPage = false;
       
-      // Business Header
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text(businessName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
@@ -287,7 +277,6 @@ export default function GraniteGridPage() {
           3: { halign: 'right' },
         },
         didDrawPage: (data) => {
-            // Footer
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFontSize(10);
             doc.setTextColor(150);
@@ -322,7 +311,6 @@ export default function GraniteGridPage() {
       activeSheetId: newSheet.id,
     };
     form.reset(newFormState);
-     // Also update local storage for bill page
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newFormState));
 
     if (user && firestore && saveToDb) {
@@ -387,11 +375,10 @@ export default function GraniteGridPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImageDataUri(e.target?.result as string);
-        setIsScanDialogOpen(true);
+        setIsEstimationDialogOpen(true);
       };
       reader.readAsDataURL(file);
     }
-    // Reset file input to allow selecting the same file again
     if (event.target) {
         event.target.value = '';
     }
@@ -399,17 +386,17 @@ export default function GraniteGridPage() {
 
   const handleProcessImage = async () => {
     if (!imageDataUri) {
-        toast({ variant: 'destructive', title: 'No Image', description: 'Please capture or upload an image first.' });
+        toast({ variant: 'destructive', title: 'No Image', description: 'Please provide an image for estimation.' });
         return;
     }
     setIsProcessing(true);
     try {
-        const result = await extractMeasurements({ photoDataUri: imageDataUri });
+        const result = await estimateProject({ photoDataUri: imageDataUri });
 
-        const targetSheetIndex = 0; // Always target Sheet 1
+        const targetSheetIndex = 0;
         const targetSheet = fields[targetSheetIndex];
         if (!targetSheet) {
-            toast({ variant: "destructive", title: "Sheet 1 Not Found", description: "Could not find 'Sheet 1' to paste data into." });
+            toast({ variant: "destructive", title: "Sheet 1 Not Found", description: "Could not find 'Sheet 1' to update." });
             return;
         }
 
@@ -432,13 +419,13 @@ export default function GraniteGridPage() {
         form.setValue('activeSheetId', targetSheet.id, { shouldDirty: true });
 
         toast({
-            title: 'Scan Complete',
-            description: `Pasted ${result.measurements.length} measurements into Sheet 1.`,
+            title: 'Estimation Complete',
+            description: `Estimated ${result.measurements.length} pieces. Data applied to Sheet 1.`,
         });
-        setIsScanDialogOpen(false);
+        setIsEstimationDialogOpen(false);
     } catch (error) {
-        console.error('Failed to process image', error);
-        toast({ variant: 'destructive', title: 'Scan Failed', description: 'Could not extract measurements. Please try a clearer image.' });
+        console.error('Failed to process estimation', error);
+        toast({ variant: 'destructive', title: 'Estimation Failed', description: 'Could not complete project estimation. Please try a clearer image.' });
     } finally {
         setIsProcessing(false);
     }
@@ -473,7 +460,7 @@ export default function GraniteGridPage() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all your data from the database and local storage.
+                            This will permanently delete all your data.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -505,8 +492,8 @@ export default function GraniteGridPage() {
                     Bill
                 </Button>
                  <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => fileInputRef.current?.click())}>
-                    <ScanLine className="mr-2" />
-                    Scan
+                    <Calculator className="mr-2" />
+                    Estimation
                 </Button>
             </div>
           </div>
@@ -542,12 +529,6 @@ export default function GraniteGridPage() {
                               type="number"
                               placeholder="Enter rate"
                               {...form.register(`sheets.${sheetIndex}.rate`)}
-                              onChange={(e) => {
-                                if (e.target.value.length > 4) {
-                                  e.target.value = e.target.value.slice(0, 4);
-                                }
-                                form.setValue(`sheets.${sheetIndex}.rate`, e.target.value, { shouldValidate: true });
-                              }}
                               className="w-[70px]"
                             />
                         </div>
@@ -599,8 +580,8 @@ export default function GraniteGridPage() {
         </div>
       </Card>
 
-      <Dialog open={isScanDialogOpen} onOpenChange={(isOpen) => {
-          setIsScanDialogOpen(isOpen);
+      <Dialog open={isEstimationDialogOpen} onOpenChange={(isOpen) => {
+          setIsEstimationDialogOpen(isOpen);
           if (!isOpen) {
               setImageDataUri(null);
               setIsProcessing(false);
@@ -608,26 +589,26 @@ export default function GraniteGridPage() {
       }}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>Scan Measurements</DialogTitle>
+                <DialogTitle>Project Estimation</DialogTitle>
                 <DialogDescription>
-                    The AI will extract data from the selected image and paste it into Sheet 1.
+                    AI will analyze your photo or site drawing to estimate measurements.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 {isProcessing ? (
                     <div className="flex flex-col items-center justify-center gap-4">
-                        <p>Processing image, please wait...</p>
+                        <p>AI is calculating estimation...</p>
                         <Progress value={50} className="w-full animate-pulse" />
                     </div>
                 ) : imageDataUri ? (
                     <div className="space-y-4">
-                        <img src={imageDataUri} alt="Uploaded preview" className="rounded-md" />
+                        <img src={imageDataUri} alt="Estimation source" className="rounded-md max-h-[300px] object-contain w-full" />
                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setIsScanDialogOpen(false)} className="flex-1">
+                            <Button variant="outline" onClick={() => setIsEstimationDialogOpen(false)} className="flex-1">
                                 Cancel
                             </Button>
                             <Button onClick={handleProcessImage} className="flex-1">
-                                Process Image
+                                Run Estimation
                             </Button>
                         </div>
                     </div>
