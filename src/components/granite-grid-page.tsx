@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -37,8 +38,6 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { estimateProject } from '@/ai/flows/estimation-flow';
-import { Progress } from '@/components/ui/progress';
 
 
 const measurementSchema = z.object({
@@ -100,10 +99,10 @@ export default function GraniteGridPage() {
   const [address, setAddress] = useState('');
 
   // Estimation Dialog State
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEstimationDialogOpen, setIsEstimationDialogOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [manualLength, setManualLength] = useState('');
+  const [manualWidth, setManualWidth] = useState('');
+  const [manualQty, setManualQty] = useState('1');
 
 
   const form = useForm<FormValues>({
@@ -369,66 +368,37 @@ export default function GraniteGridPage() {
     update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImageDataUri(e.target?.result as string);
-        setIsEstimationDialogOpen(true);
-      };
-      reader.readAsDataURL(file);
+  const handleAddManualEstimation = () => {
+    if (!activeSheet) return;
+    const l = parseFloat(manualLength);
+    const w = parseFloat(manualWidth);
+    const q = parseInt(manualQty) || 1;
+
+    if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0) {
+      toast({ variant: 'destructive', title: 'Invalid Dimensions', description: 'Please enter valid numbers greater than 0.' });
+      return;
     }
-    if (event.target) {
-        event.target.value = '';
+
+    const newPieces = Array(q).fill({ length: manualLength, width: manualWidth });
+    const currentMeasurements = activeSheet.measurements || [];
+
+    if (currentMeasurements.length + newPieces.length > MAX_ROWS) {
+      toast({
+        variant: 'destructive',
+        title: 'Limit Reached',
+        description: `Too many rows. Maximum is ${MAX_ROWS}.`
+      });
+      return;
     }
-  };
 
-  const handleProcessImage = async () => {
-    if (!imageDataUri) {
-        toast({ variant: 'destructive', title: 'No Image', description: 'Please provide an image for estimation.' });
-        return;
-    }
-    setIsProcessing(true);
-    try {
-        const result = await estimateProject({ photoDataUri: imageDataUri });
+    const updatedMeasurements = [...currentMeasurements, ...newPieces];
+    update(activeSheetIndex, { ...activeSheet, measurements: updatedMeasurements });
 
-        const targetSheetIndex = 0;
-        const targetSheet = fields[targetSheetIndex];
-        if (!targetSheet) {
-            toast({ variant: "destructive", title: "Sheet 1 Not Found", description: "Could not find 'Sheet 1' to update." });
-            return;
-        }
-
-        let newMeasurements = result.measurements.map(m => ({ length: m.length || '', width: m.width || '' }));
-
-        const originalRowCount = watchedSheets[targetSheetIndex].measurements.length;
-        const requiredRows = Math.max(originalRowCount, newMeasurements.length);
-
-        if (newMeasurements.length < requiredRows) {
-            const diff = requiredRows - newMeasurements.length;
-            newMeasurements.push(...Array(diff).fill({ length: '', width: '' }));
-        }
-
-        if(newMeasurements.length > MAX_ROWS) {
-          newMeasurements = newMeasurements.slice(0, MAX_ROWS);
-        }
-
-        const updatedSheet = { ...watchedSheets[targetSheetIndex], measurements: newMeasurements };
-        update(targetSheetIndex, updatedSheet);
-        form.setValue('activeSheetId', targetSheet.id, { shouldDirty: true });
-
-        toast({
-            title: 'Estimation Complete',
-            description: `Estimated ${result.measurements.length} pieces. Data applied to Sheet 1.`,
-        });
-        setIsEstimationDialogOpen(false);
-    } catch (error) {
-        console.error('Failed to process estimation', error);
-        toast({ variant: 'destructive', title: 'Estimation Failed', description: 'Could not complete project estimation. Please try a clearer image.' });
-    } finally {
-        setIsProcessing(false);
-    }
+    setIsEstimationDialogOpen(false);
+    setManualLength('');
+    setManualWidth('');
+    setManualQty('1');
+    toast({ title: 'Added', description: `Added ${q} piece(s) to ${activeSheet.name}.` });
   };
   
   if (!isClient) {
@@ -491,21 +461,13 @@ export default function GraniteGridPage() {
                     <Eye className="mr-2" />
                     Bill
                 </Button>
-                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => fileInputRef.current?.click())}>
+                 <Button variant="default" className="w-full h-10 px-1 flex-1" onClick={() => handleProtectedAction(() => setIsEstimationDialogOpen(true))}>
                     <Calculator className="mr-2" />
                     Estimation
                 </Button>
             </div>
           </div>
           
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
           {fields.length > 0 && (
             <Tabs value={activeSheetId} onValueChange={(id) => form.setValue('activeSheetId', id)} className="mt-4">
                 <TabsList>
@@ -580,40 +542,35 @@ export default function GraniteGridPage() {
         </div>
       </Card>
 
-      <Dialog open={isEstimationDialogOpen} onOpenChange={(isOpen) => {
-          setIsEstimationDialogOpen(isOpen);
-          if (!isOpen) {
-              setImageDataUri(null);
-              setIsProcessing(false);
-          }
-      }}>
+      <Dialog open={isEstimationDialogOpen} onOpenChange={setIsEstimationDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle>Project Estimation</DialogTitle>
+                <DialogTitle>Quick Estimation</DialogTitle>
                 <DialogDescription>
-                    AI will analyze your photo or site drawing to estimate measurements.
+                    Enter the dimensions for multiple pieces to quickly add them to your active sheet.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                {isProcessing ? (
-                    <div className="flex flex-col items-center justify-center gap-4">
-                        <p>AI is calculating estimation...</p>
-                        <Progress value={50} className="w-full animate-pulse" />
-                    </div>
-                ) : imageDataUri ? (
-                    <div className="space-y-4">
-                        <img src={imageDataUri} alt="Estimation source" className="rounded-md max-h-[300px] object-contain w-full" />
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setIsEstimationDialogOpen(false)} className="flex-1">
-                                Cancel
-                            </Button>
-                            <Button onClick={handleProcessImage} className="flex-1">
-                                Run Estimation
-                            </Button>
-                        </div>
-                    </div>
-                ) : null}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="length" className="text-right">Length (in)</Label>
+                  <Input id="length" type="number" value={manualLength} onChange={(e) => setManualLength(e.target.value)} className="col-span-3" placeholder="e.g. 102.5" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="width" className="text-right">Width (in)</Label>
+                  <Input id="width" type="number" value={manualWidth} onChange={(e) => setManualWidth(e.target.value)} className="col-span-3" placeholder="e.g. 48" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="qty" className="text-right">Quantity</Label>
+                  <Input id="qty" type="number" value={manualQty} onChange={(e) => setManualQty(e.target.value)} className="col-span-3" placeholder="Number of pieces" />
+                </div>
+                <div className="text-sm text-muted-foreground text-center mt-2">
+                   Total SFT: {((parseFloat(manualLength) * parseFloat(manualWidth) * (parseInt(manualQty) || 0)) / 144 || 0).toFixed(2)}
+                </div>
             </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEstimationDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddManualEstimation}>Add to Sheet</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
