@@ -34,8 +34,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -167,7 +167,7 @@ export default function GraniteGridPage() {
             return true;
           }
         } catch (e) {
-          console.error("Failed to parse local storage data", e);
+          // Silent local storage error
         }
       }
       return false;
@@ -203,7 +203,7 @@ export default function GraniteGridPage() {
           }
         }
       }).catch(err => {
-        console.error("Error fetching user document:", err);
+        // Handled centrally or silently if not critical
       }).finally(() => {
         if (!isDataLoaded) {
           handleClearAll(false);
@@ -223,12 +223,22 @@ export default function GraniteGridPage() {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(value));
         if (user && firestore) {
           const userDocRef = doc(firestore, 'users', user.uid);
-          setDoc(userDocRef, { 
-              sheets: value.sheets,
-              activeSheetId: value.activeSheetId,
-              labourCharges: value.labourCharges,
-              transportCharges: value.transportCharges,
-          }, { merge: true });
+          const updatePayload = { 
+              sheets: value.sheets ?? [],
+              activeSheetId: value.activeSheetId ?? '',
+              labourCharges: value.labourCharges ?? '',
+              transportCharges: value.transportCharges ?? '',
+              updatedAt: serverTimestamp(),
+          };
+          setDoc(userDocRef, updatePayload, { merge: true })
+            .catch(async (serverError) => {
+              const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'update',
+                requestResourceData: updatePayload,
+              });
+              errorEmitter.emit('permission-error', permissionError);
+            });
         }
       });
       return () => subscription.unsubscribe();
@@ -354,12 +364,22 @@ export default function GraniteGridPage() {
 
     if (user && firestore && saveToDb) {
         const userDocRef = doc(firestore, 'users', user.uid);
-        setDoc(userDocRef, { 
+        const updatePayload = { 
             sheets: newFormState.sheets,
             activeSheetId: newFormState.activeSheetId,
             labourCharges: '',
             transportCharges: '',
-        }, { merge: true });
+            updatedAt: serverTimestamp(),
+        };
+        setDoc(userDocRef, updatePayload, { merge: true })
+          .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+              path: userDocRef.path,
+              operation: 'update',
+              requestResourceData: updatePayload,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          });
     }
   };
 

@@ -35,7 +35,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { ensureUserDocument } from '@/firebase/auth/user-document';
@@ -62,7 +61,6 @@ export default function LoginPage() {
   const firestore = useFirestore();
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
@@ -78,7 +76,6 @@ export default function LoginPage() {
   const loginEmail = form.watch('email');
 
   useEffect(() => {
-    // If a user is already authenticated, redirect them to the homepage.
     if (!isUserLoading && user) {
       router.push('/');
     } else if (!isUserLoading && !user) {
@@ -86,14 +83,11 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Handle the redirect from Google
   useEffect(() => {
-    // This effect should run only once on component mount to process the redirect result.
     if (auth && firestore) {
       getRedirectResult(auth)
         .then((result) => {
           if (result) {
-            // A user has successfully signed in via redirect.
             ensureUserDocument(firestore, result.user);
             toast({
               title: 'Sign-in successful',
@@ -102,52 +96,30 @@ export default function LoginPage() {
           }
         })
         .catch((error) => {
-          // Handle various sign-in errors
-          console.error("Sign-in redirect error:", error);
-          let title = 'Sign-in Failed';
-          let description = 'An unexpected error occurred. Please try again.';
-  
-          if (error.code === 'auth/account-exists-with-different-credential') {
-              title = 'Email already in use';
-              description = 'An account already exists with this email address using a different sign-in method. Please sign in with the original method.';
-          } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-               title = 'Sign-in Cancelled';
-               description = 'The sign-in process was cancelled or blocked by the browser.';
-          }
-          
-          toast({
+          if (error.code === 'auth/internal-error' || error.code?.includes('403')) {
+            toast({
               variant: 'destructive',
-              title: title,
-              description: description,
-              duration: 9000,
-          });
+              title: 'Google Project Configuration Error (403)',
+              description: 'This is likely because your Google Cloud project is in "Testing" mode. To fix this, go to the Google Cloud Console and set your OAuth consent screen to "Production" by clicking "PUBLISH APP".',
+              duration: 15000,
+            });
+          } else if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+              variant: 'destructive',
+              title: 'Sign-in failed',
+              description: error.message || 'An unexpected error occurred. Please try again.',
+            });
+          }
         });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth, firestore]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      if (!userCredential.user.emailVerified) {
-        setUnverifiedEmail(values.email);
-        await auth.signOut();
-        toast({
-          variant: 'destructive',
-          title: 'Email not verified',
-          description: 'Please verify your email before logging in.',
-        });
-        return;
-      }
       ensureUserDocument(firestore, userCredential.user);
-      // User will be redirected by the useEffect hook
     } catch (error: any) {
-      // Don't log expected auth errors to the console, to avoid confusion in dev overlay.
-      if (error.code !== 'auth/invalid-credential') {
-        console.error('Failed to sign in', error);
-      }
-
       let title = 'Sign-in failed';
       let description = 'An unexpected error occurred. Please try again.';
 
@@ -157,10 +129,10 @@ export default function LoginPage() {
             title = 'Incorrect Email or Password';
             description = 'The email or password you entered is incorrect. Please try again.';
             break;
-          case 'auth/operation-not-allowed':
-            title = 'Sign-in method disabled';
-            description =
-              'Email/password sign-in is not enabled. Please enable it in your Firebase project settings.';
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            title = 'Incorrect Email or Password';
+            description = 'The email or password you entered is incorrect. Please try again.';
             break;
         }
       }
@@ -175,14 +147,16 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
     try {
       await signInWithRedirect(auth, provider);
-    } catch (error) {
-      console.error("Error initiating Google sign-in redirect:", error);
-      toast({
+    } catch (error: any) {
+       toast({
           variant: 'destructive',
           title: 'Could Not Start Sign-In',
-          description: 'There was an error when trying to redirect to Google. Please check your connection and try again.',
+          description: error.message || 'There was an error when trying to redirect to Google.',
       });
     }
   };
@@ -200,7 +174,6 @@ export default function LoginPage() {
       await sendPasswordResetEmail(auth, resetEmail);
       setResetEmailSent(true);
     } catch (error: any) {
-      console.error('Password reset failed', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -218,7 +191,7 @@ export default function LoginPage() {
 
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <div className="p-8 text-center">Loading...</div>;
   }
 
   return (
@@ -229,7 +202,25 @@ export default function LoginPage() {
             <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
             <CardDescription>to access your granite measurements</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+                <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
+                  <GoogleIcon />
+                  Sign in with Google
+                </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  Or use email
+                </span>
+              </div>
+            </div>
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -269,27 +260,9 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">Sign In</Button>
+                <Button type="submit" className="w-full h-11">Sign In</Button>
               </form>
             </Form>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t"></span>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-                <Button variant="secondary" className="w-full" onClick={handleGoogleSignIn}>
-                  <GoogleIcon />
-                  Sign in with Google
-                </Button>
-            </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
@@ -298,7 +271,7 @@ export default function LoginPage() {
               </Link>
             </p>
              <Link href="/" passHref>
-                <Button variant="secondary" className="w-full mt-4">
+                <Button variant="ghost" className="w-full mt-4">
                     Skip for now
                 </Button>
             </Link>

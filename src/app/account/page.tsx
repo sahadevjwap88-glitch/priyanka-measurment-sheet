@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser, useFirestore, useAuth } from '@/firebase';
+import { useUser, useFirestore, useAuth, errorEmitter, FirestorePermissionError } from '@/firebase';
 import AuthGuard from '@/components/auth-guard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -15,7 +14,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { LogOut, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 
@@ -53,7 +52,7 @@ function AccountPage() {
                 setPhoneNumber(parsedData.phoneNumber || '');
                 setAddress(parsedData.address || '');
             } catch (e) {
-                console.error("Failed to parse local storage data on account page", e);
+                // Ignore local storage parse error
             }
         }
 
@@ -76,7 +75,6 @@ function AccountPage() {
                     }
                 })
                 .catch((error) => {
-                    console.error("Error fetching user settings:", error);
                     toast({
                         variant: "destructive",
                         title: "Error",
@@ -91,7 +89,7 @@ function AccountPage() {
         }
     }, [user, firestore]);
 
-    const handleProfileUpdate = async () => {
+    const handleProfileUpdate = () => {
         if (!user) {
             toast({
                 variant: 'destructive',
@@ -102,14 +100,15 @@ function AccountPage() {
         }
 
         const settingsToSave = {
-            displayName,
-            showLabourCharges,
-            showTransportCharges,
-            labourRate,
-            minLabourCharges,
-            businessName,
-            phoneNumber,
-            address,
+            displayName: displayName || '',
+            showLabourCharges: showLabourCharges ?? true,
+            showTransportCharges: showTransportCharges ?? true,
+            labourRate: labourRate ?? 3,
+            minLabourCharges: minLabourCharges ?? 200,
+            businessName: businessName || '',
+            phoneNumber: phoneNumber || '',
+            address: address || '',
+            updatedAt: serverTimestamp(),
         };
 
         // Save to local storage for everyone
@@ -121,7 +120,15 @@ function AccountPage() {
             // If user is logged in, also save to Firestore
             if (user && firestore) {
                 const userDocRef = doc(firestore, 'users', user.uid);
-                await setDoc(userDocRef, settingsToSave, { merge: true });
+                setDoc(userDocRef, settingsToSave, { merge: true })
+                  .catch(async (serverError) => {
+                    const permissionError = new FirestorePermissionError({
+                      path: userDocRef.path,
+                      operation: 'update',
+                      requestResourceData: settingsToSave,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                  });
             }
 
             toast({
@@ -129,7 +136,6 @@ function AccountPage() {
                 description: "Your new settings have been saved successfully.",
             });
         } catch (error) {
-            console.error("Failed to update profile", error);
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",
