@@ -148,7 +148,7 @@ function EstimationPage() {
             head: [['S.No', 'Name Color', 'SFT', 'Rate', 'Total']],
             body: tableBody,
             theme: 'grid',
-            headStyles: { fillColor: [24, 95, 53] },
+            headStyles: { fillColor: [255, 126, 0] },
             columnStyles: { 0: { halign: 'center', textColor: [255, 126, 0] }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
         });
 
