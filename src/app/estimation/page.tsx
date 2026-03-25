@@ -189,157 +189,156 @@ function EstimationPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="w-full space-y-4">
-                <header className="flex justify-between items-center p-4">
-                    <div>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Calculator className="h-6 w-6 text-primary" />
-                            Quick Estimation
-                        </h1>
-                    </div>
+            <div className="w-full space-y-2">
+                <header className="flex justify-between items-center p-2 border-b bg-card">
+                    <h1 className="text-xl font-bold flex items-center gap-2">
+                        <Calculator className="h-5 w-5 text-primary" />
+                        Quick Estimation
+                    </h1>
                     <Link href="/" passHref>
-                        <Button variant="outline" size="sm">
+                        <Button variant="ghost" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
                         </Button>
                     </Link>
                 </header>
 
-                <Card className="rounded-none border-x-0 sm:border-x sm:rounded-lg sm:mx-4">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <div className="flex-1 flex items-center gap-4">
-                            <Label htmlFor="customer-name" className="text-lg font-semibold whitespace-nowrap">Customer Name</Label>
-                            <Input 
-                                id="customer-name" 
-                                value={customerName} 
-                                onChange={(e) => setCustomerName(e.target.value)} 
-                                className="max-w-md border-b-2 border-t-0 border-x-0 rounded-none focus-visible:ring-0 px-0 h-8"
-                                placeholder="Enter customer name"
-                            />
+                <div className="px-0 sm:px-2">
+                    <Card className="rounded-none sm:rounded-md border-x-0 sm:border-x shadow-none overflow-hidden">
+                        <div className="p-2 border-b bg-muted/30">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="customer-name" className="text-sm font-semibold whitespace-nowrap">Customer Name:</Label>
+                                <Input 
+                                    id="customer-name" 
+                                    value={customerName} 
+                                    onChange={(e) => setCustomerName(e.target.value)} 
+                                    className="flex-1 max-w-md border-b border-t-0 border-x-0 rounded-none focus-visible:ring-0 px-0 h-8 bg-transparent"
+                                    placeholder="Enter customer name"
+                                />
+                            </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0 sm:p-6 space-y-6">
-                        <div className="border-y sm:rounded-md sm:border overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/50">
-                                        <TableHead className="w-16 text-center">S.No</TableHead>
-                                        <TableHead className="min-w-[300px]">Name Color</TableHead>
-                                        <TableHead className="w-32 text-right">SFT</TableHead>
-                                        <TableHead className="w-32 text-right">Rate</TableHead>
-                                        <TableHead className="w-40 text-right">Total</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.map((item, index) => {
-                                        const sft = parseFloat(item.sft) || 0;
-                                        const rate = parseFloat(item.rate) || 0;
-                                        const itemTotal = sft * rate;
-                                        return (
-                                            <TableRow key={item.id}>
-                                                <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                                                <TableCell className="min-w-[300px]">
-                                                    <Input 
-                                                        value={item.nameColor} 
-                                                        onChange={(e) => handleItemChange(index, 'nameColor', e.target.value)}
-                                                        placeholder="e.g. Black Galaxy Granite"
-                                                        className="h-8 border-none focus-visible:ring-0 px-0 w-full"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input 
-                                                        type="number"
-                                                        value={item.sft} 
-                                                        onChange={(e) => handleItemChange(index, 'sft', e.target.value)}
-                                                        className="h-8 text-right border-none focus-visible:ring-0 px-0"
-                                                        placeholder="0"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input 
-                                                        type="number"
-                                                        value={item.rate} 
-                                                        onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                                                        className="h-8 text-right border-none focus-visible:ring-0 px-0"
-                                                        placeholder="0"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right font-semibold pr-4">
-                                                    ₹{Math.round(itemTotal)}
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        
-                        <div className="flex justify-start px-4 sm:px-0">
-                            <Button variant="ghost" size="sm" onClick={addRow} className="text-primary hover:text-primary/80">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Row
-                            </Button>
-                        </div>
+                        <CardContent className="p-0 space-y-2">
+                            <div className="border-b overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                            <TableHead className="w-12 text-center h-8 px-1 text-xs">S.No</TableHead>
+                                            <TableHead className="min-w-[200px] h-8 px-2 text-xs">Name Color</TableHead>
+                                            <TableHead className="w-24 text-right h-8 px-2 text-xs">SFT</TableHead>
+                                            <TableHead className="w-24 text-right h-8 px-2 text-xs">Rate</TableHead>
+                                            <TableHead className="w-28 text-right h-8 px-2 text-xs">Total</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {items.map((item, index) => {
+                                            const sft = parseFloat(item.sft) || 0;
+                                            const rate = parseFloat(item.rate) || 0;
+                                            const itemTotal = sft * rate;
+                                            return (
+                                                <TableRow key={item.id} className="hover:bg-muted/20">
+                                                    <TableCell className="text-center font-medium py-1 px-1 h-8">{index + 1}</TableCell>
+                                                    <TableCell className="py-1 px-2 h-8">
+                                                        <Input 
+                                                            value={item.nameColor} 
+                                                            onChange={(e) => handleItemChange(index, 'nameColor', e.target.value)}
+                                                            placeholder="e.g. Black Galaxy"
+                                                            className="h-7 border-none focus-visible:ring-0 px-0 w-full bg-transparent text-sm"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="py-1 px-2 h-8">
+                                                        <Input 
+                                                            type="number"
+                                                            value={item.sft} 
+                                                            onChange={(e) => handleItemChange(index, 'sft', e.target.value)}
+                                                            className="h-7 text-right border-none focus-visible:ring-0 px-0 bg-transparent text-sm"
+                                                            placeholder="0"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="py-1 px-2 h-8">
+                                                        <Input 
+                                                            type="number"
+                                                            value={item.rate} 
+                                                            onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                                                            className="h-7 text-right border-none focus-visible:ring-0 px-0 bg-transparent text-sm"
+                                                            placeholder="0"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-semibold py-1 px-2 h-8 text-sm">
+                                                        ₹{Math.round(itemTotal)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            
+                            <div className="flex justify-start px-2">
+                                <Button variant="ghost" size="sm" onClick={addRow} className="text-primary hover:text-primary/80 h-7 text-xs">
+                                    <Plus className="mr-1 h-3 w-3" />
+                                    Add Row
+                                </Button>
+                            </div>
 
-                        <div className="space-y-4 pt-4 px-4 sm:px-0">
-                            <div className="flex items-center justify-end gap-4">
-                                <Label htmlFor="labour" className="text-lg font-medium">Labour</Label>
-                                <Input 
-                                    id="labour" 
-                                    type="number" 
-                                    value={labourCharges} 
-                                    onChange={(e) => {
-                                        setLabourCharges(e.target.value);
-                                        setIsLabourManuallyEdited(true);
-                                    }} 
-                                    className="w-48 text-right border-2 h-10 text-lg font-semibold"
-                                    placeholder="0"
-                                />
-                            </div>
-                            <div className="flex items-center justify-end gap-4">
-                                <Label htmlFor="transport" className="text-lg font-medium">Transport</Label>
-                                <Input 
-                                    id="transport" 
-                                    type="number" 
-                                    value={transportCharges} 
-                                    onChange={(e) => setTransportCharges(e.target.value)} 
-                                    className="w-48 text-right border-2 h-10 text-lg font-semibold"
-                                    placeholder="0"
-                                />
-                            </div>
-                            <div className="flex items-center justify-end gap-4">
-                                <Label htmlFor="discount" className="text-lg font-medium">Discount</Label>
-                                <Input 
-                                    id="discount" 
-                                    type="number" 
-                                    value={discount} 
-                                    onChange={(e) => setDiscount(e.target.value)} 
-                                    className="w-48 text-right border-2 h-10 text-lg font-semibold"
-                                    placeholder="0"
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-end gap-4">
-                                <Label className="text-2xl font-bold">Grand Total</Label>
-                                <div className="w-48 text-right px-3 py-2 bg-primary/10 rounded-md border-2 border-primary/20 text-2xl font-bold text-primary">
-                                    ₹{Math.round(grandTotal)}
+                            <div className="space-y-1 py-2 px-2 border-t">
+                                <div className="flex items-center justify-end gap-3">
+                                    <Label htmlFor="labour" className="text-sm font-medium">Labour</Label>
+                                    <Input 
+                                        id="labour" 
+                                        type="number" 
+                                        value={labourCharges} 
+                                        onChange={(e) => {
+                                            setLabourCharges(e.target.value);
+                                            setIsLabourManuallyEdited(true);
+                                        }} 
+                                        className="w-32 text-right border h-8 text-sm font-semibold"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-end gap-3">
+                                    <Label htmlFor="transport" className="text-sm font-medium">Transport</Label>
+                                    <Input 
+                                        id="transport" 
+                                        type="number" 
+                                        value={transportCharges} 
+                                        onChange={(e) => setTransportCharges(e.target.value)} 
+                                        className="w-32 text-right border h-8 text-sm font-semibold"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-end gap-3">
+                                    <Label htmlFor="discount" className="text-sm font-medium">Discount</Label>
+                                    <Input 
+                                        id="discount" 
+                                        type="number" 
+                                        value={discount} 
+                                        onChange={(e) => setDiscount(e.target.value)} 
+                                        className="w-32 text-right border h-8 text-sm font-semibold"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-end gap-3 pt-1">
+                                    <Label className="text-lg font-bold">Grand Total</Label>
+                                    <div className="w-32 text-right px-2 py-1 bg-primary/10 rounded border border-primary/20 text-lg font-bold text-primary">
+                                        ₹{Math.round(grandTotal)}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex gap-4 border-t p-4 sm:p-6">
-                        <Button className="flex-1 h-12 text-lg" onClick={handleExportPdf} disabled={subtotal <= 0}>
-                            <Download className="mr-2 h-5 w-5" />
-                            Export PDF
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-12 w-12 text-destructive" onClick={handleReset}>
-                            <Trash2 className="h-6 w-6" />
-                        </Button>
-                    </CardFooter>
-                </Card>
+                        </CardContent>
+                        <CardFooter className="flex gap-2 p-2 bg-muted/30">
+                            <Button className="flex-1 h-9 text-base" onClick={handleExportPdf} disabled={subtotal <= 0}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export PDF
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={handleReset}>
+                                <Trash2 className="h-5 w-5" />
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
 
-                <footer className="text-center text-sm text-muted-foreground py-8">
-                    {businessName} - Professional Estimation Tool
+                <footer className="text-center text-xs text-muted-foreground py-2">
+                    {businessName || 'Priyanka Granites'} - Professional Estimation Tool
                 </footer>
             </div>
         </div>
