@@ -296,10 +296,8 @@ export default function GraniteGridPage() {
   const handleDownloadSheetPdf = useCallback(() => {
     const doc = generateSheetPdfDoc();
     if (doc) {
-      const date = new Date();
-      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-      const filename = `sheets_${timestamp}.pdf`;
-      doc.save(filename);
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
     } else {
         toast({
             variant: "destructive",

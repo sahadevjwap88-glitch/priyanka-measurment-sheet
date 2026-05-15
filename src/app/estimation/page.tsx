@@ -166,7 +166,8 @@ function EstimationPage() {
             columnStyles: { 0: { cellWidth: 140, halign: 'right' }, 1: { halign: 'right' } }
         });
 
-        doc.save(`estimation_${Date.now()}.pdf`);
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
     };
 
     const handleReset = () => {
@@ -312,9 +313,9 @@ function EstimationPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="flex gap-2 p-2 bg-muted/30 border-t">
-                                <Button className="flex-1 h-10 text-base" onClick={handleExportPdf} disabled={subtotal <= 0}>
+                                <Button className="flex-1 h-10 text-base" onClick={handleExportPdf} disabled={totalSft <= 0}>
                                     <Download className="mr-2 h-5 w-5" />
-                                    Export PDF
+                                    Download
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={handleReset}>
                                     <Trash2 className="h-6 w-6" />

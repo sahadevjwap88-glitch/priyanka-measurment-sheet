@@ -1,4 +1,3 @@
-
 'use client';
 import { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -288,9 +287,8 @@ function CreditPage() {
             startY: 35,
         });
 
-        const date = new Date();
-        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-        doc.save(`credit_report_${timestamp}.pdf`);
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
     };
 
     const handleExportPaymentHistory = () => {
@@ -315,9 +313,8 @@ function CreditPage() {
             startY: 25,
         });
         
-        const date = new Date();
-        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-        doc.save(`payment_history_${timestamp}.pdf`);
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
     };
 
 
@@ -339,11 +336,11 @@ function CreditPage() {
                         </Link>
                         <Button onClick={handleExportCreditReport} size="sm">
                             <Download className="mr-2 h-4 w-4" />
-                            Export Report
+                            Download
                         </Button>
                          <Button onClick={handleExportPaymentHistory} size="sm" variant="default">
                             <Download className="mr-2 h-4 w-4" />
-                            Export Payment History
+                            Download
                         </Button>
                     </div>
                 </header>

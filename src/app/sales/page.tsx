@@ -1,4 +1,3 @@
-
 'use client';
 import { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -240,9 +239,8 @@ function SalesPage() {
             }
         });
         
-        const date = new Date();
-        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-        doc.save(`sales_report_${timestamp}.pdf`);
+        doc.autoPrint();
+        window.open(doc.output('bloburl'), '_blank');
     };
 
     if (isLoading) {

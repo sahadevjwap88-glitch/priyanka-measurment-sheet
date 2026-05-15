@@ -1,4 +1,3 @@
-
 'use client';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -153,10 +152,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
     const handleExportPdf = () => {
         const doc = generatePdfDoc();
         if (doc) {
-            const date = new Date();
-            const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
-            const filename = `bill_${timestamp}.pdf`;
-            doc.save(filename);
+            doc.autoPrint();
+            window.open(doc.output('bloburl'), '_blank');
         }
     };
     
@@ -225,7 +222,7 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                         </div>
                         <Button onClick={handleExportPdf} size="sm">
                             <Download className="mr-2" />
-                            Download PDF
+                            Download
                         </Button>
                     </div>
                 </header>
@@ -323,5 +320,3 @@ export default function SaleDetailPageWithAuth({ params: { saleId } }: { params:
         </AuthGuard>
     );
 }
-
-    
