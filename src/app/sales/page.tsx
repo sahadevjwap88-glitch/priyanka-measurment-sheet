@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar as CalendarIcon, Download, Settings, Search, X } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Printer, Settings, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -240,9 +240,8 @@ function SalesPage() {
             }
         });
         
-        const date = new Date();
-        const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-        doc.save(`sales_report_${timestamp}.pdf`);
+        const pdfUrl = doc.output('bloburl');
+        window.open(pdfUrl, '_blank');
     };
 
     if (isLoading) {
@@ -355,7 +354,7 @@ function SalesPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             <Button onClick={handleExportReport} size="icon">
-                                <Download className="h-4 w-4" />
+                                <Printer className="h-4 w-4" />
                             </Button>
                              {(startDate || endDate || searchTerm) && (
                                 <Button onClick={handleClearFilter} size="icon" variant="ghost">

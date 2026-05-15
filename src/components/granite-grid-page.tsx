@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Eye, Trash2, Settings, FileDown, BookCopy, CreditCard, Calculator } from 'lucide-react';
+import { Plus, Eye, Trash2, Settings, Printer, BookCopy, CreditCard, Calculator } from 'lucide-react';
 import { GraniteTable } from '@/components/granite-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -296,10 +297,8 @@ export default function GraniteGridPage() {
   const handleDownloadSheetPdf = useCallback(() => {
     const doc = generateSheetPdfDoc();
     if (doc) {
-      const date = new Date();
-      const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-      const filename = `sheets_${timestamp}.pdf`;
-      doc.save(filename);
+      const pdfUrl = doc.output('bloburl');
+      window.open(pdfUrl, '_blank');
     } else {
         toast({
             variant: "destructive",
@@ -399,8 +398,8 @@ export default function GraniteGridPage() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-start gap-2">
                 <Button variant="default" onClick={handleDownloadSheetPdf} className="flex-1 h-10 px-1">
-                    <FileDown className="mr-2" />
-                    Download
+                    <Printer className="mr-2" />
+                    Print Preview
                 </Button>
                 <Button variant="default" onClick={() => handleProtectedAction(addSheet)} className="flex-1 h-10 px-1">
                     <Plus className="mr-2" />

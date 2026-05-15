@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Printer, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import AuthGuard from '@/components/auth-guard';
 import jsPDF from 'jspdf';
@@ -153,10 +153,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
     const handleExportPdf = () => {
         const doc = generatePdfDoc();
         if (doc) {
-            const date = new Date();
-            const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours()}${date.getMinutes()}${date.getSeconds()}`;
-            const filename = `bill_${timestamp}.pdf`;
-            doc.save(filename);
+            const pdfUrl = doc.output('bloburl');
+            window.open(pdfUrl, '_blank');
         }
     };
     
@@ -224,8 +222,8 @@ function SaleDetailPage({ saleId }: { saleId: string }) {
                             </AlertDialog>
                         </div>
                         <Button onClick={handleExportPdf} size="sm">
-                            <Download className="mr-2" />
-                            Download PDF
+                            <Printer className="mr-2" />
+                            Print Preview
                         </Button>
                     </div>
                 </header>
@@ -323,5 +321,3 @@ export default function SaleDetailPageWithAuth({ params: { saleId } }: { params:
         </AuthGuard>
     );
 }
-
-    

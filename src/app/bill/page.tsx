@@ -11,7 +11,7 @@ import { LOCAL_STORAGE_KEY } from '@/components/granite-grid-page';
 import { Separator } from '@/components/ui/separator';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Download, ArrowLeft, Save, Calendar as CalendarIcon, Contact, CreditCard, DollarSign } from 'lucide-react';
+import { Printer, ArrowLeft, Save, Calendar as CalendarIcon, Contact, CreditCard, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -351,10 +351,8 @@ function BillPage() {
 
   const handleExportPdf = () => {
     const doc = generatePdfDoc();
-    const date = new Date();
-    const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-    const filename = `bill_${timestamp}.pdf`;
-    doc.save(filename);
+    const pdfUrl = doc.output('bloburl');
+    window.open(pdfUrl, '_blank');
   };
   
   const handleSelectContact = async () => {
@@ -422,8 +420,8 @@ function BillPage() {
             </div>
             <div className="flex gap-2 flex-1">
                  <Button onClick={handleExportPdf} size="sm" className="w-full">
-                    <Download className="mr-2" />
-                    PDF
+                    <Printer className="mr-2" />
+                    Print Preview
                 </Button>
             </div>
         </div>
@@ -619,6 +617,3 @@ export default function BillPageWithAuth() {
         </AuthGuard>
     );
 }
-
-    
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Download, Calculator, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Printer, Calculator, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/hooks/use-toast';
 import AuthGuard from '@/components/auth-guard';
@@ -166,7 +167,8 @@ function EstimationPage() {
             columnStyles: { 0: { cellWidth: 140, halign: 'right' }, 1: { halign: 'right' } }
         });
 
-        doc.save(`estimation_${Date.now()}.pdf`);
+        const pdfUrl = doc.output('bloburl');
+        window.open(pdfUrl, '_blank');
     };
 
     const handleReset = () => {
@@ -313,8 +315,8 @@ function EstimationPage() {
                             </CardContent>
                             <CardFooter className="flex gap-2 p-2 bg-muted/30 border-t">
                                 <Button className="flex-1 h-10 text-base" onClick={handleExportPdf} disabled={subtotal <= 0}>
-                                    <Download className="mr-2 h-5 w-5" />
-                                    Export PDF
+                                    <Printer className="mr-2 h-5 w-5" />
+                                    Print Preview
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive" onClick={handleReset}>
                                     <Trash2 className="h-6 w-6" />
